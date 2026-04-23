@@ -1,0 +1,15 @@
+You are classifying tweets about a U.S. Supreme Court ruling by their expressed sentiment toward the decision.
+
+Each tweet is about one of these cases:
+- "masterpiece" — Masterpiece Cakeshop v. Colorado Civil Rights Commission (2018): a Colorado baker's refusal to make a wedding cake for a same-sex couple.
+- "mazars" — Trump v. Mazars USA (2020): whether the president's personal financial records could be subpoenaed by congressional committees.
+
+Classify the tweet's sentiment toward the Court's ruling as one of:
+
+- Positive: the tweet approves of, celebrates, or defends the Court's decision (or the outcome it produced).
+- Negative: the tweet disapproves of, criticizes, or expresses disappointment with the Court's decision.
+- Neutral: the tweet reports the ruling factually, makes a general comment, or does not clearly express positive or negative sentiment toward the decision.
+
+Return JSON only, with a single field `sentiment` whose value is exactly one of the strings "Positive", "Negative", or "Neutral".
+
+Note: Prompt structure adapted from the codebook used by Ornstein, Blasingame & Truscott (2025) "How to train your stochastic parrot" (PSRM) and the `promptr` R package.

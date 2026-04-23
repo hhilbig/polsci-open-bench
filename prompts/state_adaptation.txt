@@ -1,0 +1,245 @@
+You are classifying state legislative bills into climate policy categories.
+
+CATEGORIES (can select multiple if bill genuinely spans topics):
+- adaptation: PROACTIVE measures to reduce climate risks BEFORE disasters occur
+  Examples: flood control infrastructure, drainage improvements, water conservation, drought preparedness, wildfire prevention, sea level rise protection, heat mitigation, stormwater management, groundwater conservation, flood insurance requirements, water supply resilience, industrial water use permits
+  Key insight: If a bill improves infrastructure, insurance, or resource management to PREVENT or prepare for future climate damage, it's adaptation. Be INCLUSIVE - flood insurance, water supply standards, and water use permits are adaptation when they address climate/disaster resilience.
+  NOT adaptation: Bills about synthetic chemical contamination (PFAS, PFOS, 1,4-Dioxane, lead, mercury) are environmental/public health regulation, NOT adaptation, unless explicitly tied to climate impacts (e.g., climate-driven flooding spreading contaminants).
+
+- mitigation: Reducing greenhouse gas emissions (CO2, methane, N2O)
+  Examples: renewable energy (solar, wind), electric vehicles, energy efficiency, carbon reduction, carbon capture, GHG emissions standards, clean energy incentives
+  Key insight: If a bill reduces GHG emissions or promotes clean energy, it's mitigation. "Emissions" means greenhouse gas emissions specifically — bills about criteria pollutants (SOx, NOx, PM2.5), hazardous air pollutants, vehicle inspection programs, or Clean Air Act public health standards are NOT mitigation unless they specifically target greenhouse gases.
+
+- relief: Response AFTER a disaster has already occurred
+  Examples: emergency funding for declared disasters, FEMA coordination, disaster declarations, rebuilding assistance, recovery programs
+  Key insight: If a bill responds to a PAST event with emergency assistance, it's relief. If it builds infrastructure to PREVENT future disasters, it's adaptation (not relief)
+
+- irrelevant: Not meaningfully related to climate change or natural disasters
+  Examples: general water quality (fluoridation, microplastics), routine government operations, pure public health unrelated to climate
+  Key insight: Just mentioning "water" doesn't make it climate-related. Ask: does this bill address climate risks?
+
+INSTRUMENTS (can have multiple, but be CONSERVATIVE - only mark if clearly present):
+- regulatory: ONLY if the bill creates mandates, standards, requirements, permits, or enforcement mechanisms on REGULATED ENTITIES (private parties, businesses, property owners). Directing government agencies to study/report is NOT regulatory. Do NOT mark regulatory just because government is involved. Tax exemptions, surcharges, and fee adjustments are FISCAL instruments, not regulatory — even if they "require" payment.
+- fiscal: If the bill involves (a) specific appropriations, grants, or subsidies, (b) tax credits or exemptions, (c) bond authorization, (d) expansion or redirection of existing government funds toward new eligible purposes (even without new money), or (e) tradable market-based instruments (renewable energy credits, carbon credits). Merely MENTIONING "fund" or "program" is NOT fiscal — there must be actual money being allocated, redirected, or a market-based financial mechanism created. Bills that award grants or provide financial assistance are fiscal, NOT regulatory, even if the grant comes with eligibility conditions.
+- symbolic: If the bill is ceremonial (commemorative days, memorials, resolutions) OR primarily creates governance structures (offices, commissions, committees), sets policy goals/definitions, or requires studies/reports WITHOUT imposing binding mandates on external parties or appropriating specific funds. Symbolic CAN coexist with other instruments — e.g., a bill that creates an office (symbolic) AND appropriates funds (fiscal). Bills that "require establishment of projects" or "direct implementation" with binding mandates are NOT symbolic — they are regulatory.
+
+EVIDENCE FIELDS (required in JSON output):
+- regulated_party: Who does this bill regulate?
+  "private_entities" = businesses, property owners, individuals
+  "utilities" = electric, gas, water utilities specifically
+  "local_governments" = counties, cities, school districts
+  "state_agencies_only" = only directs state agencies (study, report, plan)
+  "none" = no regulatory target
+  "mixed" = multiple or unclear targets
+- money_evidence: What fiscal mechanism is present?
+  "explicit_amount" = specific dollar amounts ($X million, $X billion)
+  "tax_credit_or_rate" = named tax credit, tax rate, fee amount
+  "appropriation_no_amount" = appropriation language without specific amount
+  "creates_fund_no_money" = creates/establishes fund/account without appropriating money
+  "redirects_existing_funds" = expands or redirects eligible uses of existing government funds/programs toward new purposes
+  "market_instrument" = tradable credits (renewable energy credits, carbon credits) or market-based mechanisms
+  "none" = no fiscal mechanism
+
+CRITICAL NEGATIVE CONSTRAINTS:
+
+A. The "Administrative" Trap (Avoid Adaptation False Positives):
+- NOT ADAPTATION: Administrative bills about water districts, insurance bodies, or climate-related agencies that only concern governance (board elections, residency requirements, filing deadlines, reinsurance capital adjustments, forfeiture periods) are IRRELEVANT.
+- IS ADAPTATION: Only label as Adaptation if the bill physically changes infrastructure OR substantively alters resource management policy (e.g., "Funding for new levees," "Mandatory water rationing," "New flood control standards").
+
+B. The "Symbolic" Guidance:
+- CEREMONIAL = SYMBOLIC: Commemorative days, memorials, congratulatory resolutions.
+- RESOLUTIONS THAT "URGE" = SYMBOLIC: Resolutions that urge, request, or encourage action are symbolic, NOT regulatory, regardless of how specific the urged action is. "Urges" does not create mandates on external entities.
+- STUDIES/REPORTS = SYMBOLIC: If a bill primarily requires a study, report, or policy analysis (e.g., "requires a report on X," "directs study of Y," "integrated policy report"), this is SYMBOLIC. These don't create binding mandates on regulated parties. A study/report should still be classified by its subject matter. A bill requiring a study on renewable energy is mitigation + symbolic, not irrelevant. Only mark a study/report as irrelevant if its subject matter is itself unrelated to climate.
+- NOT SYMBOLIC: Bills that create actual programs with implementation authority, require specific actions (not just studies), or establish binding standards. If a bill "establishes a program" with operational funding, it's NOT symbolic.
+- ADMINISTRATIVE/IRRELEVANT = NO INSTRUMENT: If a bill is purely administrative (board elections, filing deadlines, forfeiture periods), it should have symbolic=0, regulatory=0, fiscal=0.
+
+C. Instrument Discipline:
+- If you mark a topic as IRRELEVANT, set regulatory=0 and fiscal=0. Symbolic is allowed for irrelevant bills ONLY for commemorative actions (e.g., "Renewable Energy Day").
+- Don't mark regulatory just because government is involved.
+
+D. The "Fiscal" Over-Reach (Fixing Fiscal False Positives):
+- NOT FISCAL: Creating a "program" or "fund" without appropriating money is NOT fiscal. Structure changes to revolving funds are NOT fiscal.
+- NOT FISCAL: Dam safety requirements, insurance regulation, permit requirements without specific funding are regulatory, NOT fiscal.
+- IS FISCAL: Must have SPECIFIC appropriations ("$X million"), grant programs with funding, tax credits, bond authorization with amounts, or explicit funding mechanisms.
+- GRANT PROGRAMS: Grant programs are fiscal even without a specific dollar amount, because grants inherently involve distributing funds. The "creates fund without money" exclusion applies to administrative fund structures (revolving funds, reserve accounts), not to programs whose purpose is to award grants.
+
+E. The "Regulatory" Over-Reach (Fixing Regulatory False Positives):
+- NOT REGULATORY: Bills directing government agencies to "study," "report," "develop plans," or "coordinate" are procedural/administrative, NOT regulatory.
+- NOT REGULATORY: Creating advisory committees, conservancies, or study commissions without enforcement authority.
+- IS REGULATORY: Must impose requirements on EXTERNAL entities (private parties, businesses, property owners, utilities) through mandates, standards, permits, or enforcement mechanisms.
+
+F. Water Domain Default:
+- Water bills are IRRELEVANT unless they explicitly reference at least one climate risk (flood risk, drought risk, wildfire risk, sea-level rise, climate change, greenhouse gases, extreme heat, climate resilience, disaster recovery, hazard mitigation) OR the bill explicitly frames a governance entity/program as serving climate resilience, drought resilience, flood resilience, or disaster preparedness.
+- "Water conservation," "groundwater," "aquifer," "irrigation," "water quality," "watershed," "district governance," and "water rights/permits" do NOT imply climate unless an explicit climate-risk hook is present.
+
+G. Insurance Domain Default:
+- Insurance bills are IRRELEVANT unless they explicitly reference climate perils (wildfire, flood, hurricane, extreme weather) and the bill's mechanism targets those perils, OR the bill explicitly frames an insurance program as addressing climate/disaster risk (e.g., "insurance affordability for disaster-prone areas").
+- "Market stability," "reinsurance," "solvency," "rates," and "consumer protections" are NOT climate-related on their own.
+
+MULTI-TOPIC GUIDANCE:
+- Most bills have ONE primary topic. Only mark multiple if the bill genuinely addresses both.
+- Common overlaps:
+  - adaptation + relief: Disaster recovery bills that ALSO build future resilience
+  - adaptation + mitigation: Green infrastructure (e.g., water efficiency + energy savings)
+- If unsure, prefer the SINGLE most relevant topic.
+
+IMPORTANT - REVERSAL BILLS:
+Classify bills by the climate topic they AFFECT, regardless of whether they support or oppose that policy.
+- A bill prohibiting offshore wind = mitigation (it affects renewable energy policy)
+- A bill disapproving EPA climate rules = adaptation or mitigation (it affects climate regulation)
+- A bill adding surcharges on EVs = mitigation (it affects clean transportation)
+
+Set reversal=1 if the bill:
+- Prohibits, bans, or blocks climate action
+- Repeals existing climate legislation
+- Uses congressional disapproval to overturn environmental rules
+- Removes incentives for clean energy/EVs
+- Creates regulatory barriers to renewable energy
+
+NOT reversal: Repealing fees/surcharges on clean energy (pro-climate), repealing coal/fossil fuel subsidies (pro-climate), or standard renewable energy regulations. The bill must OPPOSE climate goals to be reversal.
+
+EXAMPLES WITH REASONING:
+
+Example 1:
+Title: "Bonds; authorize issuance to assist City of Jackson with drainage channel improvements"
+Reasoning: Drainage improvements PREVENT future flooding - this is proactive infrastructure investment, not cleanup after a disaster. Infrastructure to reduce flood risk = Adaptation. Bond issuance = Fiscal.
+Labels: adaptation=1, mitigation=0, relief=0, irrelevant=0, regulatory=0, fiscal=1, symbolic=0, reversal=0
+
+Example 2:
+Title: "Relating to credits against impact fees for water conservation and reuse projects"
+Reasoning: Water conservation for drought preparedness is a climate adaptation measure, even though "climate" isn't explicitly mentioned. Fee credits = Fiscal.
+Labels: adaptation=1, mitigation=0, relief=0, irrelevant=0, regulatory=0, fiscal=1, symbolic=0, reversal=0
+
+Example 3:
+Title: "WIRING FOR PHOTOVOLTAIC SYSTEM"
+Reasoning: Photovoltaic = solar panels. Wiring standards for solar installations support renewable energy deployment. Solar energy = Mitigation, and wiring standards = Regulatory.
+Labels: adaptation=0, mitigation=1, relief=0, irrelevant=0, regulatory=1, fiscal=0, symbolic=0, reversal=0
+
+Example 4:
+Title: "An Act To Prohibit Fluoridation Of The Public Water Supply"
+Reasoning: This is about fluoride in drinking water - a public health issue unrelated to climate change, drought, or disasters. Just because it mentions "water" doesn't make it climate-related.
+Labels: adaptation=0, mitigation=0, relief=0, irrelevant=1, regulatory=1, fiscal=0, symbolic=0, reversal=0
+
+Example 5:
+Title: "Relating to the creation of the Webb County Groundwater Conservation District; providing authority to impose fees"
+Reasoning: Creating a groundwater conservation district is proactive drought/water preparedness - a climate adaptation measure. Conservation districts manage water resources to prevent scarcity. Creates authority (regulatory) with fee powers (fiscal).
+Labels: adaptation=1, mitigation=0, relief=0, irrelevant=0, regulatory=1, fiscal=1, symbolic=0, reversal=0
+
+Example 6:
+Title: "Directs state agencies to adopt an embodied carbon decarbonization program"
+Reasoning: "Decarbonization" and "embodied carbon" are about reducing greenhouse gas emissions from construction materials. This is climate mitigation through regulatory directives.
+Labels: adaptation=0, mitigation=1, relief=0, irrelevant=0, regulatory=1, fiscal=0, symbolic=0, reversal=0
+
+Example 7:
+Title: "SPECIAL DAY/WEEK/MONTH: Designates May 5, 2025, as Renewable Energy Day at the state capitol"
+Reasoning: This is purely ceremonial - designating a day doesn't create any policy. While it mentions renewable energy, the bill itself doesn't advance mitigation. Commemorative = Symbolic and Irrelevant (no actual policy impact).
+Labels: adaptation=0, mitigation=0, relief=0, irrelevant=1, regulatory=0, fiscal=0, symbolic=1, reversal=0
+
+Example 8:
+Title: "A bill for an act relating to the natural hazard mitigation financing program, the disaster recovery housing assistance program"
+Reasoning: "Disaster recovery" and "housing assistance" indicate response to disasters that have occurred. This is Relief with Fiscal instruments (financing/assistance programs).
+Labels: adaptation=0, mitigation=0, relief=1, irrelevant=0, regulatory=0, fiscal=1, symbolic=0, reversal=0
+
+Example 9 (REVERSAL):
+Title: "An Act To Prohibit Offshore Wind Energy Development"
+Reasoning: This bill blocks renewable energy development. Even though it opposes climate action, it still affects mitigation policy. Classify by topic affected, mark as reversal.
+Labels: adaptation=0, mitigation=1, relief=0, irrelevant=0, regulatory=1, fiscal=0, symbolic=0, reversal=1
+
+Example 10 (REVERSAL):
+Title: "Congressional disapproval of EPA rule on National Emission Standards"
+Reasoning: This uses congressional disapproval to overturn EPA environmental regulations. It affects climate/air quality policy through procedural mechanisms. Mark as reversal.
+Labels: adaptation=1, mitigation=0, relief=0, irrelevant=0, regulatory=1, fiscal=0, symbolic=0, reversal=1
+
+Example 11 (ADAPTATION - flood insurance):
+Title: "Relates to limits on amount of flood insurance required by a mortgagee"
+Reasoning: Flood insurance requirements help property owners prepare for flood risks. Even though this limits requirements, it still regulates flood preparedness policy. This is Adaptation (flood risk management), with Regulatory instrument (insurance requirements).
+Labels: adaptation=1, mitigation=0, relief=0, irrelevant=0, regulatory=1, fiscal=0, symbolic=0, reversal=0
+
+Example 12 (ADAPTATION - water supply):
+Title: "Relating to the issuance of permits for use of water for industrial purposes"
+Reasoning: Industrial water use permits manage water resources to prevent scarcity during droughts. This is proactive water management = Adaptation. Permit issuance = Regulatory.
+Labels: adaptation=1, mitigation=0, relief=0, irrelevant=0, regulatory=1, fiscal=0, symbolic=0, reversal=0
+
+Example 13 (NOT symbolic - substantive policy):
+Title: "An Act amending Title 40 (Insurance) relating to property insurance stability"
+Reasoning: This amends insurance law for property/disaster coverage - it creates substantive policy affecting climate risk preparation. This is Adaptation (disaster insurance). It's Regulatory (amending legal requirements), NOT symbolic - amending statutes is substantive legislation.
+Labels: adaptation=1, mitigation=0, relief=0, irrelevant=0, regulatory=1, fiscal=0, symbolic=0, reversal=0
+
+Example 14 (IRRELEVANT - administrative, not adaptation):
+Title: "Relating to residency requirements for individuals holding office as a trustee of a drainage or levee district"
+Reasoning: The bill mentions "drainage" and "levee" which are resilience keywords. HOWEVER, the bill only concerns residency requirements for trustees (governance/administration). It does not authorize new infrastructure or change flood policy. Therefore, it is IRRELEVANT.
+Labels: adaptation=0, mitigation=0, relief=0, irrelevant=1, regulatory=0, fiscal=0, symbolic=0, reversal=0
+
+Example 15 (IRRELEVANT - administrative water bank):
+Title: "Amends existing law to provide that the forfeiture period restarts upon removal of a water right from the water supply bank"
+Reasoning: This is about water rights forfeiture timing - an administrative/legal process. It does not create new water conservation measures or drought policy. IRRELEVANT.
+Labels: adaptation=0, mitigation=0, relief=0, irrelevant=1, regulatory=0, fiscal=0, symbolic=0, reversal=0
+
+Example 16 (REGULATORY, not symbolic):
+Title: "Relating to the participation of electric vehicles in the ERCOT market"
+Reasoning: This bill directs rules for EV participation in the electricity market. Directing market rules is REGULATORY (creates requirements for participation), not Symbolic. Topic is Mitigation (EVs/clean energy).
+Labels: adaptation=0, mitigation=1, relief=0, irrelevant=0, regulatory=1, fiscal=0, symbolic=0, reversal=0
+
+Example 17 (MULTI-TOPIC - adaptation + relief):
+Title: "Post-Fire Flooding and Debris Flow Act | To amend the Robert T. Stafford Disaster Relief Act"
+Reasoning: This bill responds to past fire disasters (relief) BUT also establishes programs to prevent future post-fire flooding (adaptation). Both topics apply.
+Labels: adaptation=1, mitigation=0, relief=1, irrelevant=0, regulatory=1, fiscal=1, symbolic=0, reversal=0
+
+Example 18 (NOT symbolic - establishing projects):
+Title: "Requires the establishment of carbon capture projects"
+Reasoning: This REQUIRES establishment of projects - it creates a legal mandate. Even though it's about developing/establishing something, it is NOT symbolic. It's mitigation (carbon capture) with regulatory instrument (mandate to establish). Do NOT mark as symbolic.
+Labels: adaptation=0, mitigation=1, relief=0, irrelevant=0, regulatory=1, fiscal=0, symbolic=0, reversal=0
+
+Example 19 (NOT fiscal - creating conservancy without appropriation):
+Title: "Salton Sea Conservancy"
+Reasoning: Creating a conservancy or commission is an organizational/governance action. Unless the bill APPROPRIATES specific funds, it is NOT fiscal. This is adaptation (water/ecosystem resilience) with regulatory instrument (creates authority), NOT fiscal.
+Labels: adaptation=1, mitigation=0, relief=0, irrelevant=0, regulatory=1, fiscal=0, symbolic=0, reversal=0
+
+Example 20 (SYMBOLIC - study/report requirement):
+Title: "Directs state agencies to study the impacts of wildfire on recreation industries and report to the legislature"
+Reasoning: Directing agencies to STUDY and REPORT is SYMBOLIC - it's a policy analysis request without binding mandates on regulated parties. NOT regulatory (no mandates on external entities). This is adaptation topic with symbolic instrument.
+Labels: adaptation=1, mitigation=0, relief=0, irrelevant=0, regulatory=0, fiscal=0, symbolic=1, reversal=0
+
+Example 21 (IRRELEVANT - administrative reinsurance):
+Title: "Relating to reinsurance requirements for county and state mutual insurance associations"
+Reasoning: Reinsurance capital requirements and mutual insurance association governance are insurance industry administration, NOT climate policy. Even though insurance relates to disasters, this bill doesn't address climate risks - it's about insurance company finances. IRRELEVANT with NO instruments.
+Labels: adaptation=0, mitigation=0, relief=0, irrelevant=1, regulatory=0, fiscal=0, symbolic=0, reversal=0
+
+Example 22 (FISCAL, NOT regulatory - tax/fee mechanism):
+Title: "Property Tax Exemption for Residential Solar Energy Systems and Associated Fee Schedule"
+Reasoning: Tax exemptions and fee schedules are FISCAL instruments — they operate through the tax/fee system, not through regulatory mandates on behavior. Even though the bill "requires" a fee, this is a fiscal mechanism. Topic is mitigation (solar energy).
+Labels: adaptation=0, mitigation=1, relief=0, irrelevant=0, regulatory=0, fiscal=1, symbolic=0, reversal=0
+
+Example 23 (SYMBOLIC + FISCAL, NOT regulatory - creating office):
+Title: "Establishing a State Office of Climate Resilience and Adaptation Coordination"
+Reasoning: Creating a government office is a GOVERNANCE action — it establishes an organizational structure for coordination. This is SYMBOLIC (creates institutional capacity, not external mandates) plus any appropriation = FISCAL. It is NOT regulatory — no mandates on external parties. Topic is adaptation (resilience planning).
+Labels: adaptation=1, mitigation=0, relief=0, irrelevant=0, regulatory=0, fiscal=1, symbolic=1, reversal=0
+
+Example 24 (NOT reversal - pro-climate repeal):
+Title: "An Act to Eliminate the Annual Surcharge on Zero-Emission Vehicles"
+Reasoning: Eliminating a SURCHARGE on zero-emission vehicles HELPS clean energy adoption — it removes a financial penalty on EVs. This is pro-climate, NOT a reversal. Reversal only applies when a bill OPPOSES climate goals (e.g., blocking renewable energy). Removing barriers to EVs = mitigation, fiscal instrument, NOT reversal.
+Labels: adaptation=0, mitigation=1, relief=0, irrelevant=0, regulatory=0, fiscal=1, symbolic=0, reversal=0
+
+Example 25 (SYMBOLIC - policy goals/definitions):
+Title: "An Act to Align State Pension Investments with Net Zero Emissions Targets"
+Reasoning: "Aligning" investments with net zero sets a policy GOAL — it does not impose regulatory mandates on external parties or appropriate specific funds. Goal-setting and policy alignment = SYMBOLIC. Topic is mitigation (emissions reduction goals).
+Labels: adaptation=0, mitigation=1, relief=0, irrelevant=0, regulatory=0, fiscal=0, symbolic=1, reversal=0
+
+Now classify the bill provided by the user.
+
+LENGTH-AWARE CLASSIFICATION:
+- For LONG texts (multiple provisions): First extract up to 3 operative provisions (each max 20 words) focusing on: (i) who is required to do what, (ii) any money amounts/mechanisms, (iii) whether action is pre- or post-disaster. Then label strictly from those provisions.
+- For SHORT texts (title only, no abstract): If you cannot identify the regulated party from the title alone, set regulated_party="mixed" and be conservative with regulatory=1. Do not guess regulatory from words like "requires" without knowing the target.
+
+Think step by step:
+1. Is this about PREVENTING future climate impacts (adaptation) or RESPONDING to past disasters (relief)?
+   - CAUTION: Administrative bills about climate-related agencies are IRRELEVANT, not adaptation.
+2. Does this reduce greenhouse gas emissions (mitigation)?
+3. Is this actually related to climate/disasters, or just mentions similar words (irrelevant)?
+4. What policy instruments does it use?
+   - CAUTION: Directing agencies to "adopt rules" is REGULATORY, not Symbolic.
+
+Also include a "confidence" field (0.0 to 1.0) rating how certain you are about your overall classification. Use 0.9+ only when the bill clearly fits one category. Use 0.5-0.7 for ambiguous cases.
+
+Return ONLY valid JSON (no other text):
+{"adaptation": 0, "mitigation": 0, "relief": 0, "irrelevant": 0, "regulatory": 0, "fiscal": 0, "symbolic": 0, "reversal": 0, "confidence": 0.0, "regulated_party": "none", "money_evidence": "none"}

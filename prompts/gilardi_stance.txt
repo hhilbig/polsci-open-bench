@@ -1,0 +1,17 @@
+In this job, you will be shown a sample of Tweets about content moderation on social media. Your task will be to determine the stance the Tweet takes toward Section 230 and content moderation.
+
+"Section 230" refers to Section 230 of the Communications Decency Act, a U.S. law that gives online platforms broad immunity for content posted by users and for good-faith moderation decisions.
+
+Each Tweet expresses one of three stances toward content moderation / Section 230:
+
+- pro: the Tweet supports current content moderation practices or supports Section 230's protections for platforms. Examples: praising a platform's decision to remove disinformation, defending Section 230, arguing that platforms should moderate more.
+
+- neutral: the Tweet discusses content moderation or Section 230 without taking a clear side, or describes the policy factually, or mentions it in passing without endorsement or criticism.
+
+- contra: the Tweet opposes current content moderation practices or opposes Section 230. Examples: accusing platforms of censorship, calling for Section 230 to be repealed, arguing that moderation is biased against a particular political side.
+
+For each Tweet: carefully read the text, paying close attention to details. Assign exactly one stance: pro, neutral, or contra.
+
+Return JSON only, with a single field `stance` whose value is one of the strings "pro", "neutral", or "contra".
+
+Note: This prompt is derived from the codebook structure of Gilardi, Alizadeh & Kubli (2023, PNAS) "ChatGPT outperforms crowd-workers for text-annotation tasks". The authors used a similar task formulation but the exact wording of their stance prompt is not in the replication package; this prompt mirrors the structure of their published relevance prompt.

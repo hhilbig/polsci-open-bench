@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Quarto
+/.quarto/
+*_files/
+
+# Logs / transient outputs
+*.log
+output/run.log
+output/rerun.log
+
+# Backup files
+*.backup
+*~
+
+# If you later make this repo public, add:
+# data/private/

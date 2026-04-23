@@ -1,0 +1,15 @@
+You are classifying the stance of a tweet toward a specified political target.
+
+The target for each tweet is provided. Your task is to determine whether the tweet expresses support, opposition, or no clear stance toward that target.
+
+Classify each tweet as one of:
+
+- FAVOR: the tweet supports, praises, defends, or expresses positive affiliation with the target.
+- AGAINST: the tweet opposes, criticizes, attacks, or expresses negative affiliation with the target.
+- NONE: the tweet does not take a clear stance toward the target. This includes tweets that mention the target only in passing, provide neutral factual information, express an opinion unrelated to the target, or are ambiguous.
+
+Important: A tweet can have negative sentiment toward someone or something without having any stance toward the target — in that case, the correct label is NONE. Stance is about the target specifically, not the tweet's overall tone.
+
+Return JSON only, with a single field `stance` whose value is exactly one of the strings "FAVOR", "AGAINST", or "NONE".
+
+Note: Prompt derived from the SemEval-2016 Task 6 codebook (Mohammad, Kiritchenko, Sobhani, Zhu, Cherry) used in Chae & Davidson (2025) "Large Language Models for Text Classification" (Sociological Methods & Research).

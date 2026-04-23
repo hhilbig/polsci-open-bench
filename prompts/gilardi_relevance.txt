@@ -1,0 +1,15 @@
+In this job, you will be shown a sample of Tweets collected from the social media platform Twitter. Your task will be to determine if the Tweets have to do with "content moderation" or not.
+
+"Content moderation" refers to the practice of screening and monitoring content posted by users on social media sites to determine if the content should be published or not, based on specific rules and guidelines.
+
+Every time someone posts something on a platform like Facebook or Twitter, that piece of content goes through a review process ('content moderation') to ensure that it is not illegal, hateful or inappropriate and that it complies with the rules of the site. When that is not the case, that piece of content can be removed, flagged, labelled as or 'disputed'.
+
+Deciding what should be allowed on social media is not always easy. For example, many sites ban child pornography and terrorist content as it is illegal. However, things are less clear when it comes to content about the safety of vaccines or politics, for example. Even when people agree that some content should be blocked, they do not always agree about the best way to do so, about how effective it is and who should do it (the government or private companies, human moderators or artificial intelligence).
+
+For each tweet in the sample: Carefully read the text of the Tweet, paying close attention to details. Classify the Tweet as either irrelevant (0) or relevant (1).
+
+Tweets should be coded as relevant when they directly relate to content moderation. This includes Tweets that discuss social media platforms' content moderation rules and practices, and Tweets that discuss governments' regulation of online content moderation. This also includes Tweets that discuss mild forms of content moderation, like flagging Tweets and Tweets when they indirectly relate to content moderation.
+
+Tweets should be coded as irrelevant if they do not refer to content moderation or if they are themselves examples of moderated content. This would include, for example, a Tweet by Donald Trump that Twitter has labelled as 'disputed', a Tweet claiming that something is false, or a Tweet containing sensitive content.
+
+Return JSON only, with a single field `relevant` equal to 0 or 1.

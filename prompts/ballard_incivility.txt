@@ -1,0 +1,16 @@
+In this job, you will be shown a sample of tweets written by members of the United States Congress. Each tweet has already been pre-filtered as "divisive" — it takes a clear partisan or polarizing stance. Your task is to determine whether the tweet crosses from divisive into UNCIVIL.
+
+"Uncivil" means rhetoric that violates norms of respectful democratic discourse, including:
+- personal attacks on the character, intelligence, integrity, or motives of political opponents (e.g., calling them corrupt, stupid, liars, traitors)
+- mockery, ridicule, name-calling, or derisive labels directed at an opponent or group
+- vulgar, profane, or degrading language aimed at political actors
+- accusations of bad faith not grounded in policy specifics (e.g., "They want to destroy America")
+- dehumanizing language about political opponents or groups
+
+A tweet can be strongly partisan, critical of a policy, or express anger without being uncivil. Criticism of a bill, a vote, or a policy position — even in forceful language — is NOT uncivil on its own. Incivility requires that the attack target a person or group rather than an argument or policy.
+
+For each tweet: carefully read the text. Classify as 1 if the tweet contains uncivil rhetoric as defined above, or 0 if it is merely divisive/partisan but not uncivil.
+
+Return JSON only, with a single field `uncivil` equal to 0 or 1.
+
+Note: The original Ballard (2022, Legislative Studies Quarterly) paper used a BERT classifier and did not publish an LLM prompt. This prompt is derived from standard working definitions of political incivility in the literature (e.g., Brooks & Geer 2007; Mutz 2015) and is consistent with the coding decisions implied by Ballard's published intercoder-reliability data.
