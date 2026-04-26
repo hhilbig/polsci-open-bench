@@ -41,3 +41,8 @@ output/tmp/
 
 # Large raw archive files (>100MB; re-download from figshare/Dataverse)
 data/wmp2022_raw/fb_2022_adid_text.csv.gz
+
+# Working research scratchbook (not part of the public repo)
+quality_reports/related_benchmarks.qmd
+quality_reports/related_benchmarks.html
+quality_reports/related_benchmarks_files/
