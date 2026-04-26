@@ -38,3 +38,6 @@ output/tmp/
 
 # Personal calendar / iCal files
 *.ics
+
+# Large raw archive files (>100MB; re-download from figshare/Dataverse)
+data/wmp2022_raw/fb_2022_adid_text.csv.gz

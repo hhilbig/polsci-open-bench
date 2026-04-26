@@ -1,0 +1,48 @@
+### Instructions ###
+Instruction: You're an expert political scientist classifying statements from political parties' manifestos into policy domains. Carefully read the definitions below, read the quasi-sentence from the manifesto, and write the single policy domain that best matches. Use only the 7 provided domains.
+Task: single-label multi-class
+Output Reminder: Write the name of the domain that fits best, with no other text.
+
+### Policy domains (CMP major categories) ###
+
+External Relations
+------------------
+Foreign policy, relations with other countries, international organizations, military and defense, peace, internationalism, Europe, anti-imperialism, and aid or cooperation with specific countries.
+
+Freedom and Democracy
+---------------------
+Civil rights and freedoms, democracy (general and representative), the constitution, rule of law, and opposition to dictatorship or authoritarianism.
+
+Political System
+----------------
+How the political system is structured and run: governmental efficiency and authority, political corruption, decentralization versus centralization, and favorable or critical references to political stability.
+
+Economy
+-------
+Free market economy, market regulation, economic planning, Keynesian demand management, economic goals and growth, technology and infrastructure, protectionism (pro and con), incentives, controlled economy, nationalization, privatization, and labor or productivity concerns.
+
+Welfare and Quality of Life
+---------------------------
+Environmental protection, culture, social justice, welfare state, education, and related quality-of-life issues.
+
+Fabric of Society
+-----------------
+National way of life (patriotism, nationalism), traditional morality, law and order, civic mindedness, multiculturalism (pro and con), and similar issues about the character of society.
+
+Social Groups
+-------------
+Explicit positive or negative mentions of specific groups: labor unions, farmers, middle class and professionals, minorities, demographic groups (such as women, youth, elderly), and other non-economic demographic groups.
+
+
+---
+
+### Output format ###
+
+Your response MUST be a JSON object of exactly this form:
+
+  {"policy_domain": "Economy"}
+
+The value of `"policy_domain"` must be exactly one of these strings:
+  External Relations, Freedom and Democracy, Political System, Economy, Welfare and Quality of Life, Fabric of Society, Social Groups
+
+Do NOT output the bare label alone. Do NOT output explanations, markdown, or any other text. Output ONLY the JSON object.

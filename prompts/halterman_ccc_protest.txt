@@ -1,5 +1,7 @@
 ### Instructions ###
-You are an expert political scientist categorizing news stories about protests into categories. Read the definitions below carefully, then read the news story, and identify the single label that best matches.
+Instruction: You're an expert political scientist categorizing news stories about protests into categories. Carefully read the definitions below, read the story, and write the single Label that best match the story. Do not write anything else except the Label in all caps.
+Task: single-label multi-class
+Output Reminder: Write the name of the Label that fits best, with no other text. For example, "Label: PROTEST", "Label: MARCH", etc.
 
 ### Categories ###
 
@@ -9,11 +11,13 @@ Label: PROTEST
 Definition: A crowd gathering to express disagreement with, or disapproval or anger or frustration toward, a specific individual or organization that is at or near the crowd's gathering point.
 Clarification: The crowd must be near the target of the protest, e.g., a politician giving a speech, a corporate headquarters, a bank branch, a construction site, a city hall) or in negative reaction to a recent or current event (e.g., the killing of George Floyd, the reversal of Roe v. Wade)
 
+
 rally
------
+------
 Label: RALLY
 Definition: A crowd gathering to demonstrate and reinforce their mutual support for a set of political demands or claims, typically by making speeches directed at each other.
 Clarification: These include but are not limited to campaign rallies, and these events sometimes include or support press conferences.
+
 
 demonstration
 --------------
@@ -21,34 +25,13 @@ Label: DEMONSTRATION
 Definition: A crowd gathering to demonstrate their support for a set of political demands or claims to an external audience, typically with things like signs and banners and flags displayed to passers-by in a public space.
 Clarification: Pickets may also be considered a form of demonstration.
 
+
 march
------
+------
 Label: MARCH
 Definition: A crowd moving on foot from one location to another as a means to express their support for a set of political demands or claims.
-Clarification: Does not include a crowd moving in motorized vehicles (e.g., cars, trucks, motorcycles) or by bicycle. These fall under separate categories.
+Clarification: Does not include a crowd moving in motorized vehicles (e.g., cars, trucks, motorcycles) or by bicycle.
 
-caravan
--------
-Label: CARAVAN
-Definition: A crowd moving in motorized vehicles (e.g., cars, trucks, motorcycles) from one location to another as a means to express their support for a set of political demands or claims.
-Clarification: Does not include a crowd moving on foot or by bicycle. These fall under separate categories.
-
-bicycle ride
-------------
-Label: BICYCLE_RIDE
-Definition: A crowd moving mostly or entirely with bicycles from one location to another as a means to express their support for a set of political demands or claims.
-
-direct action
--------------
-Label: DIRECT_ACTION
-Definition: An individual or crowd using civil disobedience or other physical actions that do not directly threaten to harm other humans as a way to express or advance their claims.
-Clarification: Common forms involve occupations of space that impede others from doing things to which the protesters object and damaging property materially or symbolically relevant to protesters' claims. Looting may also be construed as a form of direct action.
-
-counter protest
----------------
-Label: COUNTER_PROTEST
-Definition: A counter-protest is an action organized or occurring in direct response to another action and usually engaging directly with that original action.
-Clarification: Actions organized primarily for purposes of confronting or challenging another event, or described by organizers as a counter-protest to another event on the same date.
 
 ---
 
@@ -59,6 +42,6 @@ Your response MUST be a JSON object of exactly this form:
   {"protest_type": "PROTEST"}
 
 The value of `"protest_type"` must be exactly one of these strings:
-  PROTEST, RALLY, DEMONSTRATION, MARCH, CARAVAN, BICYCLE_RIDE, DIRECT_ACTION, COUNTER_PROTEST
+  PROTEST, RALLY, DEMONSTRATION, MARCH
 
 Do NOT output the bare label alone. Do NOT output explanations, markdown, or any other text. Output ONLY the JSON object.

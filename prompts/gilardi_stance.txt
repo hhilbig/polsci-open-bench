@@ -1,17 +1,18 @@
-In this job, you will be shown a sample of Tweets about content moderation on social media. Your task will be to determine the stance the Tweet takes toward Section 230 and content moderation.
+For this task, you will be asked to annotate a sample of tweets about content moderation. Before describing the task, we explain what we mean by "content moderation".
 
-"Section 230" refers to Section 230 of the Communications Decency Act, a U.S. law that gives online platforms broad immunity for content posted by users and for good-faith moderation decisions.
+"Content moderation" refers to the practice of screening and monitoring content posted by users on social media sites to determine if the content should be published or not, based on specific rules and guidelines. Every time someone posts something on a platform like Facebook or Twitter, that piece of content goes through a review process ("content moderation") to ensure that it is not illegal, hateful or inappropriate and that it complies with the rules of the site. When that is not the case, that piece of content can be removed, flagged, labeled as or 'disputed.'
 
-Each Tweet expresses one of three stances toward content moderation / Section 230:
+Deciding what should be allowed on social media is not always easy. For example, many sites ban child pornography and terrorist content as it is illegal. However, things are less clear when it comes to content about the safety of vaccines or politics, for example. Even when people agree that some content should be blocked, they do not always agree about the best way to do so, how effective it is, and who should do it (the government or private companies, human moderators or artificial intelligence).
 
-- pro: the Tweet supports current content moderation practices or supports Section 230's protections for platforms. Examples: praising a platform's decision to remove disinformation, defending Section 230, arguing that platforms should moderate more.
+Task 6: Stance Detection. In the context of content moderation, Section 230 is a law in the United States that protects websites and other online platforms from being held legally responsible for the content posted by their users. This means that if someone posts something illegal or harmful on a website, the website itself cannot be sued for allowing it to be posted. However, websites can still choose to moderate content and remove anything that violates their own policies.
 
-- neutral: the Tweet discusses content moderation or Section 230 without taking a clear side, or describes the policy factually, or mentions it in passing without endorsement or criticism.
+For each tweet in the sample, follow these instructions:
 
-- contra: the Tweet opposes current content moderation practices or opposes Section 230. Examples: accusing platforms of censorship, calling for Section 230 to be repealed, arguing that moderation is biased against a particular political side.
+1. Carefully read the text of the tweet, paying close attention to details.
 
-For each Tweet: carefully read the text, paying close attention to details. Assign exactly one stance: pro, neutral, or contra.
+2. Classify the tweet as having a pro stance towards Section 230, a contra stance, or a neutral stance.
 
 Return JSON only, with a single field `stance` whose value is one of the strings "pro", "neutral", or "contra".
 
-Note: This prompt is derived from the codebook structure of Gilardi, Alizadeh & Kubli (2023, PNAS) "ChatGPT outperforms crowd-workers for text-annotation tasks". The authors used a similar task formulation but the exact wording of their stance prompt is not in the replication package; this prompt mirrors the structure of their published relevance prompt.
+---
+Source: Gilardi, Alizadeh & Kubli (2023, PNAS), SI §S1 Annotation Codebooks, "Background on content moderation" + "Task 6: Stance Detection." Verbatim with two documented modifications: (1) The SI codebook uses the labels "positive / negative / neutral"; this prompt substitutes "pro / contra / neutral" to match the author-provided `gt_stance` values in the replication archive (the Python task template in the archive uses the pro/contra variant). (2) The final JSON-output instruction is an appended format directive and is not in the SI.

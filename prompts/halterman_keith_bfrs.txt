@@ -1,0 +1,126 @@
+### Instructions ###
+Instruction: You're an expert political scientist categorizing news stories from Pakistan into categories. Carefully read the definitions below, read the story, and write the Label that best matches the story. Use only the provided labels.
+Task: single label multiclass
+Output Reminder: Write the name of the Label that fits best, with no other text. For example, "Label: ASSASSINATION", "Label: VIOLENT_POLITICAL_DEMONSTRATION", etc.
+
+### Categories ###
+
+assassination
+-------------
+Label: ASSASSINATION
+Definition: An attempt (successful or failed) by a non-state entity aimed to kill a specific individual.
+Clarification: Targets may include military, political, civil society or civilian state or federal leadership. In some case, there may be a suspected government agency behind the assassination.  This Label applies when a body is found with bullet wounds or other marks of violence and/or torture.
+Negative Clarification: Does not include assassination using drone attacks (coded separately) or deaths from attacks on military, paramilitary, police or intelligence targets, or state violence against a group of civilians.""",
+Positive Example: "An Imam of a mosque was brutally murdered by unknown assailants in Jehanian on Friday." This is an ASSASSINATION because the imam appears to have been deliberately targeted.
+Negative Example: "A woman and her son were injured by unidentified assailants in Mominabad on Sunday." This is an example of TERRORISM, not ASSASSINATION, because the attack does not appear to be specifically targeted at the victims.
+
+assassination (drone attack)
+----------------------------
+Label: DRONE_ASSASSINATION
+Definition: An assassination (failed or successful attempt) carried out using an unmanned aerial vehicle (drone strike).
+Negative Clarification: Non-drone assassination attempts are coded under the ‘Assassination’ category, not under this category.
+Positive Example: "Drone fired missiles at a heavily fortified mud-house in Asoray Village in the Mirali sub-division kiliing 5 people and injuring 1.;a senior Al Qaeda commander, Hamza Rabia, was killed in the attack"
+Negative Example: "Two soldiers were injured in a bomb blast near an army outpost in the Hamrang area." No mention of a drone strike.
+
+attack on state
+---------------
+Label: ATTACK_ON_STATE
+Definition: An attack on Pakistani territory targeted at the state of Pakistan or its representatives that was conducted by the armed forces of another state. This includes shelling across the Line of Control, attacks on Pakistani forces mistaken for militants near the Afghan border.
+Clarification: All these incidents were attributed to the government of India or United States and NATO forces.
+Positive Example: "Indian forces resorted to machine gun firing across the LoC in what the Pakistani officials termed a clear violation of the ceasefire." This is an example of another state's military conducting an attack on Pakistan.
+Negative Example: "Five rockets were fired at a Frontier Corps checkpost in Sangsilla Chashma area of Pir Koh." Not attributable to the armed forces of another state. 
+
+conventional attack on military/paramilitary/police/intelligence
+---------------------------------------------------------------
+Label: CONVENTIONAL_ATTACK_ON_GOV_FORCES
+Definition: Incidents that involve a direct conventional attack on a military, police, paramilitary, or intelligence target, such that violence has the potential to be exchanged between the attackers.
+Clarification: Conventional tactics are those that would be employed by state forces. Conventional attacks include ambushes, direct fire, artillery, pitched battle, and troop captures. This includes but is not limited to: attacks against military checkposts, police headquarters, the Federal Investigative Agency (FIA), the ISI.
+Negative Clarification: “Guerilla” tactics are described in a separate category. Attacks by state actors (e.g. India) are coded as "attack on state"
+Positive Example: "At least two security personnel were injured in skirmishes between security forces and armed tribesmen. The attackers escaped after security forces retaliated using gunfire. No arrest was reported." Skirmishes involving gunfire is a conventional attack.
+Negative Example: "A vehicle carrying security personnel hit a landmine in Loti gas field area resulting in injuries to three soldiers." This is a guerilla attack because it involves a road-side bomb.
+
+
+guerilla attack on military/paramilitary/police/intelligence
+-----------------------------------------------------------
+Label: GUERILLA_ATTACK_ON_GOV_FORCES 
+Definition: Incidents that involve a guerilla-like attack (e.g., a car or suicide-bombing, a kidnapping) on a military, police, paramilitary, or intelligence target.
+Clarification: Guerilla attacks employ tactics that conventional forces do not. For example, guerilla attacks will employ road-side bombs, improvised explosive devices (IEDs), suicide attacks (e.g. on a checkpoint), car bombs and the like.
+Negative Clarification: Gun battles between soldiers and militants are coded as conventional attacks. 
+Positive Example: "A suicide bomber blew himself up in an army training area in Guliana near Kharian cantonment, where the soldiers were busy training." Suicide attacks are examples of guerilla attacks.
+Negative Example: "Mewind Rifles received information about the presence of militants in the area. When security forces reached there, militants started firing." This describes a conventional battle between militants and state forces and is thus not a guerilla attack.
+
+military/paramilitary/police attack on non-state combatants
+------------------------------------------------------------
+Label: GOV_ATTACK_ON_NONSTATE_COMBATANTS
+Definition: Violence initiated by state (federal or provincial) combatants against combatant non-state, sub-national groups, or clandestine agents.
+Clarification: Includes attacks by the US and NATO on militants in Pakistan that involve manned aircraft or artillery systems. For example, these may be brief episodes such as the Pakistan Army and Police assault on the Lal Masjid OR they may be sustained as the army offensive in South Waziristan in 2011 or the Frontier Corps in Aurakzai.
+Negative Clarification: drone attacks have their own category
+Positive Example: "In a continuation of the crackdown on militants by the army, four more militants were killed." State forces attacked non-state armed actors.
+Negative Example: "A personnel of the Balochistan Reserve Police was injured when some armed men opened indiscriminate fire on them which they later returned." This is a non-state attack on state forces, so this label does not apply.
+
+
+military/paramilitary/police selective violence
+-----------------------------------------------
+Label: GOV_ATTACK_ON_CIVILIANS
+Definition: Violence initiated by state (federal or provincial) combatants against civilians.
+Clarification: These may include incidents where a newspaper reports that a political activist is picked up by the intelligence services and detained and beaten overnight.
+Negative Clarification: Does not include attacks on combatants or violence in the context of a protest.
+Positive Example: "Advocate Ghulam Nabi of the Peshawer High Court was allegedly picked up by personnel of an intelligence agency in three vehicles near the NWFP assembly, and released after a severe over night thrashing. He is associated with Jamaat-i-Islami and a critic of the army and intelligence agencies."
+Negative Example: "The police baton charged lawyers and other political activists as they tried to enter the city in order to join the throng of people outside the Supreme Court who were there supporting the sacked Chief Justice. Hundereds of people tried entering Islamabad for the purpose, which the police tried to stop by baton-charging the crowd." This violence takes place in the context of a protest, and thus should get the label "violent political demonstration".
+
+riot
+----
+Label: RIOT
+Definition: A riot is a violent clash between two or more sizeable groups or when a single informally assembled crowd becomes violent. 
+Clarification: Neither group can be a state force. However, if there are two or more clashes around a single event in which the police are involved, then it would be a classified as a riot.
+Negative Clarification: For example, the students of the Lal Masjid versus the police would not be considered a riot, it would be a Violent Political Demonstration.
+Positive Example: "Five workers of the Muslim Students Federation, the student wing of the ruling Muslim conference, sustained bullet wounds in a clash with the activists of pro-independence National Students Federation."
+Negative Example: "An angry mob thrashed police personnel, accusing them of manhandling people and using obscene language when they (the police) raided a gambling den." This incident involves police, so it is coded as a "violent political demonstration."
+
+terrorism
+---------
+Label: TERRORISM
+Definition: Premeditated, politically motivated violence perpetrated against noncombatant targets by subnational groups or clandestine agents (22 U.S.C. § 2656f(d)(2)).
+Positive Example: For example, the attack on the Data Ganj Baksh shrine is such an example as the victims were primarily intended to be non-combatants.
+Negative Clarification: In contrast, an attack on a police check point is not considered to be terrorism even if civilians are harmed in the conduct of the attack provided that the primary target was the check point. This is coded as an attack on police, paramilitary or military target. The intended targets of the attacks is key. A targeted attack on a specific figure is an instance of assassination, not terrorism.
+Positive Example: "Security forces foiled an attempt to blow up a 12-inch diameter gas pipeline in Sui tehsil." Even though this attack was unsuccessful, it still involved an attack by non-state groups on non-combatant targets.
+Negative Example: "The grandson of Mohmand Agency MNA Maulana Ghulam Mohammad Sadiq was killed when gunmen entered his house and opened fire." The attack seems directed at a specific prominent person, so even though it's carried out by non-state actors, it should be coded as an assassination, not terrorism.
+
+threat of violence
+------------------
+Label: THREAT_OF_VIOLENCE
+Definition: Incidents in which the threat of violence is reported as being used for political purposes.
+Clarification: A typical example is when a spokesman for a banned militant group threatens attacks if certain policy changes were not made, or when a party spokesman threatens violent protest if certain changes are not made. This also includes incidents in which a particular individual is threatened.
+Positive Example: "The President of the All Pakistan Clerks Association...alleged that he had received a phone call warning him of an explosion at his house."
+Negative Example: "A man killed his cousin, accusing her of having illicit relations with a youth of the same village." This is an instance of violence actually being carried out, not a threat of violence.
+
+violent political demonstration
+--------------------------------
+Label: VIOLENT_POLITICAL_DEMONSTRATION
+Definition: A violent political demonstration is characterized as mobilization of crowds in response to a political event that at some point becomes violent.
+Clarification: Violence may be initiated by the crowd or by the police upon the crowd.
+Negative Clarification: A violent clash between two non-state groups is a riot, not a violent political demonstration.
+Positive Example: "Hundreds of school children and armed supporters of Lashkar-i-Islam stormed the Bara bazaar  and set the main tehsil, Qambaraband, Al Haaj Market, Sheikhan and Qasaban checkposts of the Khasadar force on fire. The Lashkar-i-Islam had warned of protests if their demands were not met."
+Negative Example: "A man killed and his brother injured when they were attacked by their rivals over a land dispute." The motivation here is not a political event, thus this event is a riot, not a violent political demonstration.
+
+other
+-----
+Label: OTHER
+Definition: Incidents that are not easily categorized such as people being hurt by unexploded ordnance or when the source of the violence is unclear. 
+Clarification: An event that does not fit into the other categories (assassination, attack on state, conventional attack on military/paramilitary/police/intelligence, guerilla attack on military/paramilitary/police/intelligence, military/paramilitary/police selective violence) should be coded as OTHER.
+Positive Example: "A man allegedly opened fire on his wife while she was offering prayers, and later proceeded to kill his brother on the pretext that his wife and his brother had illicit relations. He then escaped."
+Negative Example: "A suicide bomber blew himself up in an army training area in Guliana near Kharian cantonment, where the soldiers were busy training."
+
+
+---
+
+### Output format ###
+
+Your response MUST be a JSON object of exactly this form:
+
+  {"event_type": "ASSASSINATION"}
+
+The value of `"event_type"` must be exactly one of these strings:
+  ASSASSINATION, DRONE_ASSASSINATION, ATTACK_ON_STATE, CONVENTIONAL_ATTACK_ON_GOV_FORCES, GUERILLA_ATTACK_ON_GOV_FORCES, GOV_ATTACK_ON_NONSTATE_COMBATANTS, GOV_ATTACK_ON_CIVILIANS, RIOT, TERRORISM, THREAT_OF_VIOLENCE, VIOLENT_POLITICAL_DEMONSTRATION, OTHER
+
+Do NOT output the bare label alone. Do NOT output explanations, markdown, or any other text. Output ONLY the JSON object.
