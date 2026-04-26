@@ -4,8 +4,9 @@ A **political-science text-classification benchmark** comparing local open-weigh
 
 ## Current state
 
-- **7 tasks × 7 models × N=50 = 2,450 predictions** (combined Round 2 + Round 3).
-- All tasks use published political-science replication data (one task uses private RA coding, see below).
+- **6 tasks × 6 models × N=250 per task (halterman_ccc capped at N=50 by data availability) = 7,800 predictions**, run 2026-04-23 on mac2.
+- `state_adaptation` (the user's own 24 KB-prompt bill classification) is temporarily deactivated in `TASKS` — Ollama prefill at ~150 s/item made the cell unusable on gemma4:31b. Task definition is preserved at module level; reinstate for a dedicated single-task run.
+- `gpt-5.4-mini` dropped from the 2026-04-23 run (rarely Pareto-optimal in prior rounds).
 - Task prompts are either verbatim from the original paper or derived from the codebook when the paper didn't use an LLM; provenance is documented per task.
 
 See `output/report.html` for the current results summary (self-contained Quarto report).
@@ -33,27 +34,33 @@ See `candidates.yaml` for the full inventory of 35 candidate tasks (ready, parti
 | `qwen3:30b-a3b-q4_K_M` | Ollama | 30B MoE (~3B active) |
 | `mistral-small:24b-instruct-2501-q4_K_M` | Ollama | 24B dense |
 | `gpt-5.4-nano` | OpenAI | — |
-| `gpt-5.4-mini` | OpenAI | — |
 | `gpt-5.4` | OpenAI | — |
 
-All local models ran with thinking OFF. API models use structured JSON outputs.
+All local models ran with thinking OFF. API models use structured JSON outputs. `gpt-5.4-mini` is available in the MODELS list structurally but was dropped from the 2026-04-23 run.
 
 ## Usage
 
-Prerequisites: Python 3.9+, `pip install openai httpx openpyxl pandas pyreadr pyyaml`. Ollama running locally (or reachable via `OLLAMA_URL`). `OPENAI_API_KEY` set.
+Prerequisites: Python 3.9+, `pip install openai httpx openpyxl pandas pyreadr pyyaml scikit-learn`. Ollama running locally (or reachable via `OLLAMA_URL`). `OPENAI_API_KEY` set. The four Ollama models are installed on mac2; benchmark runs there — see `CLAUDE.md` for the mac2 workflow.
 
 ```bash
-# Full benchmark (7 tasks × 7 models)
+# Full benchmark (6 tasks × 6 models — state_adaptation is currently commented out in TASKS)
 python code/benchmark.py
 
 # Selective rerun of one (task, model) cell, merge into existing predictions
+# NOTE: --merge-into has known bugs (documented in MEMORY.md and KNOWLEDGE_BASE §6);
+# prefer a fresh full run or a task-only run until they're fixed.
 python code/benchmark.py \
   --only-model qwen3:30b-a3b-q4_K_M \
-  --only-task halterman_ccc_protest \
-  --merge-into output/predictions.csv
+  --only-task halterman_ccc_protest
 
 # Run all models on one task (e.g. after updating a prompt)
 python code/benchmark.py --only-task gilardi_stance
+
+# Rebuild output/summary.csv from output/predictions.csv
+python code/build_summary.py
+
+# Re-render the Quarto report (from the repo root)
+quarto render output/report.qmd --execute-dir .
 ```
 
 ## Output schema
@@ -67,7 +74,7 @@ python code/benchmark.py --only-task gilardi_stance
 - `pred_<label>` per task's label schema
 - `gt_<label>` per task's ground truth
 
-`output/summary.csv` has per (task, model) metrics: F1 per label, `avg_f1`, `accuracy` (categorical tasks), `median_latency_s`, `parse_err_rate`, `headline_f1` (unified per-task primary metric).
+`output/summary.csv` has per (task, model) metrics: F1 per label, `avg_f1`, `accuracy` (categorical tasks), `median_latency_s`, `parse_err_rate`, `headline_f1` (unified per-task primary metric). Rebuild it from `predictions.csv` with `python code/build_summary.py`.
 
 ## Private data
 

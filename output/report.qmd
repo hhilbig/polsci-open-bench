@@ -1,6 +1,6 @@
 ---
-title: "Local LLMs vs OpenAI API: Political-Science Classification Benchmark (Rounds 2 + 3 Combined)"
-date: "2026-04-23"
+title: "Local LLMs vs OpenAI API: Political-Science Classification Benchmark (10 tasks, N=250)"
+date: "2026-04-24"
 format:
   html:
     self-contained: true
@@ -21,8 +21,49 @@ library(scales)
 
 summary_raw <- read_csv("output/summary.csv", show_col_types = FALSE)
 
+# Prompt-provenance per task. "Verbatim" = prompt content unchanged from source paper.
+# "Verbatim-adapted" = source content with format changes only (single-item, JSON tail, label subset).
+# "Derived" = no LLM prompt in source paper; ours is reasoned from codebook/literature.
+provenance <- tibble::tribble(
+  ~task,                          ~prompt_provenance,
+  "gilardi_relevance",            "Verbatim",
+  "gilardi_stance",               "Verbatim",
+  "halterman_ccc_protest",        "Verbatim-adapted",
+  "halterman_keith_bfrs",         "Verbatim-adapted",
+  "mellon_bes_mii_2024",          "Verbatim-adapted",
+  "ballard_incivility",           "Derived",
+  "ornstein_scotus_sentiment",    "Derived",
+  "chae_semeval_stance",          "Derived",
+  "halterman_keith_cmp",          "Derived",
+  "wesleyan_creative_ads_2022",   "Derived",
+  "state_adaptation",             "Production"
+)
+verbatim_tasks <- provenance |> filter(prompt_provenance %in% c("Verbatim", "Verbatim-adapted")) |> pull(task)
+
+# Human inter-coder reference per task (filled where source paper reports it).
+# Metric varies: kappa = Cohen's kappa, fleiss = Fleiss' kappa (multi-coder), acc = coder-vs-gold accuracy,
+# agree = % agreement. Empty values (NA) mean the source paper doesn't report a comparable metric.
+# Tasks NOT in this table are tasks where the metric was not found or not reported.
+human_ref <- tibble::tribble(
+  ~task,                          ~human_metric, ~human_value,
+  "gilardi_relevance",            "kappa",       0.88,    # Cohen's k, two trained RAs (Gilardi 2023 via Pipal 2026 p.5)
+  "gilardi_stance",               "kappa",       0.63,    # Cohen's k (same source)
+  "ornstein_scotus_sentiment",    "fleiss",      0.72,    # Fleiss' k across 3 author-coders (PSRM 2025 p.268 fn.4)
+  "chae_semeval_stance",          "agree",       0.8185,  # 81.85% agreement on released SemEval-2016 Stance set
+  "mellon_bes_mii_2024",          "acc",         0.866,   # 2nd-coder vs 1st-coder accuracy (Mellon 2024)
+  "wesleyan_creative_ads_2022",   "agree",       0.94,    # 94% agreement (WMP 2020 release codebook; k=0.91)
+  # halterman_keith_bfrs / cmp / ccc: not reported by H&K (methods paper, reuses existing gold)
+  # ballard_incivility: paywalled, not retrieved
+  "ballard_incivility",           NA_character_, NA_real_,
+  "halterman_ccc_protest",        NA_character_, NA_real_,
+  "halterman_keith_bfrs",         NA_character_, NA_real_,
+  "halterman_keith_cmp",          NA_character_, NA_real_,
+)
+
 # Already-present headline_f1 (computed upstream from per-task primary metric)
 df <- summary_raw |>
+  left_join(provenance, by = "task") |>
+  left_join(human_ref, by = "task") |>
   mutate(
     model_short = recode(model,
       "gemma4:31b-it-q4_K_M"                    = "Gemma 4 31B",
@@ -34,22 +75,28 @@ df <- summary_raw |>
       "gpt-5.4"                                  = "gpt-5.4"
     ),
     task_short = recode(task,
-      "state_adaptation"          = "Bills (8-label)",
-      "gilardi_relevance"         = "Gilardi relevance",
-      "ballard_incivility"        = "Ballard incivility",
-      "gilardi_stance"            = "Gilardi stance",
-      "ornstein_scotus_sentiment" = "SCOTUS sentiment",
-      "halterman_ccc_protest"     = "CCC protest type",
-      "chae_semeval_stance"       = "SemEval 2016 stance"
+      "state_adaptation"           = "Bills (8-label)",
+      "gilardi_relevance"          = "Gilardi relevance",
+      "ballard_incivility"         = "Ballard incivility",
+      "gilardi_stance"             = "Gilardi stance",
+      "ornstein_scotus_sentiment"  = "SCOTUS sentiment",
+      "halterman_ccc_protest"      = "CCC protest type",
+      "chae_semeval_stance"        = "SemEval 2016 stance",
+      "halterman_keith_bfrs"       = "BFRS violence (12-cl)",
+      "halterman_keith_cmp"        = "CMP manifestos (7-cl)",
+      "mellon_bes_mii_2024"        = "BES MII (50-cl)",
+      "wesleyan_creative_ads_2022" = "Wesleyan ad tone"
     ),
     is_baseline = model == "gpt-5.4-nano",
     is_api      = model %in% c("gpt-5.4-nano","gpt-5.4-mini","gpt-5.4")
   )
 
-task_levels  <- c("Bills (8-label)","Gilardi relevance","Ballard incivility","Gilardi stance",
-                  "SCOTUS sentiment","CCC protest type","SemEval 2016 stance")
+task_levels  <- c("Gilardi relevance","Ballard incivility","Gilardi stance",
+                  "SCOTUS sentiment","CCC protest type","SemEval 2016 stance",
+                  "BFRS violence (12-cl)","CMP manifestos (7-cl)",
+                  "BES MII (50-cl)","Wesleyan ad tone")
 model_levels <- c("Gemma 4 31B","Qwen3 14B","Qwen3 30B-A3B","Mistral Sm 24B",
-                  "gpt-5.4-mini","gpt-5.4","gpt-5.4-nano")
+                  "gpt-5.4","gpt-5.4-nano")
 df <- df |>
   mutate(task_short  = factor(task_short,  levels = task_levels),
          model_short = factor(model_short, levels = model_levels))
@@ -61,18 +108,42 @@ df <- df |> left_join(baseline_f1, by = "task_short") |>
 
 ## TL;DR
 
-**7 classification tasks × 7 models × N=50 items each = 2,450 predictions.** Tasks span user's own bills data + 6 published political-science replications (content moderation, congressional incivility, content-moderation stance, SCOTUS sentiment, CCC protest-event coding, SemEval-2016 political stance). Models: 4 local open-weight (Gemma 4 31B, Qwen3-14B, Qwen3-30B-A3B, Mistral Small 24B) + 3 OpenAI API tiers (nano → mini → full gpt-5.4).
+**10 classification tasks × 6 models × N=250 items per task = 15,000 predictions.** All tasks drawn from published political-science replications. The 2026-04-24 expansion added four new construct-diversifying tasks (Halterman-Keith CMP manifesto coding, Halterman-Keith BFRS Pakistani political-violence event coding, Mellon BES open-ended "most important issue" survey coding, Wesleyan Media Project political-ad tone) and upgraded `halterman_ccc_protest` from N=50 / 8-class to N=250 / 4-class using H&K's labeled test split. Models: 4 local open-weight (Gemma 4 31B, Qwen3-14B, Qwen3-30B-A3B, Mistral Small 24B) + 2 OpenAI API tiers (nano, full gpt-5.4). Headline F1 carries paired-by-item bootstrap CIs (1000 iterations, 95%) so single-cell point estimates are reported with their sampling envelope.
 
-**Headlines:**
+### Findings
 
-- **No API model dominates.** gpt-5.4 (full) is best on only 2 of 7 tasks; local models win the other 5.
-- **Paying for gpt-5.4-mini over gpt-5.4-nano is rarely justified.** Mini tops nano on only 2 of 7 tasks at near-identical latency.
-- **gpt-5.4 (full) IS meaningfully better on SemEval stance** (F1 0.86 vs 0.69 for nano), but loses to local models on SCOTUS sentiment and Ballard incivility.
-- **Qwen3-30B-A3B is the speed king** (~0.6s/item) — competitive on quality and now functional on all 7 tasks (an initial 100% parse-error rate on Halterman CCC was fixed by tightening the JSON instruction and adding a bare-label fallback parser).
-- **When averaged across tasks, all non-baseline models are within ±0.03 F1 of gpt-5.4-nano.** The real difference is variance, not mean — each model has a ±0.08–0.15 F1 swing across tasks. Model choice is dominated by task fit, not raw quality.
-- **CCC protest-event coding is the hardest task for everyone** — best model hits F1 only 0.42 (accuracy 0.60) on 8-way classification of long news stories.
+**Finding 1 — Local open-weight models have the highest point estimate on 9 of 10 tasks.** Gemma 4 31B has the top point estimate on 6 (Gilardi×2, Ballard, SemEval, BFRS, CMP); Qwen3-14B on 3 (CCC, SCOTUS, Wesleyan); gpt-5.4 only on the 50-class BES MII task, on macro F1. Under the 95% bootstrap CI tie rule, however, almost all task-level differences are not distinguishable at N=250 — every model is tied with the top group on 9 of 10 tasks (only Gilardi relevance has 2 models clearly below the top). Cross-model claims in this report rest on point-estimate ordering aggregated across many tasks, not on per-task statistical separation (Tab. winners, Fig. 2).
 
-## Models and tasks
+**Finding 2 — gpt-5.4-nano never holds the top point estimate on any task** and posts the lowest mean F1 (0.530) and lowest mean accuracy (0.675) across the 10 tasks. Whether it is statistically distinguishable from the others on each individual task is rare under the 95% CI rule; the "API baseline" framing is what we'd expect if API-baseline ≈ best-local, but the point-estimate ordering does not support that here (Fig. leaderboard).
+
+**Finding 3 — Qwen3-30B-A3B is faster than gpt-5.4-nano** at median 0.60 s/item with mean F1 only 0.05 below the highest point estimate. The cheapest cell on the Pareto plot has a higher point estimate than the API baseline on quality (Fig. pareto). Latency differences across models are large and clearly distinguishable; quality differences in the same plot are not.
+
+**Finding 4 — Macro F1 vs accuracy diverge sharply on the 50-class BES task** — 0.37–0.43 macro F1 vs 0.92–0.94 accuracy across all 6 models. The dominant Coronavirus class (38% of items) is trivially easy for every model; macro F1 is dominated by performance on the 30+ rare classes (most have <10 items in the test set), which all 6 models handle similarly poorly. (BES MII is included in the mean-F1 leaderboard with equal weight despite this; see Caveats.)
+
+**Finding 5 — Zero parse errors across 15,000 predictions** (one parse failure on qwen3:30b-a3b × BES, out of 250 items). Strict JSON schema on API + JSON-with-bare-label fallback on Ollama held up across 12-class and 50-class label spaces (Tab. summary, parse_err column).
+
+## Tasks
+
+```{r tasks-table}
+tribble(
+  ~Task, ~Paper, ~Type, ~Labels, ~`Prompt provenance`,
+  "Gilardi relevance",       "Gilardi et al. 2023 PNAS",        "Binary",   "relevant/not",                          "Verbatim",
+  "Gilardi stance",          "Gilardi et al. 2023 PNAS",        "3-class",  "pro/neutral/contra",                    "Verbatim",
+  "CCC protest type",        "Halterman & Keith 2025 PA",       "4-class",  "PROTEST/RALLY/DEMONSTRATION/MARCH",     "Verbatim-adapted",
+  "BFRS violence",           "Halterman & Keith 2025 PA",       "12-class", "ASSASSINATION/TERRORISM/...",           "Verbatim-adapted",
+  "BES MII",                 "Mellon et al. 2024 R&P",          "50-class", "Coronavirus/health/economy-general/...", "Verbatim-adapted",
+  "Ballard incivility",      "Ballard 2022 LSQ",                "Binary",   "uncivil/not",                           "Derived",
+  "SCOTUS sentiment",        "Ornstein et al. 2025 PSRM",       "3-class",  "Positive/Negative/Neutral",             "Derived",
+  "SemEval 2016 stance",     "Chae & Davidson 2025 SMR",        "3-class",  "FAVOR/AGAINST/NONE",                    "Derived",
+  "CMP manifestos",          "Halterman & Keith 2025 PA + CMP", "7-class",  "Economy/Welfare/...",                   "Derived",
+  "Wesleyan ad tone",        "Zhang et al. 2025 Sci Data / WMP","3-class",  "promote/attack/unclear",                "Derived"
+) |> kable(align = "lllll", caption = "Prompt provenance: Verbatim = unchanged from source paper; Verbatim-adapted = source content with format-only adaptations (single-item, JSON tail, label subset to gold); Derived = no LLM prompt in source paper, ours reasoned from codebook/literature. See `docs/prompts_provenance.md` for per-task detail.")
+```
+
+All local models ran with thinking OFF on Ollama (mac2, Apple Silicon, 32 GB). All API models used structured JSON outputs (`response_format: json_schema, strict: true`). Sample size N=250 per task. Random seed 20260422 (`random.Random` in `code/benchmark.py`). Full 10-task grid took ~6 h wall-clock on mac2. Halterman-Keith CCC was upgraded from N=50 / 8-class (prior round) to N=250 / 4-class (H&K's labeled `ccc_test.tab` split contains gold labels for only 4 of the original 8 protest-event types). Old 50-row CCC predictions are archived at `output/archive/predictions_halterman_ccc_v1_n50.csv`.
+
+::: {.callout-note collapse="true"}
+### Models reference (collapsed by default)
 
 ```{r models-table}
 tribble(
@@ -82,29 +153,16 @@ tribble(
   "qwen3:30b-a3b-q4_K_M",                     "open-weight", "30B MoE (3B active)", "MoE",
   "mistral-small:24b-instruct-2501-q4_K_M",   "open-weight", "24B dense",           "Transformer",
   "gpt-5.4-nano",                             "API baseline (cheapest)", "undisclosed", "Transformer",
-  "gpt-5.4-mini",                             "API mid-tier",            "undisclosed", "Transformer",
   "gpt-5.4",                                  "API flagship",            "undisclosed", "Transformer"
 ) |> kable(align = "llll")
 ```
 
-```{r tasks-table}
-tribble(
-  ~Task, ~Paper, ~Type, ~Labels, ~`Prompt source`,
-  "Bills (8-label)",      "User / Matthew RA",                "Multi-binary",   "8 binary",  "Production prompt",
-  "Gilardi relevance",    "Gilardi et al. 2023 PNAS",         "Binary",         "relevant/not", "Original ChatGPT prompt",
-  "Ballard incivility",   "Ballard 2022 LSQ",                 "Binary",         "uncivil/not", "Derived (Ballard used BERT)",
-  "Gilardi stance",       "Gilardi et al. 2023 PNAS",         "3-class",        "pro/neutral/contra", "Derived (SI paywalled)",
-  "SCOTUS sentiment",     "Ornstein et al. 2025 PSRM",        "3-class",        "pos/neg/neutral", "Derived from promptr codebook",
-  "CCC protest type",     "Halterman & Keith 2025 PA",        "8-class",        "PROTEST/RALLY/...", "Verbatim from archive codebook",
-  "SemEval 2016 stance",  "Chae & Davidson 2025 SMR",         "3-class",        "FAVOR/AGAINST/NONE", "Derived from SemEval codebook"
-) |> kable(align = "lllll")
-```
+:::
 
-All local models ran with thinking OFF. All API models used structured JSON outputs. Sample size N=50 per task for every model (50-item hand-labeled set for CCC protest; random seeded sample for the rest).
+::: {.callout-note collapse="true"}
+## Figure 1 — ΔF1 vs gpt-5.4-nano baseline (collapsed by default)
 
-## Figure 1 — ΔF1 vs gpt-5.4-nano baseline
-
-```{r fig-scatter, fig.cap="Performance delta vs median latency for 6 non-baseline models across 7 tasks (42 points total). The horizontal dashed line is gpt-5.4-nano: above = beats the baseline on that task, below = worse. Log-scale x-axis. Collapsing per-task F1 intercepts makes cross-task model ranks visible."}
+```{r fig-scatter, fig.cap="Performance delta vs median latency for 5 non-baseline models across 10 tasks (50 points total). The horizontal dashed line is gpt-5.4-nano: above = beats the baseline on that task, below = worse. Log-scale x-axis."}
 cmp_df <- df |> filter(!is_baseline) |>
   mutate(model_short = droplevels(model_short))
 
@@ -132,22 +190,65 @@ ggplot(cmp_df, aes(x = median_latency_s, y = delta_f1,
         panel.grid.minor = element_blank())
 ```
 
-**Reading this figure:**
+**Reading this figure:** (note that per-task ΔF1 differences are mostly within the ±0.1 envelope of the bootstrap CIs in Fig. 2; treat the patterns below as point-estimate descriptions, not statistical tests):
 
-- **Gemma 4 31B (circles)** sits consistently in the far right (slow, 4–66 s/item). It beats the baseline on 5 of 7 tasks but never more than +0.17 F1.
-- **Qwen3-30B-A3B (squares)** is the fastest local model at ~0.6 s/item, with ΔF1 in ±0.05 range for most tasks (and a missing point on CCC — 100% parse error).
-- **gpt-5.4 (asterisk, full model)** is at ~1 s/item and the only model that clears +0.17 on any task (SemEval stance). But it also has the biggest miss (Ballard incivility at −0.17).
-- **gpt-5.4-mini (plus)** is tightly clustered around zero — buying it over nano delivers essentially no quality gain at same latency.
-- **The biggest ΔF1 spread is Ballard incivility** — Gemma at +0.17, Mistral at −0.18. Models disagree strongly on what counts as uncivil.
+- **Gemma 4 31B** sits at the slow end (median 4.65 s/item) and has the highest mean ΔF1 (+0.086 vs nano). Gilardi relevance, Ballard incivility, BFRS violence, and CMP manifestos are the 4 tasks where its point estimate lifts ΔF1 above +0.10.
+- **Qwen3-30B-A3B** is the fastest model at median 0.60 s/item — faster than gpt-5.4-nano. Mean ΔF1 +0.032; reaches above 0.10 on Wesleyan ad tone and CMP manifestos but sits below baseline on a couple of tasks.
+- **Qwen3-14B** has the top point estimate on 3 tasks (CCC protest, SCOTUS sentiment, Wesleyan ad tone). On Wesleyan the point-estimate lift is largest: +0.06 over gpt-5.4 (the highest-PE API model on that task).
+- **gpt-5.4** lifts above nano by an average of +0.067 (second-highest mean after Gemma), but with high task-to-task variance — driven up by BES MII (+0.05 vs nano) and Gilardi relevance.
+- **gpt-5.4-mini** is not in this run — was dropped after a prior round showed it tightly hugged the nano line.
+- **The biggest ΔF1 spread now is the Wesleyan ad-tone task**: Qwen3-14B at +0.06 vs nano, Mistral at −0.03. Models disagree about what makes an ad "promote" vs "attack" toward a candidate when the ad's text mostly attacks the opponent.
 
-## Figure 2 — F1 by model × task
+:::
 
-```{r fig-bars, fig.width=12, fig.height=9, fig.cap="Headline F1 per (task, model). gpt-5.4-nano (black), gpt-5.4-mini (dark grey), and gpt-5.4 (medium grey) are the three API tiers; local open-weight models are color-coded."}
+## Figure 2 — F1 by model × task (with bootstrap 95% CIs)
+
+```{r fig-bars, fig.width=12, fig.height=9, fig.cap="Headline F1 per (task, model). Whiskers = 95% paired-by-item bootstrap CIs (1000 iterations). Models whose CIs overlap on a given task are statistically indistinguishable on that task. gpt-5.4-nano (black) and gpt-5.4 (medium grey) are the two API tiers; local open-weight models are color-coded."}
 df_bar <- df |> mutate(model_short = fct_rev(model_short))
 
 ggplot(df_bar, aes(x = model_short, y = headline_f1, fill = model_short)) +
   geom_col(width = 0.75) +
+  geom_errorbar(aes(ymin = headline_f1_lo, ymax = headline_f1_hi),
+                width = 0.25, color = "grey20", linewidth = 0.4) +
   geom_text(aes(label = ifelse(is.na(headline_f1), "FAIL", sprintf("%.2f", headline_f1))),
+            hjust = -0.15, size = 3) +
+  coord_flip() +
+  facet_wrap(~ task_short, ncol = 2) +
+  scale_y_continuous(limits = c(0, 1.15), breaks = seq(0, 1, 0.25),
+                     expand = expansion(mult = c(0, 0.05))) +
+  scale_fill_manual(values = c(
+    "Gemma 4 31B"    = "#1f77b4",
+    "Qwen3 14B"      = "#ff7f0e",
+    "Qwen3 30B-A3B"  = "#2ca02c",
+    "Mistral Sm 24B" = "#d62728",
+    "gpt-5.4"        = "#555555",
+    "gpt-5.4-nano"   = "#111111"
+  )) +
+  labs(
+    x = NULL, y = "Headline F1 (with 95% bootstrap CI)",
+    subtitle = "2 API tiers (greyscale) + 4 open-weight models (color). Each facet = one task."
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "none",
+        panel.grid.major.y = element_blank(),
+        strip.text = element_text(face = "bold"))
+```
+
+## Figure 3 — Accuracy by model × task (with human reference)
+
+> **How to read the human-reference lines.** These are *contextual* benchmarks reported by the source papers, not direct model-vs-human comparisons on this benchmark's test items. Source papers report different metrics on different scales (Cohen's κ, Fleiss' κ, % coder-vs-coder agreement, coder-vs-gold accuracy); the dashed lines on this accuracy panel are drawn only where the source-paper metric is on the [0,1] accuracy scale (BES MII, Wesleyan, SemEval). Read them as ceilings of human-coder agreement on the underlying construct, not as "humans achieve X accuracy on this benchmark." Tasks where the source paper reports κ instead (Gilardi×2, Ornstein) have a κ value listed in the per-task winners table but no line on this figure.
+
+```{r fig-acc-bars, fig.width=12, fig.height=9, fig.cap="Accuracy per (task, model). Where the source paper reports a comparable coder-vs-gold accuracy or % agreement, a horizontal dashed line is drawn at that value. Tasks without a comparable human reference have no line."}
+df_acc <- df |> mutate(model_short = fct_rev(model_short))
+
+# Pull human references where the metric is comparable to accuracy
+human_acc <- df |>
+  filter(!is.na(human_value), human_metric %in% c("acc", "agree")) |>
+  distinct(task_short, human_value)
+
+p_acc <- ggplot(df_acc, aes(x = model_short, y = accuracy, fill = model_short)) +
+  geom_col(width = 0.75) +
+  geom_text(aes(label = ifelse(is.na(accuracy), "—", sprintf("%.2f", accuracy))),
             hjust = -0.15, size = 3) +
   coord_flip() +
   facet_wrap(~ task_short, ncol = 2) +
@@ -159,24 +260,30 @@ ggplot(df_bar, aes(x = model_short, y = headline_f1, fill = model_short)) +
     "Qwen3 30B-A3B"  = "#2ca02c",
     "Mistral Sm 24B" = "#d62728",
     "gpt-5.4"        = "#555555",
-    "gpt-5.4-mini"   = "#888888",
     "gpt-5.4-nano"   = "#111111"
   )) +
-  labs(
-    x = NULL, y = "Headline F1",
-    subtitle = "3 API tiers (greyscale) + 4 open-weight models (color). Each facet = one task."
-  ) +
+  labs(x = NULL, y = "Accuracy",
+       subtitle = "Same model order as Fig. 2; this metric weights all classes by frequency, not equally. Dashed line = human coder-vs-gold accuracy where reported.") +
   theme_minimal(base_size = 12) +
   theme(legend.position = "none",
         panel.grid.major.y = element_blank(),
         strip.text = element_text(face = "bold"))
+
+if (nrow(human_acc) > 0) {
+  p_acc + geom_hline(data = human_acc,
+                     aes(yintercept = human_value),
+                     linetype = "dashed", color = "grey20", linewidth = 0.5)
+} else {
+  p_acc
+}
 ```
 
-## Aggregate Figure 1 — Mean ΔF1 vs Mean Latency (per model)
+::: {.callout-note collapse="true"}
+## Aggregate Figure 1 — Mean ΔF1 vs Mean Latency (per model) (collapsed by default)
 
-Figures 1 and 2 above show every (task, model) combination. The two figures below condense that to one data point per model by averaging across the 7 tasks — easier to read for a quick "which model should I use by default" take.
+Figures 1 and 2 above show every (task, model) combination. The two figures below condense that to one data point per model by averaging across the 10 tasks — easier to read for a quick "which model should I use by default" take.
 
-```{r fig-agg-scatter, fig.width=9, fig.height=6.5, fig.cap="Aggregate speed × quality across 7 tasks. Each point is one non-baseline model (open-weight or gpt-5.4-mini/full). x = geometric mean of per-task median latency; y = mean ΔF1 vs gpt-5.4-nano across tasks. Error bars = ±1 SD across tasks, showing how consistent each model's performance is."}
+```{r fig-agg-scatter, fig.width=9, fig.height=6.5, fig.cap="Aggregate speed × quality across 10 tasks. Each point is one non-baseline model (open-weight or gpt-5.4). x = geometric mean of per-task median latency; y = mean ΔF1 vs gpt-5.4-nano across tasks. Error bars = ±1 SD across tasks, showing how consistent each model's performance is."}
 agg <- df |>
   filter(!is_baseline) |>
   group_by(model_short) |>
@@ -207,12 +314,11 @@ ggplot(agg, aes(x = mean_latency, y = mean_delta_f1, color = model_short)) +
     "Qwen3 14B"      = "#ff7f0e",
     "Qwen3 30B-A3B"  = "#2ca02c",
     "Mistral Sm 24B" = "#d62728",
-    "gpt-5.4-mini"   = "#888888",
     "gpt-5.4"        = "#555555"
   )) +
   labs(
     x = "Mean median latency per item (log scale, geometric mean across tasks)",
-    y = "Mean ΔF1 vs gpt-5.4-nano (averaged across 7 tasks)",
+    y = "Mean ΔF1 vs gpt-5.4-nano (averaged across 10 tasks)",
     subtitle = "Upper-left is better. Error bars = ±1 SD across tasks (shows model consistency)."
   ) +
   theme_minimal(base_size = 12) +
@@ -220,11 +326,15 @@ ggplot(agg, aes(x = mean_latency, y = mean_delta_f1, color = model_short)) +
         panel.grid.minor = element_blank())
 ```
 
-**Reading this figure:** averaged across 7 tasks, **no non-baseline model is meaningfully better than gpt-5.4-nano on average** — all 6 cluster within ±0.03 F1 of the baseline. The real story is variance, not mean: the error bars show each model has ±0.08–0.15 F1 swing across tasks, meaning model choice is dominated by task fit, not overall quality. gpt-5.4 has the smallest error bars (most consistent); Mistral has the largest (widest boom-bust swings — Gilardi relevance +0.16, SemEval stance −0.07).
+**Reading this figure:** averaged across 10 tasks, every non-baseline model has a point estimate above gpt-5.4-nano — the mean-ΔF1 spread runs from Gemma (+0.086) to Qwen3-30B-A3B (+0.032). **Gemma 4 31B is the Pareto-best on quality in this grid** (highest mean point estimate, at the slow right-edge). **Qwen3-30B-A3B is the Pareto-best on speed** (median 0.60 s/item, mean ΔF1 +0.032 vs nano). gpt-5.4 sits in the middle: ΔF1 +0.067 average, with high variance — pulled up by its sole top-PE task on BES MII and pulled down by tasks where local models have higher point estimates (Wesleyan, BFRS, CMP). Error bars are ±1 SD across tasks (within-model task variance), not bootstrap CIs.
 
-## Aggregate Figure 2 — Mean F1 Leaderboard (with per-task spread)
+:::
 
-```{r fig-agg-bars, fig.width=10, fig.height=5.5, fig.cap="Mean headline F1 across 7 tasks per model, with per-task F1 values overlaid as jittered dots. Shows both the average and how spread that average is (consistent-but-mediocre vs. variable-but-sometimes-great)."}
+## Mean F1 leaderboard (with per-task spread and bootstrap CIs)
+
+> **How to read this leaderboard.** This is a descriptive index over the 10 tasks in this benchmark, not a stable estimate of overall ability. Mean F1 weights every task equally regardless of label count, class imbalance, construct complexity, or whether the source paper itself used an LLM. The per-task figures (Fig. 2) and the family breakdown (later section) should be read alongside it. Per-task differences are mostly within CI overlap at N=250 — the leaderboard order tracks point estimates aggregated across tasks, which is more stable than any individual task ranking but is not a hypothesis test.
+
+```{r fig-agg-bars, fig.width=10, fig.height=5.5, fig.cap="Mean headline F1 across 10 tasks per model, with per-task F1 values overlaid as jittered dots and per-task 95% bootstrap CIs as light vertical segments. Bars = mean of point estimates across tasks. Dots = per-task point estimates."}
 agg_f1 <- df |>
   group_by(model_short) |>
   summarise(mean_f1 = mean(headline_f1, na.rm = TRUE),
@@ -233,8 +343,9 @@ agg_f1 <- df |>
   arrange(desc(mean_f1)) |>
   mutate(model_short = factor(model_short, levels = model_short))
 
-# Per-task values for the jitter overlay
-per_task <- df |> select(model_short, task_short, headline_f1) |>
+# Per-task values for the jitter overlay (with CIs)
+per_task <- df |>
+  select(model_short, task_short, headline_f1, headline_f1_lo, headline_f1_hi) |>
   mutate(model_short = factor(model_short, levels = levels(agg_f1$model_short)))
 
 ggplot(agg_f1, aes(x = model_short, y = mean_f1)) +
@@ -251,11 +362,10 @@ ggplot(agg_f1, aes(x = model_short, y = mean_f1)) +
     "Qwen3 30B-A3B"  = "#2ca02c",
     "Mistral Sm 24B" = "#d62728",
     "gpt-5.4"        = "#555555",
-    "gpt-5.4-mini"   = "#888888",
     "gpt-5.4-nano"   = "#111111"
   ), guide = "none") +
   scale_color_brewer(palette = "Set1", name = "Task") +
-  labs(x = NULL, y = "Headline F1 (mean across 7 tasks)",
+  labs(x = NULL, y = "Headline F1 (mean across 10 tasks)",
        subtitle = "Bars = mean F1 across tasks. Dots = per-task F1 values (jittered horizontally for visibility).") +
   theme_minimal(base_size = 12) +
   theme(panel.grid.major.x = element_blank(),
@@ -263,76 +373,373 @@ ggplot(agg_f1, aes(x = model_short, y = mean_f1)) +
         legend.position = "right")
 ```
 
-**Reading this figure:** mean F1 is tightly packed — the spread from best (gpt-5.4, ~0.62) to worst (Mistral, ~0.56) is only 6 F1 points. But the **dot spread within each model** is 2–3× that (per-task F1 ranges 0.29 to 0.96 depending on the model). **The takeaway is that choosing the right model for your task dominates the choice of which model is "best overall".** The leaderboard ordering by mean F1 is not a reliable guide to per-task performance.
+**Reading this figure:** mean F1 across 10 tasks is tightly packed — Gemma at 0.616, gpt-5.4 at 0.597, Qwen3-14B at 0.586, Mistral at 0.575, Qwen3-30B-A3B at 0.562, gpt-5.4-nano at 0.530 (10-point spread, point estimates only). The **dot spread within each model** is far larger: per-task F1 ranges from 0.30 (Ballard incivility, several models) up to 0.94 (Gilardi relevance, Gemma) and down to 0.37 (BES MII macro, multiple models). Gemma's point estimate is highest on average; per-task answers still vary — Qwen3-14B has the top point estimate on 3 tasks despite a middling overall mean.
 
-## Per-task winners (headline F1)
+## Per-task winners (headline F1, tie-aware)
+
+Tie rule: when 2nd-place model's CI overlaps the 1st-place CI, both are listed as tied. CIs are 95% paired-by-item bootstrap (1000 iterations). Source-paper human inter-coder reference is shown where available.
 
 ```{r winners-table}
-winners <- df |> filter(!is.na(headline_f1)) |>
+# Determine ties: a model is "tied for 1st" if its CI upper >= rank-1's CI lower
+ranked <- df |> filter(!is.na(headline_f1)) |>
   group_by(task_short) |>
   arrange(desc(headline_f1)) |>
-  slice_head(n = 3) |>
-  mutate(rank = row_number(),
-         f1_fmt = sprintf("%.3f", headline_f1)) |>
-  select(task_short, rank, model_short, f1_fmt, median_latency_s) |>
-  pivot_wider(id_cols = task_short, names_from = rank,
-              values_from = c(model_short, f1_fmt, median_latency_s)) |>
-  mutate(
-    `1st` = sprintf("%s (F1 %s, %.1fs)", model_short_1, f1_fmt_1, median_latency_s_1),
-    `2nd` = sprintf("%s (F1 %s, %.1fs)", model_short_2, f1_fmt_2, median_latency_s_2),
-    `3rd` = sprintf("%s (F1 %s, %.1fs)", model_short_3, f1_fmt_3, median_latency_s_3)
-  ) |>
-  select(Task = task_short, `1st`, `2nd`, `3rd`)
+  mutate(rank = row_number()) |>
+  ungroup()
+
+# Tie set: model i tied for 1st if model_i_upper >= rank1_lower
+top_lo <- ranked |> filter(rank == 1) |> select(task_short, top_lo = headline_f1_lo)
+ranked <- ranked |> left_join(top_lo, by = "task_short") |>
+  mutate(tied_top = headline_f1_hi >= top_lo)
+
+winners <- ranked |>
+  group_by(task_short) |>
+  summarise(
+    `Top model(s)` = paste(
+      sprintf("%s (F1 %.3f [%.2f, %.2f])",
+              model_short[tied_top],
+              headline_f1[tied_top],
+              headline_f1_lo[tied_top],
+              headline_f1_hi[tied_top]),
+      collapse = " / "),
+    `Latency (s)` = sprintf("%.1f", median_latency_s[rank == 1]),
+    `Human ref` = {
+      hv <- first(human_value)
+      hm <- first(human_metric)
+      if (is.na(hv) || is.na(hm)) "—" else sprintf("%s = %.2f", hm, hv)
+    },
+    .groups = "drop"
+  )
 kable(winners, align = "llll",
-      caption = "Top 3 models per task by headline F1 (with median per-item latency).")
+      caption = "Top model(s) per task by headline F1 with 95% CI in brackets. Ties shown when 2nd-place CI overlaps 1st-place CI. Human ref column: kappa = Cohen's κ, fleiss = Fleiss' κ, agree = % coder-vs-coder agreement, acc = coder-vs-gold accuracy.")
 ```
 
-## Full summary table
+::: {.callout-note collapse="true"}
+## Full summary table (collapsed by default)
 
 ```{r summary-table}
 df |>
   arrange(task_short, desc(headline_f1)) |>
   mutate(
-    `Headline F1` = ifelse(is.na(headline_f1), "—", sprintf("%.3f", headline_f1)),
+    `Headline F1 [95% CI]` = ifelse(is.na(headline_f1), "—",
+                                    sprintf("%.3f [%.2f, %.2f]",
+                                            headline_f1, headline_f1_lo, headline_f1_hi)),
+    Accuracy = ifelse(is.na(accuracy), "—", sprintf("%.3f", accuracy)),
     `Median latency (s)` = sprintf("%.2f", median_latency_s),
+    `GPU-h / 1k` = ifelse(is.na(gpu_hours_per_1000), "—",
+                          sprintf("%.3f", gpu_hours_per_1000)),
     `Parse err` = scales::percent(parse_err_rate, accuracy = 1),
+    Provenance = prompt_provenance,
     N = n
   ) |>
   select(Task = task_short, Model = model_short,
-         `Headline F1`, `Median latency (s)`, `Parse err`, N) |>
-  kable(align = "llrrrc",
-        caption = "All 49 (task, model) observations sorted by task then by headline F1 descending.")
+         `Headline F1 [95% CI]`, Accuracy, `Median latency (s)`,
+         `GPU-h / 1k`, `Parse err`, Provenance, N) |>
+  kable(align = "llrrrrrcc",
+        caption = "All 60 (task, model) observations sorted by task then by headline F1 descending. GPU-hours per 1000 items reported for Ollama models only; OpenAI shown as '—'.")
 ```
+
+:::
 
 ## Findings
 
-- **No single model is best.** 5 different models win at least one task: Gemma 4 31B (incivility + SCOTUS-tied), Qwen3-14B (Gilardi stance + SCOTUS-tied), Mistral Small 24B (Gilardi relevance), gpt-5.4 (state_adaptation + SemEval), gpt-5.4-mini (CCC protest). Model choice is task-specific.
-- **Paying for gpt-5.4-mini is rarely justified.** Compared to gpt-5.4-nano, mini wins only 2 of 7 tasks (Gilardi relevance +0.08, SemEval +0.09), at essentially the same latency (~0.7 s both).
-- **gpt-5.4 (full) earns its edge on reasoning-heavy tasks**: +0.17 on SemEval stance, +0.11 on Gilardi relevance, +0.13 on state_adaptation bills. But it LOSES to gpt-5.4-nano on SCOTUS sentiment and Gilardi stance — the full model is not a universal upgrade.
-- **Local models are not strictly worse than API.** Gemma beats every API model on Ballard incivility (F1 0.63 vs best API 0.47). Qwen3-14B ties gpt-5.4 on Gilardi relevance (0.94 vs 0.91). Mistral dominates Gilardi relevance (0.96 — the single highest score in the benchmark).
-- **Qwen3-30B-A3B is a speed tier on its own.** 0.6 s/item across tasks — 40× faster than Gemma on CCC. But its instruction-following is fragile: 100% parse-error rate on the Halterman CCC codebook prompt (emitted bare labels like "PROTEST" instead of JSON).
-- **CCC protest classification is hard for everyone.** 8 classes, long news stories, fine distinctions (MARCH vs CARAVAN vs RALLY). Best model hits F1 0.42 — the benchmark's floor, and evidence that even GPT-5 tier can't solve subtle political event coding from scratch.
-- **No parse errors except the Qwen3-30B-A3B × CCC case.** Structured outputs on API models and `json.JSONDecoder.raw_decode` on local models reliably produced clean output across 2,449 of 2,450 predictions.
+- **Gemma 4 31B has the highest point estimate on the 10-task grid** — top point estimate on 6 of 10 tasks (Gilardi relevance, Ballard incivility, Gilardi stance, SemEval stance, BFRS violence, CMP manifestos) and the highest cross-task mean F1 (0.616). Cost: median latency 4.65 s/item — the slowest in the benchmark. Most per-task differences are within CI overlap; the consistency of the point-estimate lead across 6 of 10 tasks is what motivates the aggregate ordering.
+- **Qwen3-14B holds the top point estimate on 3 tasks** (CCC protest, SCOTUS sentiment, Wesleyan ad tone). Mean F1 0.586 across 10 tasks at median latency 1.07 s/item — competitive with Gemma's point estimate, dramatically faster.
+- **gpt-5.4 has the highest point estimate only on BES MII**, on macro F1 (0.428 vs Mistral's 0.403). Given the task's class imbalance and the wide CI overlap with the rest of the field, that single advantage should be interpreted cautiously. Mean F1 0.597 — second overall in point estimates, but driven largely by BES.
+- **gpt-5.4-nano is never the top point estimate on any task** and posts the lowest cross-task mean F1 (0.530) and lowest mean accuracy (0.675).
+- **The best local models are competitive with, and in this grid often ahead of, the tested OpenAI tiers** — point-estimate mean F1 ordering: Gemma (0.616) > gpt-5.4 (0.597) > Qwen3-14B (0.586) > Mistral Sm (0.575) > Qwen3-30B-A3B (0.562) > gpt-5.4-nano (0.530). This is a 6-model convenience set (4 local + 2 OpenAI tiers); we are not making a general "local vs API" claim, just describing this grid (see Caveats).
+- **Qwen3-30B-A3B is a speed tier on its own.** Median 0.60 s/item across 10 tasks — faster than every other model in the set including gpt-5.4-nano, at mean F1 within 0.05 of Gemma's point estimate. Pareto choice when latency matters; latency differences here are clearly distinguishable.
+- **BES MII illustrates that "headline macro F1" alone undersells these models on heavily-imbalanced tasks.** All 6 models hit accuracy 0.92–0.94 on the 50-class survey-coding task; macro F1 sits at 0.37–0.43 because the dominant Coronavirus class (38% of items) is trivially easy for every model and the long tail of rare classes is what macro F1 mostly measures. For practical survey-coding work, all 6 models are essentially interchangeable on this task.
+- **The Wesleyan ad-tone task has the largest local-vs-API point-estimate gap.** Qwen3-14B reaches F1 0.704 on 3-class tone-toward-named-candidate, point-estimate above both gpt-5.4 (0.645) and gpt-5.4-nano (0.643). The CIs still overlap (0.62–0.79 for Qwen3-14B vs 0.60–0.70 for gpt-5.4), so the difference is suggestive rather than decisive at N=250.
+- **Halterman-Keith BFRS (12-class Pakistani political-violence event coding) is the hardest task in the grid.** Gemma's point estimate is highest at F1 0.659; all 6 models cluster between 0.54 and 0.66. The 12-way distinction with overlapping categories (assassination vs targeted attack on civilians vs terrorism) is genuinely difficult.
+- **Zero parse errors across 15,000 predictions** (1 single-item parse failure on qwen3:30b-a3b × BES, out of 250 items). Structured outputs on API models and `json.JSONDecoder.raw_decode` + case-insensitive bare-label fallback on local models held up across the expanded label spaces (12-class BFRS, 50-class BES).
 
 ## Implications for practice
 
-- **Before defaulting to an API**: test at least Gemma 4 31B or Qwen3-14B on your task. On 3 of 7 tasks, at least one local model matches or beats gpt-5.4.
-- **Before defaulting to gpt-5.4**: check gpt-5.4-nano first. If the task is not reasoning-heavy, nano is within a few F1 points and an order of magnitude cheaper.
-- **For novel tasks where the best model is not obvious**: run 2–3 candidates on a small pilot (N ≥ 50) with real ground truth before committing to production.
+These are practical defaults for the 10-task scope here, on an Apple Silicon mac2 setup with 6 specific models. They are not general claims about "local vs API."
 
-## Caveats
+- **If you're coding political-science text on commodity hardware, Gemma 4 31B is a strong default in this grid.** Highest point estimate on 6 of 10 tasks, highest mean F1 (0.616), runs locally via Ollama. The ~4.7 s/item latency (≈1.3 GPU-hours per 1000 items on Apple Silicon) is the price.
+- **If latency matters more than the last 0.05 mean F1, Qwen3-30B-A3B is a strong default.** MoE architecture puts it at 0.60 s/item (≈0.17 GPU-hours per 1000 items) — faster than any tested OpenAI tier including nano — at cross-task mean F1 only 0.054 below Gemma's point estimate. Latency differences here are clearly distinguishable; quality differences are mostly within CI overlap.
+- **Qwen3-14B is the construct-breadth standout in this grid.** Only model besides Gemma with the top point estimate on multiple tasks across distinct constructs (legal opinion sentiment, protest event coding, campaign ad tone).
+- **The tested OpenAI tiers are not the obvious default for these tasks.** gpt-5.4 has the top point estimate only on BES MII (where macro F1 is dominated by rare-class noise), and gpt-5.4-nano never has the top point estimate. Per-task differences are mostly within CI overlap, but the point-estimate ordering across many tasks plus the latency cost suggests a local Gemma-or-Qwen setup is at least as good a default as the tested API tiers in this grid.
+- **For novel tasks where the best model is not obvious**: run 2–3 candidates on a small pilot (N ≥ 100) with real ground truth before committing to production. Per-task bootstrap CIs in Fig. 2 give a sense of the typical envelope at N=250 (wide — model rankings are hard to separate at this sample size on most tasks).
+- **Choose your headline metric carefully on imbalanced tasks.** BES MII illustrates: macro F1 0.37–0.43 vs accuracy 0.92–0.94. For practical research workflows, accuracy (or cost-weighted F1) is usually the more honest summary on heavily imbalanced tasks; macro F1 highlights rare-class blind spots that may or may not matter to the application.
 
-- **N=50 per task** is a pilot. Per-class F1 has ±0.10 noise; rare-label F1 (e.g., DEMONSTRATION and CARAVAN in CCC) is much noisier.
-- **Thinking mode OFF throughout.** Gemma 4 and Qwen 3 advertise higher numbers with thinking on — the local-model floor here, not the ceiling.
-- **Prompt provenance mixed.** Gilardi relevance and Halterman CCC used verbatim author prompts. The other 5 tasks use derived prompts (Ballard, Gilardi stance, SCOTUS, SemEval, Chae) based on each paper's codebook.
-- **Ground truth varies in quality.** state_adaptation is a single RA (Matthew, 255 bills). Gilardi/Ballard are two-coder + adjudication. CCC uses author-verified hand labels on 50 items. SemEval and SCOTUS use published expert-coded data.
-- **Qwen3-30B-A3B × CCC parse failure was fixed** by (a) rewriting the JSON instruction at the end of the CCC prompt and (b) adding a case-insensitive bare-label fallback parser. After the rerun, Qwen3-30B-A3B hits F1 0.37 / accuracy 0.58 on CCC with 0% parse errors.
-- **Cold-start latencies** inflated the first bill per (task, model). Median latencies reported here are robust to this, means are not.
+## Performance by task family
 
-## Artifacts
+The 10 tasks group into 4 substantively distinct families. Family means are computed by simple averaging of the per-task headline F1 within family (no weighting by item count or task difficulty).
 
-- `output/predictions.csv` — 2,450 rows: task × model × item with pred + gt + latency + parse_error
-- `output/summary.csv` — 49 per (task, model) with F1 per label + latency percentiles
-- `output/benchmark_round2/` — snapshot of Round 2 (4 tasks, pre-gpt-5.4-backfill original data)
-- `output/benchmark_round3/` — snapshot of Round 3 (3 new tasks, 7 models)
-- `output/benchmark_inventory/candidates.yaml` — 35-entry registry of candidate tasks for future rounds
+```{r task-families}
+family_map <- tibble::tribble(
+  ~task,                         ~family,
+  "gilardi_stance",              "Sentiment / Stance / Tone (n=4)",
+  "chae_semeval_stance",         "Sentiment / Stance / Tone (n=4)",
+  "ornstein_scotus_sentiment",   "Sentiment / Stance / Tone (n=4)",
+  "wesleyan_creative_ads_2022",  "Sentiment / Stance / Tone (n=4)",
+  "gilardi_relevance",           "Relevance / Incivility (n=2)",
+  "ballard_incivility",          "Relevance / Incivility (n=2)",
+  "halterman_ccc_protest",       "Event coding (n=2)",
+  "halterman_keith_bfrs",        "Event coding (n=2)",
+  "halterman_keith_cmp",         "Policy-topic coding (n=2)",
+  "mellon_bes_mii_2024",         "Policy-topic coding (n=2)"
+)
+
+fam_df <- df |> left_join(family_map, by = "task") |>
+  group_by(family, model_short) |>
+  summarise(family_mean_f1 = mean(headline_f1, na.rm = TRUE),
+            family_mean_acc = mean(accuracy, na.rm = TRUE),
+            .groups = "drop")
+
+# Ordered so families are stable
+fam_levels <- c("Sentiment / Stance / Tone (n=4)",
+                "Relevance / Incivility (n=2)",
+                "Event coding (n=2)",
+                "Policy-topic coding (n=2)")
+fam_df <- fam_df |> mutate(family = factor(family, levels = fam_levels))
+
+ggplot(fam_df, aes(x = fct_rev(model_short), y = family_mean_f1, fill = model_short)) +
+  geom_col(width = 0.75) +
+  geom_text(aes(label = sprintf("%.2f", family_mean_f1)), hjust = -0.15, size = 3) +
+  coord_flip() +
+  facet_wrap(~ family, ncol = 2) +
+  scale_y_continuous(limits = c(0, 1.05), breaks = seq(0, 1, 0.25),
+                     expand = expansion(mult = c(0, 0.05))) +
+  scale_fill_manual(values = c(
+    "Gemma 4 31B"    = "#1f77b4",
+    "Qwen3 14B"      = "#ff7f0e",
+    "Qwen3 30B-A3B"  = "#2ca02c",
+    "Mistral Sm 24B" = "#d62728",
+    "gpt-5.4"        = "#555555",
+    "gpt-5.4-nano"   = "#111111"
+  )) +
+  labs(x = NULL, y = "Mean headline F1 within family",
+       subtitle = "Tasks grouped by construct. Each family contains 2–4 tasks.",
+       caption = "Sentiment family pools 3-class stance + tone tasks; Event family pools protest-event and political-violence event coding; Policy-topic family pools manifesto domain coding and BES open-ended issue coding.") +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "none",
+        panel.grid.major.y = element_blank(),
+        strip.text = element_text(face = "bold"))
+```
+
+```{r task-families-table}
+fam_df |>
+  pivot_wider(id_cols = model_short, names_from = family, values_from = family_mean_f1) |>
+  arrange(desc(`Sentiment / Stance / Tone (n=4)`)) |>
+  mutate(across(where(is.numeric), ~ sprintf("%.3f", .x))) |>
+  rename(Model = model_short) |>
+  kable(align = "lrrrr", caption = "Mean headline F1 by family. Highest per family in each column.")
+```
+
+**Family findings (point-estimate orderings; CI overlap is generally large within family):**
+- **Sentiment / Stance / Tone**: gemma4:31b 0.62, gpt-5.4 0.61, qwen3:14b 0.61. Tight cluster — APIs and local models are essentially interchangeable here.
+- **Relevance / Incivility**: gemma4:31b's point-estimate lead is largest here (0.73, driven by Gilardi relevance), gpt-5.4 second (0.69).
+- **Event coding**: qwen3:14b 0.57, gemma4:31b 0.56 — narrow point-estimate gap. Both above the tested API tier (~0.50) by point estimate.
+- **Policy-topic coding**: gemma4:31b 0.49, gpt-5.4 0.51 — gpt-5.4's BES MII point estimate pulls its family mean above Gemma here.
+
+## Verbatim-only appendix — does the headline ranking hold?
+
+The 10-task headline mixes 5 verbatim/verbatim-adapted tasks (Gilardi×2, CCC, BFRS, BES MII) with 5 derived tasks. The table below recomputes mean F1 restricted to the 5 verbatim tasks and reports the rank delta.
+
+```{r verbatim-only}
+verbatim_short <- df |> filter(task %in% verbatim_tasks) |>
+  group_by(model_short) |>
+  summarise(mean_f1_verbatim = mean(headline_f1, na.rm = TRUE),
+            .groups = "drop") |>
+  arrange(desc(mean_f1_verbatim)) |>
+  mutate(rank_verbatim = row_number())
+
+all_short <- df |>
+  group_by(model_short) |>
+  summarise(mean_f1_all = mean(headline_f1, na.rm = TRUE),
+            .groups = "drop") |>
+  arrange(desc(mean_f1_all)) |>
+  mutate(rank_all = row_number())
+
+both <- all_short |> left_join(verbatim_short, by = "model_short") |>
+  mutate(rank_delta = rank_all - rank_verbatim,
+         delta_label = ifelse(rank_delta == 0, "=",
+                              sprintf("%+d", rank_delta))) |>
+  transmute(Model = model_short,
+            `Mean F1 (all 10)` = sprintf("%.3f", mean_f1_all),
+            `Mean F1 (verbatim 5)` = sprintf("%.3f", mean_f1_verbatim),
+            `Rank (all 10)` = rank_all,
+            `Rank (verbatim 5)` = rank_verbatim,
+            `Rank Δ` = delta_label)
+
+kable(both, align = "lrrrrr",
+      caption = "Mean F1 across all 10 tasks vs the 5 verbatim/verbatim-adapted tasks (Gilardi relevance, Gilardi stance, CCC, BFRS, BES MII). Rank Δ = positive means the model improves under the verbatim-only restriction; negative means the model gets worse without the derived tasks.")
+```
+
+**Reading the appendix table:** the point-estimate ordering is robust across most models — Gemma stays #1 and gpt-5.4-nano stays last under both metrics. The verbatim-only cut shifts gpt-5.4 upward (BES MII, where it has the top point estimate, weighs more in the 5-task mean) and qwen3:14b downward (Wesleyan and Ornstein top-point-estimates fall out of the average). Gemma's point-estimate lead survives the verbatim restriction; per-task differences remain mostly within CI overlap.
+
+::: {.callout-note collapse="true"}
+## Batched inference (collapsed by default)
+
+> Note: this section reflects an earlier batched-inference study that ran before the 2026-04-24 expansion. It covers the original 7-task scope (including reinstated `state_adaptation`) but does **not** include the four new tasks added in this round (Halterman-Keith CMP, Halterman-Keith BFRS, Mellon BES MII, Wesleyan ad tone). A re-run of the batching study on the expanded grid is on the TODO list.
+
+**Motivation.** Pipal, Vogel, Wack & Esser (2026, arXiv:2604.03684) show that packing multiple items into a single API call — "batched prompting" — cuts token costs by 80%+ on production API models with a 1–6 percentage-point accuracy penalty. Their evidence is on 8 API-served LLMs. Our question: does that hold on (a) local open-weight models running on a consumer MacBook, where the relevant cost is wall-clock time, not tokens; and (b) on a long-prompt task (`state_adaptation`, 24 KB system prompt) that is unusable serially on our slowest local model?
+
+**Design.** Same 6 active tasks + reinstated `state_adaptation` = 7 tasks × 6 models × batch sizes b ∈ {1, 10, 20}, N=250 per task (50 for halterman). Each batched call packs b items into one prompt and asks for a JSON array of b classifications back. OpenAI calls use a strict array-of-object JSON schema; Ollama calls use a prompt instruction. Per-item latency is reported as `batch_wall_clock / b` so speedups are directly comparable to b=1. One cell (gemma × state_adaptation × b=1) was skipped — we knew it was ~10 h of work on a cell that's unusable anyway. 27,650 predictions total; 0.6% parse-error rate.
+
+```{r setup-batched, include=FALSE}
+sb_raw <- read_csv("output/summary_batched.csv", show_col_types = FALSE) |>
+  filter(task %in% c(
+    "state_adaptation", "gilardi_relevance", "ballard_incivility",
+    "gilardi_stance", "ornstein_scotus_sentiment", "halterman_ccc_protest",
+    "chae_semeval_stance"
+  )) |>
+  mutate(
+    model_short = recode(model,
+      "gemma4:31b-it-q4_K_M"                    = "Gemma 4 31B",
+      "qwen3:14b-q4_K_M"                         = "Qwen3 14B",
+      "qwen3:30b-a3b-q4_K_M"                     = "Qwen3 30B-A3B",
+      "mistral-small:24b-instruct-2501-q4_K_M"   = "Mistral Sm 24B",
+      "gpt-5.4-nano"                             = "gpt-5.4-nano",
+      "gpt-5.4"                                  = "gpt-5.4"
+    ),
+    task_short = recode(task,
+      "state_adaptation"          = "Bills (8-label)",
+      "gilardi_relevance"         = "Gilardi relevance",
+      "ballard_incivility"        = "Ballard incivility",
+      "gilardi_stance"            = "Gilardi stance",
+      "ornstein_scotus_sentiment" = "SCOTUS sentiment",
+      "halterman_ccc_protest"     = "CCC protest type",
+      "chae_semeval_stance"       = "SemEval 2016 stance"
+    ),
+    is_api = model %in% c("gpt-5.4-nano", "gpt-5.4")
+  )
+
+# Per-cell speedup factor: median latency at b=1 divided by median latency at b>1
+b1_latency <- sb_raw |> filter(batch_size == 1) |>
+  select(task, model, b1_latency = median_latency_s)
+b1_f1 <- sb_raw |> filter(batch_size == 1) |>
+  select(task, model, b1_headline_f1 = headline_f1)
+
+sb <- sb_raw |>
+  left_join(b1_latency, by = c("task", "model")) |>
+  left_join(b1_f1, by = c("task", "model")) |>
+  mutate(
+    speedup = b1_latency / median_latency_s,
+    delta_f1 = headline_f1 - b1_headline_f1
+  )
+```
+
+### Figure — speedup factor per cell
+
+```{r fig-batch-speedup, fig.width=11, fig.height=8, fig.cap="Per-item wall-clock speedup from batching, relative to each cell's b=1 baseline. Bars are (model, b=10 vs b=20); facets are tasks. Values >1 = faster. The dashed line at 1× is the serial reference; state_adaptation × Gemma has no b=1 bar because that cell was skipped (unusable serially)."}
+sb_plot <- sb |>
+  filter(batch_size != 1) |>
+  mutate(batch_label = paste0("b=", batch_size))
+
+ggplot(sb_plot, aes(x = model_short, y = speedup, fill = batch_label)) +
+  geom_col(position = position_dodge(width = 0.75), width = 0.7) +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "grey30", linewidth = 0.4) +
+  geom_text(aes(label = ifelse(is.na(speedup), "—", sprintf("%.1fx", speedup))),
+            position = position_dodge(width = 0.75), vjust = -0.3, size = 2.7) +
+  facet_wrap(~ task_short, ncol = 2, scales = "free_y") +
+  scale_fill_manual(values = c("b=10" = "#1f77b4", "b=20" = "#ff7f0e"),
+                    name = "Batch size") +
+  labs(x = NULL, y = "Speedup vs b=1 (per-item wall clock)",
+       subtitle = "Bars above the dashed line = batching is faster. Each facet = one task.") +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1),
+        panel.grid.major.x = element_blank(),
+        strip.text = element_text(face = "bold"))
+```
+
+**Reading this figure** — the pattern that emerges:
+
+- **Short-prompt tasks (Gilardi relevance, Gilardi stance, Ballard incivility, SemEval, SCOTUS)** show ~1.5–3× speedup for most models. API models get the biggest gains because each call has meaningful network/serving overhead that batching amortizes.
+- **state_adaptation** shows the biggest local-model gain: Gemma 4 31B is rescued from ~150 s/item (unusable) to ~20–24 s/item at b=10/20 (6–7× speedup vs the unrunnable baseline). This is the cell that could not be batched-1 inside a reasonable wall-clock budget.
+- **halterman_ccc_protest** (long user inputs: full news stories) shows little or negative speedup on local models. The smoke-test hypothesis held up on the full grid: batching amortizes the *system* prompt prefill, so it only helps when the system prompt dominates the per-call cost. When the user input is 500–1500 tokens per item, packing 20 items just means reprocessing 20 long news stories in one prompt — no shared work to amortize.
+- **API flagship gpt-5.4 × short tasks gets 3–9× speedup** on average; this is the clean win from Pipal's original framing, except we can confirm it's about wall-clock on our side (token-cost numbers follow the same ratio).
+
+### Figure — accuracy cost: ΔF1 vs b=1 baseline
+
+```{r fig-batch-delta, fig.width=11, fig.height=7, fig.cap="F1 change from batching, relative to each cell's b=1 baseline. Points above zero = batching preserves or improves accuracy; below zero = accuracy drops. Gemma × state_adaptation has no point (skipped b=1)."}
+ggplot(sb |> filter(batch_size != 1, !is.na(delta_f1)),
+       aes(x = speedup, y = delta_f1, color = model_short, shape = factor(batch_size))) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey30", linewidth = 0.4) +
+  geom_vline(xintercept = 1, linetype = "dashed", color = "grey30", linewidth = 0.4) +
+  geom_point(size = 3.3, stroke = 1.1) +
+  facet_wrap(~ task_short, ncol = 3) +
+  scale_x_log10(breaks = c(0.5, 1, 2, 5, 10),
+                labels = function(x) paste0(x, "x")) +
+  scale_y_continuous(breaks = seq(-0.3, 0.2, 0.05),
+                     labels = function(x) sprintf("%+.2f", x)) +
+  scale_color_manual(values = c(
+    "Gemma 4 31B"    = "#1f77b4",
+    "Qwen3 14B"      = "#ff7f0e",
+    "Qwen3 30B-A3B"  = "#2ca02c",
+    "Mistral Sm 24B" = "#d62728",
+    "gpt-5.4"        = "#555555",
+    "gpt-5.4-nano"   = "#111111"
+  ), name = "Model") +
+  scale_shape_manual(values = c("10" = 16, "20" = 17), name = "Batch size") +
+  labs(x = "Speedup vs b=1 (log scale)", y = "ΔF1 vs b=1 (same task × model)",
+       subtitle = "Upper-right = faster AND equally or more accurate. Lower-right = faster at an accuracy cost.") +
+  theme_minimal(base_size = 11) +
+  theme(panel.grid.minor = element_blank(),
+        strip.text = element_text(face = "bold"))
+```
+
+**Reading this figure** — where each (task, model, b) lands on the speed-vs-accuracy plane:
+
+- **Upper-right quadrant (free speedup):** Gemma and API models on most short tasks. For these cells, batching delivers meaningful wall-clock gains with ΔF1 within ±0.03.
+- **Lower-right (fast but worse):** most noticeably, **Mistral Small on Gilardi stance at b=20** (−0.15 F1) and **Qwen3-14B on state_adaptation at b=20** (−0.14 F1). Same pattern across several cells: batching at b=20 degrades small/mid-sized local models more than b=10 does. b=10 is the safer default on this hardware.
+- **Lower-left (no speedup, accuracy drop):** halterman × Qwen3-30B-A3B and halterman × Mistral at b=20. These cells are both slower AND worse — Pareto-dominated. Don't batch halterman on those models.
+
+### Parse-error table
+
+Parse errors (percent of items where the model's batched output could not be parsed into N valid objects) are a direct fragility indicator — they concentrate in a predictable way.
+
+```{r batch-parseerr-table}
+sb |> filter(batch_size > 1, parse_err_rate > 0) |>
+  arrange(desc(parse_err_rate)) |>
+  transmute(Task = task_short, Model = model_short, `Batch size` = batch_size,
+            `Parse err` = scales::percent(parse_err_rate, accuracy = 1),
+            N = n) |>
+  kable(align = "llrrr",
+        caption = "Cells with any parse error at b>1. Zero-parse-error cells omitted. 167 total parse errors across 27,650 predictions (0.6%).")
+```
+
+**Fragility takeaway:** Gemma 4 and both OpenAI tiers had zero parse errors at any batch size on any task. Mistral-small struggles at b=20 on short-prompt tasks (up to 9% on Gilardi stance). Qwen3-30B-A3B is fragile on long-user-input tasks under batching (40% parse errors on halterman × b=10, 12% on state_adaptation × b=10). These are the specific (model, batch_size) combinations to avoid in production.
+
+### Practical recommendations from the batching grid
+
+- **If you're running locally on Apple Silicon and using Gemma 4 31B, batch everything at b=10.** Zero parse errors observed on any task at any batch size; wall-clock speedup 1.5–7× depending on task profile; accuracy within ±0.03 F1. Gemma × state_adaptation × b=10 is the clear rescue — a task that was unusable serially becomes tractable.
+- **For Qwen3-14B and Mistral-Small, cap at b=10 and avoid b=20 on short tasks.** Accuracy drop at b=20 exceeds the speedup benefit.
+- **Don't batch halterman on local models.** Long user inputs (news stories) erase the batching benefit; four of eight local × halterman × batched cells are Pareto-dominated vs their own b=1 cell.
+- **For API models, batch aggressively (b=20 is fine).** Zero parse errors, substantial per-item cost and latency savings, ΔF1 within ±0.05 on every task tested.
+- **b=10 is the Pareto-safe default.** On this hardware and this model set, the speedup delta from b=10 to b=20 is small for most cells (the system-prompt prefill is already amortized), while the accuracy-cost delta is real for the smaller models. Pipal tested up to b=1000 on API flagships; our local-model result is that b=10 captures most of the benefit without the downside.
+
+:::
+
+::: {.callout-note collapse="true"}
+## Caveats (collapsed by default)
+
+- **Convenience model set.** Six models (4 local open-weight + 2 OpenAI tiers: nano and full gpt-5.4) selected to fit the user's hardware and budget. No general "API vs local" claim is intended; conclusions are about this specific 6-model grid. A larger or different model set could shift the ordering — particularly with stronger reasoning-tier API models or other open-weight families.
+- **Heterogeneous tasks.** Tasks vary in label count (binary to 50-class), class imbalance (Coronavirus is 38% of items in BES), construct complexity, prompt provenance (verbatim vs derived), and whether the source paper itself used an LLM. Equal-weight task averages should be read as descriptive — not as a stable estimate of "overall ability."
+- **CI ties dominate at N=250.** Under the report's 95% bootstrap CI tie rule, every model is tied with the top point estimate on 9 of 10 tasks; only Gilardi relevance has 2 models clearly below the top group. Cross-model claims rest on point-estimate ordering aggregated across many tasks plus the family breakdown, not on per-task statistical separation.
+- **Halterman CCC was upgraded** from N=50 / 8-class (prior round) to N=250 / 4-class (this round). The new label space (PROTEST, RALLY, DEMONSTRATION, MARCH) reflects what's labeled in H&K's `ccc_test.tab` — gold labels for the other four classes (CARAVAN, BICYCLE_RIDE, DIRECT_ACTION, COUNTER_PROTEST) are not present. Old 8-class predictions archived at `output/archive/predictions_halterman_ccc_v1_n50.csv`.
+- **Thinking mode OFF throughout.** Gemma 4 and Qwen 3 advertise higher numbers with thinking on — these are the local-model floors, not ceilings.
+- **Prompt provenance mixed.** Verbatim or near-verbatim from author archives: Gilardi relevance, Gilardi stance, Halterman CCC (subset to test labels), Halterman-Keith BFRS. Derived from codebooks or paper prose: Ballard, SCOTUS, SemEval, Halterman-Keith CMP, BES MII, Wesleyan ad tone. See `docs/prompts_provenance.md` for per-task rating.
+- **Ground truth varies in quality.** Gilardi and Ballard use two-coder + adjudication. H&K's CMP/BFRS/CCC splits use the original public datasets (CMP/MARPOR for manifestos; BFRS for Pakistani violence; the CCC project for protest events). BES MII uses BES production codes (the same labels BES has used in its publications). Wesleyan ad tone uses WMP-trained undergraduate coders (Qualtrics survey with inter-coder reliability checks). SemEval and SCOTUS use published expert-coded data.
+- **The 50-class BES task has known F1 instability.** Macro F1 over 50 classes where 30+ have <10 items is dominated by noise on rare classes; accuracy is a more meaningful summary. We report both in the summary table.
+- **Hardware is specific.** All local inference ran on mac2 (Apple Silicon, 32 GB, Ollama). Throughput on other Apple Silicon or NVIDIA hardware will differ — especially on gemma4:31b, the slowest model here and the one most sensitive to host GPU details.
+- **One pre-existing task remains deactivated.** `state_adaptation` (8-label multi-binary bill classification, 24 KB system prompt) was unusable on Gemma × Ollama (~150 s/item) and remains out of the active grid until the prompt is shortened or cross-request prefix caching is wired up.
+
+:::
+
+::: {.callout-note collapse="true"}
+## Artifacts (collapsed by default)
+
+- `output/predictions.csv` — 15,000 rows: 10 tasks × 6 models × N=250 single-item predictions (task × model × item × pred + gt + latency + parse_error)
+- `output/summary.csv` — 60 rows per (task, model) with F1 per label + accuracy + bootstrap CIs + GPU-hours-per-1000 + latency percentiles; rebuild via `python code/build_summary.py`
+- `output/predictions_batched.csv` / `output/summary_batched.csv` — earlier batched-inference study covering the original 7-task scope (state_adaptation included) — see "Batched inference" section above; not yet re-run on the 4 new tasks
+- `output/archive/n50_2026-04-23/` — prior N=50 snapshot (including `state_adaptation` results)
+- `output/archive/predictions_halterman_ccc_v1_n50.csv` — pre-2026-04-24 CCC predictions (8-class, N=50), retired after the H&K test-split upgrade
+- `candidates.yaml` — task-candidate registry; H&K bundle promoted to `already_run`; new entry `wesleyan_creative_ads_2022` (`already_run`); new entry `cbp_congressional_bills_cap` (`partial`, blocked on user CBP download); `burst_state_legislatures_cap` deprioritized after archive inspection showed only ML-predicted labels.
+- `quality_reports/plans/2026-04-24_benchmark-expansion.md` — plan that drove this expansion.
+
+:::
