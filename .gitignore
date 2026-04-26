@@ -29,3 +29,12 @@ output/rerun.log
 
 # If you later make this repo public, add:
 # data/private/
+
+# Claude Code local state
+.claude/
+
+# Mid-flight benchmark working dir (overwritten by run scripts)
+output/tmp/
+
+# Personal calendar / iCal files
+*.ics
