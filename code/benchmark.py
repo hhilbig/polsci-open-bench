@@ -75,18 +75,33 @@ PROMPTS = REPO / "prompts"
 OUT = REPO / "output"
 
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
-N_SAMPLE = 50
+
+# v2 sampling: keep v1's 250 + add 250 disjoint new items for total N=500.
+# v1 used N_SAMPLE=250 with SEED. v2 uses (v1 sample) ∪ (new sample with SEED+1).
+N_V1 = 250
+N_V2_NEW = 250
+N_SAMPLE = N_V1 + N_V2_NEW   # = 500
 SEED = 20260422
+SEED_V2 = SEED + 1            # secondary seed for v2-new draw
 
 MODELS = [
     {"name": "gemma4:31b-it-q4_K_M",                     "backend": "ollama", "think": False},
     {"name": "qwen3:14b-q4_K_M",                         "backend": "ollama", "think": False},
     {"name": "qwen3:30b-a3b-q4_K_M",                     "backend": "ollama", "think": False},
     {"name": "mistral-small:24b-instruct-2501-q4_K_M",   "backend": "ollama", "think": False},
-    {"name": "gpt-5.4-nano",                             "backend": "openai", "think": False},
-    {"name": "gpt-5.4-mini",                             "backend": "openai", "think": False},
-    {"name": "gpt-5.4",                                  "backend": "openai", "think": False},
+    {"name": "gpt-5.5",                                  "backend": "openai", "think": False, "reasoning_effort": "medium"},
+    {"name": "gpt-5.4-nano",                             "backend": "openai", "think": False, "reasoning_effort": "medium"},
 ]
+
+# (model_name, task_name) pairs to skip. Populated empirically — some Ollama
+# models are unusably slow on specific tasks due to long system prompts that
+# Ollama re-prefills on every call. Dropped cells are reported as absent (not
+# as parse errors) so the report can flag them explicitly.
+#
+# Note: state_adaptation is currently disabled at the TASKS-list level, so the
+# previously-needed ("gemma4:31b-it-q4_K_M", "state_adaptation") entry is gone
+# from this set. Reinstate it if state_adaptation is re-enabled.
+SKIP_COMBOS = set()
 
 
 # --------- Task loaders ---------
@@ -111,11 +126,10 @@ def load_state_adaptation():
     df = pd.DataFrame(rows[1:], columns=rows[0])
     label_cols = [f"manual_{d}" for d in STATE_ADAPTATION_DIMS]
     df = df[df[label_cols].notna().all(axis=1)].reset_index(drop=True)
-    rng = random.Random(SEED)
-    idxs = sorted(rng.sample(range(len(df)), N_SAMPLE))
-    sub = df.iloc[idxs].reset_index(drop=True)
+    v1_idxs, v2_idxs = _v1_v2_indices(len(df))
     items = []
-    for _, r in sub.iterrows():
+    for idx in v1_idxs + v2_idxs:
+        r = df.iloc[idx]
         items.append({
             "item_id": r["identifier"],
             "user_content": f"Title: {r['title']}\nText: {r['abstract'] or ''}",
@@ -124,15 +138,39 @@ def load_state_adaptation():
     return items
 
 
+def _v1_v2_indices(n_total: int):
+    """Return (v1_idxs, v2_new_idxs) — both sorted, disjoint subsets of range(n_total).
+
+    v1 uses SEED + sample size N_V1; v2-new uses SEED_V2 sampling N_V2_NEW from the
+    remainder. If n_total < N_V1+N_V2_NEW, v2_new is shrunk to fit.
+    """
+    rng_v1 = random.Random(SEED)
+    n_v1 = min(N_V1, n_total)
+    v1_idxs = sorted(rng_v1.sample(range(n_total), n_v1))
+    remaining = sorted(set(range(n_total)) - set(v1_idxs))
+    n_v2 = min(N_V2_NEW, len(remaining))
+    rng_v2 = random.Random(SEED_V2)
+    v2_idxs = sorted(rng_v2.sample(remaining, n_v2)) if n_v2 > 0 else []
+    return v1_idxs, v2_idxs
+
+
 def _sample_csv(path, text_col, id_col, gt_builder):
     df = pd.read_csv(path)
-    rng = random.Random(SEED)
-    idxs = sorted(rng.sample(range(len(df)), N_SAMPLE))
-    sub = df.iloc[idxs].reset_index(drop=True)
+    v1_idxs, v2_idxs = _v1_v2_indices(len(df))
     items = []
-    for i, r in sub.iterrows():
+    # v1 items first — preserves existing item_ids (positional fallback uses i in 0..N_V1-1)
+    for i, idx in enumerate(v1_idxs):
+        r = df.iloc[idx]
         items.append({
             "item_id": str(r[id_col]) if id_col in r else f"{path.stem}_{i:03}",
+            "user_content": text_col(r),
+            "gt": gt_builder(r),
+        })
+    # v2-new items — positional fallback continues from N_V1 (250..)
+    for j, idx in enumerate(v2_idxs):
+        r = df.iloc[idx]
+        items.append({
+            "item_id": str(r[id_col]) if id_col in r else f"{path.stem}_{N_V1 + j:03}",
             "user_content": text_col(r),
             "gt": gt_builder(r),
         })
@@ -169,13 +207,19 @@ def load_ornstein_scotus():
 
 def load_chae_semeval():
     df = pd.read_csv(DATA / "semeval_stance.csv")
-    rng = random.Random(SEED)
-    idxs = sorted(rng.sample(range(len(df)), N_SAMPLE))
-    sub = df.iloc[idxs].reset_index(drop=True)
+    v1_idxs, v2_idxs = _v1_v2_indices(len(df))
     items = []
-    for i, r in sub.iterrows():
+    for i, idx in enumerate(v1_idxs):
+        r = df.iloc[idx]
         items.append({
             "item_id": f"semeval_{i:03}",
+            "user_content": f"Target: {r['target_short']}\nTweet: {r['text']}",
+            "gt": {"stance": r["gt_stance"]},
+        })
+    for j, idx in enumerate(v2_idxs):
+        r = df.iloc[idx]
+        items.append({
+            "item_id": f"semeval_{N_V1 + j:03}",
             "user_content": f"Target: {r['target_short']}\nTweet: {r['text']}",
             "gt": {"stance": r["gt_stance"]},
         })
@@ -183,34 +227,105 @@ def load_chae_semeval():
 
 
 def load_halterman_ccc():
-    df = pd.read_csv(DATA / "halterman_ccc.csv")
-    # Exactly 50 rows — use them all (deterministic, no sampling)
+    # Upgraded 2026-04-24 to Halterman & Keith (2025) Dataverse ccc_test.tab
+    # (1,010 rows, 4-class). Previous version was N=50 with 8-class schema;
+    # archived as data/halterman_ccc.csv (legacy), still on disk.
+    df = pd.read_csv(DATA / "halterman_ccc_hk2025.csv")
+    v1_idxs, v2_idxs = _v1_v2_indices(len(df))
     items = []
-    for i, r in df.iterrows():
+    for i, idx in enumerate(v1_idxs):
+        r = df.iloc[idx]
         items.append({
             "item_id": f"ccc_{i:03}",
+            "user_content": f"News story:\n{r['text']}",
+            "gt": {"protest_type": r["gt_protest_type"]},
+        })
+    for j, idx in enumerate(v2_idxs):
+        r = df.iloc[idx]
+        items.append({
+            "item_id": f"ccc_{N_V1 + j:03}",
             "user_content": f"News story:\n{r['text']}",
             "gt": {"protest_type": r["gt_protest_type"]},
         })
     return items
 
 
+def load_halterman_keith_bfrs():
+    return _sample_csv(DATA / "halterman_keith_bfrs.csv",
+                       text_col=lambda r: f"News story from Pakistan:\n{r['text']}",
+                       id_col="__index__",  # no id col; fallback to row index
+                       gt_builder=lambda r: {"event_type": r["gt_event_type"]})
+
+
+def load_halterman_keith_cmp():
+    return _sample_csv(DATA / "halterman_keith_cmp.csv",
+                       text_col=lambda r: f"Manifesto quasi-sentence:\n{r['text']}",
+                       id_col="__index__",
+                       gt_builder=lambda r: {"policy_domain": r["gt_policy_domain"]})
+
+
+BES_MII_LABELS = [
+    "Referendum unspecified", "Coronavirus", "COVID-economy", "BLM and responses",
+    "health", "education", "election outcome", "pol-neg", "partisan-neg",
+    "societal divides", "morals", "nat ident, goals-loss", "racism/discrimination",
+    "welfare", "terrorism", "immigration", "asylum", "crime", "europe",
+    "constitutional", "international trade", "devolution", "scot-ind", "constitution",
+    "foreign affairs", "war", "defence", "foreign emergency", "domestic emergency",
+    "economy-general", "economy-personal", "unemployment", "taxation",
+    "debt/deficit", "inflation", "living costs", "poverty", "austerity",
+    "inequality", "housing", "social care", "pensions/ageing",
+    "transport/infrastructure", "environment", "pol value-auth", "pol values-liberal",
+    "pol values-right", "pol values-left", "other", "uncoded",
+]
+
+
+def load_mellon_bes_mii():
+    return _sample_csv(DATA / "mellon_bes_mii_2024.csv",
+                       text_col=lambda r: f"Open-ended response: {r['text']}",
+                       id_col="item_id",
+                       gt_builder=lambda r: {"issue": r["gt_issue"]})
+
+
+def load_wesleyan_creative_ads():
+    # Cap user content to keep Ollama prefill tractable. 90%+ of ads fit in 4000 chars.
+    MAX_CHARS = 4000
+    def text_col(r):
+        full = r["full_text"]
+        if len(full) > MAX_CHARS:
+            full = full[:MAX_CHARS] + f"... [truncated at {MAX_CHARS} chars]"
+        return (
+            f"Ad sponsor (page name): {r['page_name']}\n"
+            f"Candidate being evaluated: {r['candidate']}\n"
+            f"Ad content:\n{full}"
+        )
+    return _sample_csv(DATA / "wesleyan_creative_ads_2022.csv",
+                       text_col=text_col,
+                       id_col="ad_id",
+                       gt_builder=lambda r: {"tone": r["gt_tone"]})
+
+
 # --------- Task definitions ---------
 
-TASKS = [
-    {
-        "name": "state_adaptation",
-        "loader": load_state_adaptation,
-        "prompt_file": "state_adaptation.txt",
-        "label_kind": "multi_binary",
-        "labels": STATE_ADAPTATION_DIMS,
-        "json_schema": {
-            "type": "object",
-            "properties": {d: {"type": "integer", "enum": [0, 1]} for d in STATE_ADAPTATION_DIMS},
-            "required": STATE_ADAPTATION_DIMS,
-            "additionalProperties": False,
-        },
+# state_adaptation is temporarily disabled for the N=250 run. Its 24 KB
+# multi-binary prompt made some Ollama cells unusable (~150 s/item on gemma4)
+# and substantially lengthened the full grid even on faster models. Task
+# config is preserved below, commented out, so it can be reinstated for a
+# dedicated single-task run later. Labels and loader still defined above.
+_STATE_ADAPTATION_TASK_DEF = {
+    "name": "state_adaptation",
+    "loader": load_state_adaptation,
+    "prompt_file": "state_adaptation.txt",
+    "label_kind": "multi_binary",
+    "labels": STATE_ADAPTATION_DIMS,
+    "json_schema": {
+        "type": "object",
+        "properties": {d: {"type": "integer", "enum": [0, 1]} for d in STATE_ADAPTATION_DIMS},
+        "required": STATE_ADAPTATION_DIMS,
+        "additionalProperties": False,
     },
+}
+
+TASKS = [
     {
         "name": "gilardi_relevance",
         "loader": load_gilardi_relevance,
@@ -272,16 +387,86 @@ TASKS = [
         "loader": load_halterman_ccc,
         "prompt_file": "halterman_ccc_protest.txt",
         "label_kind": "categorical",
-        "labels": ["PROTEST", "RALLY", "DEMONSTRATION", "MARCH",
-                   "CARAVAN", "BICYCLE_RIDE", "DIRECT_ACTION", "COUNTER_PROTEST"],
+        "labels": ["PROTEST", "RALLY", "DEMONSTRATION", "MARCH"],
         "label_key": "protest_type",
         "json_schema": {
             "type": "object",
             "properties": {"protest_type": {
                 "type": "string",
-                "enum": ["PROTEST", "RALLY", "DEMONSTRATION", "MARCH",
-                         "CARAVAN", "BICYCLE_RIDE", "DIRECT_ACTION", "COUNTER_PROTEST"]}},
+                "enum": ["PROTEST", "RALLY", "DEMONSTRATION", "MARCH"]}},
             "required": ["protest_type"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "halterman_keith_bfrs",
+        "loader": load_halterman_keith_bfrs,
+        "prompt_file": "halterman_keith_bfrs.txt",
+        "label_kind": "categorical",
+        "labels": ["ASSASSINATION", "DRONE_ASSASSINATION", "ATTACK_ON_STATE",
+                   "CONVENTIONAL_ATTACK_ON_GOV_FORCES", "GUERILLA_ATTACK_ON_GOV_FORCES",
+                   "GOV_ATTACK_ON_NONSTATE_COMBATANTS", "GOV_ATTACK_ON_CIVILIANS",
+                   "RIOT", "TERRORISM", "THREAT_OF_VIOLENCE",
+                   "VIOLENT_POLITICAL_DEMONSTRATION", "OTHER"],
+        "label_key": "event_type",
+        "json_schema": {
+            "type": "object",
+            "properties": {"event_type": {
+                "type": "string",
+                "enum": ["ASSASSINATION", "DRONE_ASSASSINATION", "ATTACK_ON_STATE",
+                         "CONVENTIONAL_ATTACK_ON_GOV_FORCES", "GUERILLA_ATTACK_ON_GOV_FORCES",
+                         "GOV_ATTACK_ON_NONSTATE_COMBATANTS", "GOV_ATTACK_ON_CIVILIANS",
+                         "RIOT", "TERRORISM", "THREAT_OF_VIOLENCE",
+                         "VIOLENT_POLITICAL_DEMONSTRATION", "OTHER"]}},
+            "required": ["event_type"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "halterman_keith_cmp",
+        "loader": load_halterman_keith_cmp,
+        "prompt_file": "halterman_keith_cmp.txt",
+        "label_kind": "categorical",
+        "labels": ["External Relations", "Freedom and Democracy", "Political System",
+                   "Economy", "Welfare and Quality of Life", "Fabric of Society",
+                   "Social Groups"],
+        "label_key": "policy_domain",
+        "json_schema": {
+            "type": "object",
+            "properties": {"policy_domain": {
+                "type": "string",
+                "enum": ["External Relations", "Freedom and Democracy", "Political System",
+                         "Economy", "Welfare and Quality of Life", "Fabric of Society",
+                         "Social Groups"]}},
+            "required": ["policy_domain"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "mellon_bes_mii_2024",
+        "loader": load_mellon_bes_mii,
+        "prompt_file": "mellon_bes_mii_2024.txt",
+        "label_kind": "categorical",
+        "labels": BES_MII_LABELS,
+        "label_key": "issue",
+        "json_schema": {
+            "type": "object",
+            "properties": {"issue": {"type": "string", "enum": BES_MII_LABELS}},
+            "required": ["issue"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "wesleyan_creative_ads_2022",
+        "loader": load_wesleyan_creative_ads,
+        "prompt_file": "wesleyan_creative_ads_2022.txt",
+        "label_kind": "categorical",
+        "labels": ["promote", "attack", "unclear"],
+        "label_key": "tone",
+        "json_schema": {
+            "type": "object",
+            "properties": {"tone": {"type": "string", "enum": ["promote", "attack", "unclear"]}},
+            "required": ["tone"],
             "additionalProperties": False,
         },
     },
@@ -378,7 +563,8 @@ def classify_ollama(model, system_prompt, user_content, think=False):
     }
 
 
-def classify_openai(client, model, system_prompt, user_content, json_schema):
+def classify_openai(client, model, system_prompt, user_content, json_schema,
+                    reasoning_effort=None):
     kwargs = {
         "model": model,
         "messages": [
@@ -395,6 +581,8 @@ def classify_openai(client, model, system_prompt, user_content, json_schema):
     else:
         kwargs["max_tokens"] = 1024
         kwargs["temperature"] = 0.1
+    if reasoning_effort:
+        kwargs["reasoning_effort"] = reasoning_effort
     t0 = time.perf_counter()
     resp = client.chat.completions.create(**kwargs)
     latency = time.perf_counter() - t0
@@ -420,12 +608,20 @@ def warmup_ollama(model):
 
 # --------- Orchestration ---------
 
-def run_task(task, models, oai, checkpoint_path):
+def run_task(task, models, oai, checkpoint_path, only_new_items=False):
     system_prompt = (PROMPTS / task["prompt_file"]).read_text()
     items = task["loader"]()
+    if only_new_items:
+        # Items are returned as (v1, then v2-new). Skip the v1 items.
+        skipped = items[:N_V1]
+        items = items[N_V1:]
+        print(f"\n[only-new-items] skipping first {len(skipped)} v1 items; running {len(items)} new items.", flush=True)
     print(f"\n########## TASK: {task['name']} ({len(items)} items) ##########", flush=True)
     rows = []
     for m in models:
+        if (m["name"], task["name"]) in SKIP_COMBOS:
+            print(f"\n--- SKIPPING {m['name']} on {task['name']} (SKIP_COMBOS) ---", flush=True)
+            continue
         if m["backend"] == "ollama":
             print(f"\n--- Warming up {m['name']} ---", flush=True)
             warmup_ollama(m["name"])
@@ -435,7 +631,8 @@ def run_task(task, models, oai, checkpoint_path):
                 if m["backend"] == "ollama":
                     r = classify_ollama(m["name"], system_prompt, it["user_content"], think=m["think"])
                 else:
-                    r = classify_openai(oai, m["name"], system_prompt, it["user_content"], task["json_schema"])
+                    r = classify_openai(oai, m["name"], system_prompt, it["user_content"], task["json_schema"],
+                                        reasoning_effort=m.get("reasoning_effort"))
                 preds, parse_err = parse_content(r["content"], task)
                 row = {
                     "task": task["name"], "model": m["name"],
@@ -475,21 +672,36 @@ def run_task(task, models, oai, checkpoint_path):
 
 def merge_into(existing_csv: Path, new_rows: list,
                key_cols=("task", "model", "item_id")):
-    """Replace matching (task, model, item_id) rows in existing_csv with new_rows."""
+    """Replace matching (task, model, item_id) rows in existing_csv with new_rows.
+
+    Takes the UNION of columns from old and new. New columns introduced by
+    new_rows (e.g., gt_event_type for a freshly-added task) are preserved.
+    Old columns absent from new_rows stay populated for non-overwritten rows.
+    """
     new_df = pd.DataFrame(new_rows)
     if not existing_csv.exists():
         new_df.to_csv(existing_csv, index=False)
         print(f"[merge] wrote {len(new_df)} rows to new {existing_csv}", flush=True)
         return
     old = pd.read_csv(existing_csv)
+    # Force string dtype on key cols on both sides to avoid int64-vs-str mismatch
+    # that silently duplicates rows on key comparison.
+    for c in key_cols:
+        old[c] = old[c].astype(str)
+        new_df[c] = new_df[c].astype(str)
     new_keys = set(zip(*[new_df[c] for c in key_cols]))
     mask = list(zip(*[old[c] for c in key_cols]))
     keep = [k not in new_keys for k in mask]
     filtered = old[keep]
-    for c in filtered.columns:
+    # Take the union of columns. Preserve old order, append new-only columns at the end.
+    union_cols = list(filtered.columns) + [c for c in new_df.columns if c not in filtered.columns]
+    for c in union_cols:
+        if c not in filtered.columns:
+            filtered = filtered.assign(**{c: None})
         if c not in new_df.columns:
             new_df[c] = None
-    new_df = new_df[filtered.columns.tolist()]
+    filtered = filtered[union_cols]
+    new_df = new_df[union_cols]
     merged = pd.concat([filtered, new_df], ignore_index=True)
     merged.to_csv(existing_csv, index=False)
     print(f"[merge] {existing_csv}: replaced {len(old)-len(filtered)} rows with "
@@ -505,6 +717,10 @@ def main():
     ap.add_argument("--merge-into", dest="merge_into", default=None,
                     help="After running, merge this run's rows into an existing CSV "
                          "(replacing matching task/model/item_id rows).")
+    ap.add_argument("--only-new-items", action="store_true",
+                    help="Only run the v2-new 250 items (skip the v1 250). Used for "
+                         "Ollama carry-over: existing v1 predictions are kept; only the "
+                         "new items 250..499 get model calls.")
     args = ap.parse_args()
 
     OUT.mkdir(parents=True, exist_ok=True)
@@ -526,7 +742,7 @@ def main():
 
     all_rows = []
     for task in tasks:
-        all_rows.extend(run_task(task, models, oai, args.output))
+        all_rows.extend(run_task(task, models, oai, args.output, only_new_items=args.only_new_items))
         pd.DataFrame(all_rows).to_csv(args.output, index=False)
 
     if args.merge_into:
