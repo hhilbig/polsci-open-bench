@@ -5,8 +5,8 @@ models as benchmark.py but at multiple batch sizes, writing to a
 separate predictions CSV so the main benchmark outputs stay canonical.
 
 Grid (default):
-  tasks      = 6 active + state_adaptation (7 total; reinstated here)
-  models     = benchmark.py MODELS (4 Ollama + gpt-5.4-nano + gpt-5.4)
+  tasks       = benchmark.py TASKS (10 tasks)
+  models      = benchmark.py MODELS (4 Ollama + 2 OpenAI)
   batch_sizes = {1, 10, 20}
 
 Per-batch semantics:
@@ -25,7 +25,6 @@ Per-batch semantics:
 Usage:
   python3 code/batch_benchmark.py
   python3 code/batch_benchmark.py --only-task gilardi_relevance --batch-sizes 10,20
-  python3 code/batch_benchmark.py --only-task state_adaptation --only-model gemma4:31b-it-q4_K_M --N 5 --batch-sizes 10
   python3 code/batch_benchmark.py --resume    # skip cells already in output CSV
 """
 import argparse
@@ -42,8 +41,7 @@ from openai import OpenAI
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from benchmark import (  # noqa: E402
-    TASKS as ACTIVE_TASKS,
-    _STATE_ADAPTATION_TASK_DEF,
+    TASKS,
     MODELS,
     PROMPTS, OUT,
     OLLAMA_URL,
@@ -51,19 +49,10 @@ from benchmark import (  # noqa: E402
     warmup_ollama,
 )
 
-
-# State_adaptation is reinstated for the batching study. Sits at the front so
-# --only-task state_adaptation works via the standard lookup.
-TASKS = [_STATE_ADAPTATION_TASK_DEF] + ACTIVE_TASKS
-
 BATCH_SIZES_DEFAULT = [1, 10, 20]
 
-# (model, task, batch_size) combos to skip. gemma × state_adaptation at b=1
-# is known unusable (~150 s/item, ~10 h for the cell); the rescue story only
-# needs b=10 and b=20 for that cell.
-BATCH_SKIP_COMBOS = {
-    ("gemma4:31b-it-q4_K_M", "state_adaptation", 1),
-}
+# (model, task, batch_size) combos to skip when empirically unusable.
+BATCH_SKIP_COMBOS = set()
 
 
 # --------- Prompt construction ---------
@@ -217,7 +206,8 @@ def _build_batched_schema(task_def, batch_size):
     }
 
 
-def classify_openai_batched(client, model, system_prompt, batch, task_def):
+def classify_openai_batched(client, model, system_prompt, batch, task_def,
+                            reasoning_effort=None):
     user = build_user_content(task_def, batch)
     if len(batch) == 1:
         schema = task_def["json_schema"]
@@ -241,6 +231,8 @@ def classify_openai_batched(client, model, system_prompt, batch, task_def):
     else:
         kwargs["max_tokens"] = 128 + 64 * len(batch)
         kwargs["temperature"] = 0.1
+    if reasoning_effort:
+        kwargs["reasoning_effort"] = reasoning_effort
     t0 = time.perf_counter()
     resp = client.chat.completions.create(**kwargs)
     latency = time.perf_counter() - t0
@@ -265,7 +257,8 @@ def run_cell(task, model_def, oai, batch_size, items):
                 )
             else:
                 content, latency, eval_count = classify_openai_batched(
-                    oai, model_def["name"], system_prompt, batch, task
+                    oai, model_def["name"], system_prompt, batch, task,
+                    reasoning_effort=model_def.get("reasoning_effort"),
                 )
             parsed = parse_response(content, task, len(batch))
         except Exception as e:
@@ -312,6 +305,12 @@ def main():
                     help="Output CSV path (default: output/predictions_batched.csv)")
     ap.add_argument("--resume", action="store_true",
                     help="Skip cells already present in the output CSV")
+    ap.add_argument("--only-new-items", action="store_true",
+                    help="Only run the v2-new 250 items (skip v1's first N_V1=250). "
+                         "Mirrors benchmark.py's flag for the v2 incremental path.")
+    ap.add_argument("--merge-into", dest="merge_into", default=None,
+                    help="After the run, merge new rows into an existing CSV by "
+                         "(task, model, batch_size, item_id), replacing matches.")
     args = ap.parse_args()
 
     batch_sizes = [int(x) for x in args.batch_sizes.split(",")]
@@ -350,8 +349,15 @@ def main():
         print(f"  N cap      : {args.N}")
     print()
 
+    # Lazy-import N_V1 from benchmark to support --only-new-items.
+    from benchmark import N_V1 as N_V1_BENCHMARK
+
     for task in tasks:
         items = task["loader"]()
+        if args.only_new_items:
+            n_skipped = min(N_V1_BENCHMARK, len(items))
+            items = items[n_skipped:]
+            print(f"[only-new-items] task {task['name']}: skipping first {n_skipped} v1 items, running {len(items)} new items", flush=True)
         if args.N is not None and len(items) > args.N:
             items = items[:args.N]
 
@@ -383,8 +389,16 @@ def main():
                 all_rows.extend(rows)
                 pd.DataFrame(all_rows).to_csv(out_path, index=False)
 
+    if args.merge_into:
+        from benchmark import merge_into  # reuse the union-merge from the serial pipeline
+        merge_path = Path(args.merge_into)
+        # Use (task, model, batch_size, item_id) as the key for batched merges
+        merge_into(merge_path, all_rows, key_cols=("task", "model", "batch_size", "item_id"))
+
     print(f"\n=== ALL DONE ===", flush=True)
     print(f"  predictions: {out_path}", flush=True)
+    if args.merge_into:
+        print(f"  merged into: {args.merge_into}", flush=True)
 
 
 if __name__ == "__main__":

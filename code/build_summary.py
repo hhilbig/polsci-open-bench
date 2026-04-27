@@ -14,7 +14,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, matthews_corrcoef
 
 from benchmark import TASKS  # reuse the canonical task definitions
 
@@ -25,6 +25,19 @@ OLLAMA_MODELS = {
     "qwen3:14b-q4_K_M",
     "qwen3:30b-a3b-q4_K_M",
     "mistral-small:24b-instruct-2501-q4_K_M",
+}
+
+# Observed average $/call for OpenAI models in the v2 (2026-04-25) run.
+# Ground truth: /v1/organization/costs ledger entries for the v2 grid only,
+# divided by call count (5,000 per model = 10 tasks × 500 items).
+# Use as observed averages for cost_per_1000_correct estimates.
+USD_PER_CALL = {
+    # v2 medium reasoning, ground truth from cost ledger:
+    "gpt-5.5":      0.00433,    # $21.66 / 5,000 calls
+    "gpt-5.4-nano": 0.00024,    # $1.20 / 5,000 calls
+    # not in v2 grid (historical / placeholder):
+    "gpt-5.4":      0.00300,
+    "gpt-5.4-mini": 0.00100,
 }
 
 
@@ -69,6 +82,16 @@ def _metrics_for_group(task_def, g):
         f1 = f1_score(sub[gt_col].astype(int), sub[pred_col].astype(int),
                       pos_label=1, zero_division=0) if len(sub) else np.nan
         row[f"f1_{key}"] = f1
+        # accuracy + MCC for binary tasks
+        if len(sub):
+            row["accuracy"] = (sub[pred_col].astype(int) == sub[gt_col].astype(int)).mean()
+            try:
+                row["mcc"] = matthews_corrcoef(sub[gt_col].astype(int), sub[pred_col].astype(int))
+            except ValueError:
+                row["mcc"] = np.nan
+        else:
+            row["accuracy"] = np.nan
+            row["mcc"] = np.nan
         row["headline_f1"] = f1
 
     elif kind == "categorical":
@@ -85,6 +108,13 @@ def _metrics_for_group(task_def, g):
         vals = [v for v in per_class.values() if not np.isnan(v)]
         row["avg_f1"] = float(np.mean(vals)) if vals else np.nan
         row["accuracy"] = (sub[pred_col] == sub[gt_col]).mean() if len(sub) else np.nan
+        # MCC handles class imbalance better than macro F1; same data + mask as accuracy.
+        try:
+            row["mcc"] = (
+                matthews_corrcoef(sub[gt_col], sub[pred_col]) if len(sub) else np.nan
+            )
+        except ValueError:
+            row["mcc"] = np.nan
         row["headline_f1"] = row["avg_f1"]
 
     else:
@@ -211,11 +241,24 @@ def main():
         lambda r: (r["median_latency_s"] * 1000 / 3600) if r["model"] in OLLAMA_MODELS else np.nan,
         axis=1,
     )
+    # USD per 1000 calls (OpenAI only; Ollama gets NaN). Uses observed averages
+    # from /v1/organization/costs in the v2 run (see USD_PER_CALL dict at the top).
+    df["usd_per_1000"] = df.apply(
+        lambda r: (USD_PER_CALL[r["model"]] * 1000) if r["model"] in USD_PER_CALL else np.nan,
+        axis=1,
+    )
+    # Cost per 1000 *correct* predictions = cost_per_1000 / accuracy.
+    # Two parallel columns since units differ across backends.
+    df["gpu_hours_per_1000_correct"] = df["gpu_hours_per_1000"] / df["accuracy"]
+    df["usd_per_1000_correct"] = df["usd_per_1000"] / df["accuracy"]
 
     # Move identifier + summary cols to the front; f1_* sparse columns after.
     leading = ["task", "model", "n", "parse_ok", "parse_err_rate",
-               "mean_latency_s", "median_latency_s", "gpu_hours_per_1000"]
-    trailing = ["avg_f1", "accuracy", "headline_f1", "headline_f1_lo", "headline_f1_hi"]
+               "mean_latency_s", "median_latency_s",
+               "gpu_hours_per_1000", "gpu_hours_per_1000_correct",
+               "usd_per_1000", "usd_per_1000_correct"]
+    trailing = ["avg_f1", "accuracy", "mcc",
+                "headline_f1", "headline_f1_lo", "headline_f1_hi"]
     f1_cols = [c for c in df.columns if c.startswith("f1_")]
     ordered = leading + f1_cols + [c for c in trailing if c in df.columns]
     df = df[[c for c in ordered if c in df.columns]]

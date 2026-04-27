@@ -1,117 +1,185 @@
 # polsci-open-bench
 
-A **political-science text-classification benchmark** comparing local open-weight LLMs (via Ollama) against the OpenAI API on tasks drawn from published replication archives.
+A small political-science text-classification benchmark comparing four local
+open-weight LLMs (via Ollama) against two OpenAI API tiers on ten tasks
+drawn from published replication archives.
 
-## Current state
+The goal is not a definitive model ranking. It is practical guidance for
+applied researchers asking "is the local model good enough on the specific
+task I want to run?" Headline numbers, per-task figures, batched-inference
+results, and reproduction notes are in
+[`output/report.html`](output/report.html) (HTML companion) and
+[`output/report_pdf.pdf`](output/report_pdf.pdf) (six-to-eight page PDF).
 
-- **6 tasks × 6 models × N=250 per task (halterman_ccc capped at N=50 by data availability) = 7,800 predictions**, run 2026-04-23 on mac2.
-- `state_adaptation` (the user's own 24 KB-prompt bill classification) is temporarily deactivated in `TASKS` — Ollama prefill at ~150 s/item made the cell unusable on gemma4:31b. Task definition is preserved at module level; reinstate for a dedicated single-task run.
-- `gpt-5.4-mini` dropped from the 2026-04-23 run (rarely Pareto-optimal in prior rounds).
-- Task prompts are either verbatim from the original paper or derived from the codebook when the paper didn't use an LLM; provenance is documented per task.
+## Scope
 
-See `output/report.html` for the current results summary (self-contained Quarto report).
+- 10 classification tasks, drawn from public replication archives.
+- 6 models: 4 local (Ollama, 4-bit quantized) + 2 OpenAI tiers (gpt-5.5,
+  gpt-5.4-nano), both with `reasoning_effort=medium`.
+- N=500 items per task, fixed random seed (20260422).
+- 30,000 serial predictions plus 44,500 batched predictions across b in
+  {1, 10, 20}.
+- Metrics: macro F1, accuracy, MCC, latency, parse-error rate. Bootstrap
+  confidence intervals (1000 iterations, paired-by-item, 95%).
 
 ## Tasks
 
-| Task | Paper | Labels | Text | Prompt source |
+| Task | Source | Family | Labels | Coded object |
 |---|---|---|---|---|
-| `state_adaptation` | User's own bill classification | 8 binary (adaptation, mitigation, …) | bill title + abstract | Production few-shot prompt |
-| `gilardi_relevance` | Gilardi, Alizadeh & Kubli 2023 PNAS | binary | tweet | Verbatim from replication archive |
-| `gilardi_stance` | Gilardi et al. 2023 PNAS | 3-class (pro/neutral/contra) | tweet | Derived (PNAS SI §S1 paywalled) |
-| `ballard_incivility` | Ballard 2022 LSQ | binary | tweet | Derived (Ballard used BERT) |
-| `ornstein_scotus_sentiment` | Ornstein et al. 2025 PSRM | 3-class | tweet | Derived from `promptr` codebook |
-| `halterman_ccc_protest` | Halterman & Keith 2025 PA | 8-class | news story | Verbatim from archive codebook |
-| `chae_semeval_stance` | Chae & Davidson 2025 SMR (SemEval-2016) | 3-class | tweet | Derived from SemEval codebook |
+| `gilardi_relevance` | Gilardi et al. 2023 PNAS | Relevance / Incivility | binary | tweets, classified as about content moderation or not |
+| `ballard_incivility` | Ballard 2022 LSQ | Relevance / Incivility | binary | tweets by U.S. Congress members |
+| `gilardi_stance` | Gilardi et al. 2023 PNAS | Sentiment / Stance / Tone | 3-class | tweets about content moderation |
+| `chae_semeval_stance` | Chae & Davidson 2025 SMR | Sentiment / Stance / Tone | 3-class | tweets toward a named political target |
+| `ornstein_scotus_sentiment` | Ornstein et al. 2025 PSRM | Sentiment / Stance / Tone | 3-class | tweets about a Supreme Court ruling |
+| `wesleyan_creative_ads_2022` | Zhang et al. 2025 Sci Data | Sentiment / Stance / Tone | 3-class | political ads on Meta toward a candidate |
+| `halterman_ccc_protest` | Halterman & Keith 2025 PA | Event coding | 4-class | news stories about U.S. protest events |
+| `halterman_keith_bfrs` | Halterman & Keith 2025 PA | Event coding | 12-class | news stories about Pakistani political violence |
+| `halterman_keith_cmp` | Halterman & Keith 2025 PA + CMP | Policy-topic coding | 7-class | quasi-sentences from political party manifestos |
+| `mellon_bes_mii_2024` | Mellon et al. 2024 R&P | Policy-topic coding | 50-class | open-ended British Election Study survey responses |
 
-See `candidates.yaml` for the full inventory of 35 candidate tasks (ready, partial, blocked, deprioritized), and `candidates.md` for a quick-scan summary.
+Per-task prompt provenance (verbatim from source paper, verbatim with
+format adaptations, or derived from the published codebook) is documented
+in [`docs/prompts_provenance.md`](docs/prompts_provenance.md).
 
 ## Models
 
-| Model | Backend | Size |
+| Model | Backend | Size / role |
 |---|---|---|
 | `gemma4:31b-it-q4_K_M` | Ollama | 31B dense |
 | `qwen3:14b-q4_K_M` | Ollama | 14B dense |
 | `qwen3:30b-a3b-q4_K_M` | Ollama | 30B MoE (~3B active) |
 | `mistral-small:24b-instruct-2501-q4_K_M` | Ollama | 24B dense |
-| `gpt-5.4-nano` | OpenAI | — |
-| `gpt-5.4` | OpenAI | — |
+| `gpt-5.5` | OpenAI | flagship; `reasoning_effort=medium` |
+| `gpt-5.4-nano` | OpenAI | small / cheap; `reasoning_effort=medium` |
 
-All local models ran with thinking OFF. API models use structured JSON outputs. `gpt-5.4-mini` is available in the MODELS list structurally but was dropped from the 2026-04-23 run.
+All local models ran with thinking off. OpenAI calls use structured JSON
+outputs (strict schema).
 
-## Usage
+## How to reproduce
 
-Prerequisites: Python 3.9+, `pip install openai httpx openpyxl pandas pyreadr pyyaml scikit-learn`. Ollama running locally (or reachable via `OLLAMA_URL`). `OPENAI_API_KEY` set. The four Ollama models are installed on mac2; benchmark runs there — see `CLAUDE.md` for the mac2 workflow.
+Prerequisites:
+
+- Python 3.10+
+- `pip install openai httpx openpyxl pandas pyyaml scikit-learn`
+- Ollama running at `http://localhost:11434` (or set `OLLAMA_URL`)
+- The four Ollama models installed (`ollama pull <model>`)
+- `OPENAI_API_KEY` exported in your shell environment
+
+Run the full grid (10 tasks x 6 models x N=500). On Apple Silicon with
+32 GB unified memory the full grid takes roughly 6-8 hours of wall-clock
+time, dominated by local Ollama inference:
 
 ```bash
-# Full benchmark (6 tasks × 6 models — state_adaptation is currently commented out in TASKS)
 python code/benchmark.py
+```
 
-# Selective rerun of one (task, model) cell, merge into existing predictions
-# NOTE: --merge-into has known bugs (documented in MEMORY.md and KNOWLEDGE_BASE §6);
-# prefer a fresh full run or a task-only run until they're fixed.
-python code/benchmark.py \
-  --only-model qwen3:30b-a3b-q4_K_M \
-  --only-task halterman_ccc_protest
+Selective reruns and merging back into the canonical CSV:
 
-# Run all models on one task (e.g. after updating a prompt)
+```bash
+# Run one task across all models (e.g. after editing a prompt)
 python code/benchmark.py --only-task gilardi_stance
 
-# Rebuild output/summary.csv from output/predictions.csv
-python code/build_summary.py
+# Run one (task, model) cell and merge into the existing predictions CSV
+python code/benchmark.py \
+  --only-model qwen3:30b-a3b-q4_K_M \
+  --only-task halterman_ccc_protest \
+  --merge-into output/predictions.csv
+```
 
-# Re-render the Quarto report (from the repo root)
-quarto render output/report.qmd --execute-dir .
+Rebuild the summary table and the report:
+
+```bash
+python code/build_summary.py             # output/summary.csv
+python code/build_summary_batched.py     # output/summary_batched.csv
+quarto render output/report.qmd          # output/report.html
+quarto render output/report_pdf.qmd      # output/report_pdf.pdf
+```
+
+Batched-inference study (separate from the serial run):
+
+```bash
+# Default grid: 10 tasks x 6 models x b in {1, 10, 20}
+python code/batch_benchmark.py
+
+# Single cell with smaller batch sizes
+python code/batch_benchmark.py \
+  --only-task gilardi_relevance \
+  --batch-sizes 10,20
 ```
 
 ## Output schema
 
-`output/predictions.csv` columns (long format; one row per task × model × item):
+`output/predictions.csv` (one row per (task, model, item)):
 
 - `task`, `model`, `item_id`
 - `latency_s`, `eval_count`
-- `parse_error` (NaN if parsed cleanly)
+- `parse_error` (NaN when parsed cleanly)
 - `raw_content_preview` (first 200 chars of model output)
-- `pred_<label>` per task's label schema
-- `gt_<label>` per task's ground truth
+- `pred_<label>` and `gt_<label>` columns per the task's label schema
 
-`output/summary.csv` has per (task, model) metrics: F1 per label, `avg_f1`, `accuracy` (categorical tasks), `median_latency_s`, `parse_err_rate`, `headline_f1` (unified per-task primary metric). Rebuild it from `predictions.csv` with `python code/build_summary.py`.
+`output/summary.csv` has one row per (task, model) with per-label F1,
+`accuracy`, `mcc`, `median_latency_s`, `parse_err_rate`, `headline_f1`,
+bootstrap CI bounds, and per-correct-prediction cost columns. Rebuild
+from predictions with `python code/build_summary.py`.
 
-## Private data
+`output/predictions_batched.csv` and `output/summary_batched.csv` are
+the analogous outputs for the batched-inference study, keyed by
+`(task, model, batch_size)`.
 
-`data/private/bills_for_matthew.xlsx` is a single-RA's personal coding of US state bills. It is kept in the private repo but is **not for redistribution**; if this repo is ever made public, this file must be removed. The `state_adaptation` loader will fail clearly if the file is missing.
+Full schema reference: [`docs/schema.md`](docs/schema.md).
 
-## Repo structure
+## Repo layout
 
 ```
 code/
-  benchmark.py          # unified runner (--only-task, --only-model, --merge-into)
+  benchmark.py              # serial runner
+  batch_benchmark.py        # batched runner (b in {1, 10, 20})
+  build_summary.py          # builds summary.csv from predictions.csv
+  build_summary_batched.py  # builds summary_batched.csv
 data/
-  *.csv                 # public clean per-task data
-  private/              # bills_for_matthew.xlsx (gitignored pattern on release)
-prompts/                # per-task LLM prompts (verbatim or derived)
+  *.csv                     # cleaned per-task data files (10 tasks)
+prompts/
+  *.txt                     # one prompt per task
 output/
-  predictions.csv       # raw per-item predictions
-  summary.csv           # per (task, model) F1 and latency
-  report.qmd            # Quarto source for the report
-  report.html           # rendered self-contained report
-candidates.yaml         # 35-entry inventory of task candidates
-candidates.md           # summary markdown rendering of the yaml
+  predictions.csv           # 30,000 serial predictions
+  summary.csv               # 60 (task, model) summary rows
+  predictions_batched.csv   # batched-inference predictions
+  summary_batched.csv       # batched-inference summary
+  report.qmd / report.html  # full HTML report (Quarto)
+  report_pdf.qmd            # PDF source
+  report_pdf.pdf            # six-to-eight page applied summary
 docs/
-  inventory_schema.md   # field definitions for candidates.yaml
+  prompts_provenance.md     # per-task provenance ratings
+  schema.md                 # CSV column reference
+  inventory_schema.md       # task-candidate yaml schema
+  twitter_thread.md         # six-post public summary
 ```
 
 ## Extending the benchmark
 
 To add a new task:
 
-1. Prepare a clean CSV at `data/{task_name}.csv` with a text column, an id column, and a gold-label column.
-2. Write the prompt at `prompts/{task_name}.txt`. Paste verbatim from the paper when possible; derive from the codebook otherwise.
-3. Add a loader function + task config entry in `code/benchmark.py` (the TASKS list).
-4. Add the candidate to `candidates.yaml` and regenerate `candidates.md`.
-5. Run `python code/benchmark.py --only-task {task_name}`.
+1. Prepare a clean CSV at `data/{task_name}.csv` with a text column, an
+   id column, and gold-label columns.
+2. Write the prompt at `prompts/{task_name}.txt`. Paste verbatim from the
+   source paper when possible; derive from the codebook otherwise.
+3. Add a loader function and task config entry in `code/benchmark.py`
+   (`_sample_csv` covers most patterns).
+4. Run `python code/benchmark.py --only-task {task_name}` to populate the
+   predictions, then `python code/build_summary.py`.
 
-See the existing loaders for the expected item shape (`item_id`, `user_content`, `gt` dict).
+See existing loaders for the expected item shape: `{item_id, user_content, gt: {label_key: value, ...}}`.
+
+## Citation
+
+If you use this benchmark in academic work, please cite both the report
+and the source papers for the individual tasks (listed in the Tasks table
+above and in [`docs/prompts_provenance.md`](docs/prompts_provenance.md)).
 
 ## License
 
-Code: MIT. Data: each task inherits its source paper's license — see `candidates.yaml` `license` field per task.
+Code: MIT (see [`LICENSE`](LICENSE)).
+
+Data: each task's CSV is derived from a publicly distributed replication
+archive. Task-level licenses inherit from the source paper. Re-derivation
+recipes and source URLs are in [`docs/prompts_provenance.md`](docs/prompts_provenance.md).

@@ -2,30 +2,33 @@
 """
 polsci-open-bench: classification benchmark for local LLMs vs OpenAI API.
 
-Currently covers 7 tasks × 7 models × N=50 items.
+Covers 10 political-science classification tasks across 4 local Ollama
+models and 2 OpenAI API tiers, with N=500 items per task.
 
-Tasks (see TASKS list below for canonical names):
-  - state_adaptation        - 8-label bill classification (private data)
-  - gilardi_relevance       - binary content-moderation relevance
-  - gilardi_stance          - 3-class content-moderation stance
-  - ballard_incivility      - binary congressional tweet incivility
-  - ornstein_scotus_sentiment - 3-class SCOTUS tweet sentiment
-  - halterman_ccc_protest   - 8-class protest event type
-  - chae_semeval_stance     - 3-class SemEval-2016 political stance
+Tasks (canonical names; see TASKS list below):
+  - gilardi_relevance         binary content-moderation relevance
+  - gilardi_stance            3-class content-moderation stance
+  - ballard_incivility        binary congressional tweet incivility
+  - ornstein_scotus_sentiment 3-class SCOTUS tweet sentiment
+  - halterman_ccc_protest     4-class U.S. protest event type
+  - halterman_keith_bfrs      12-class Pakistani political violence
+  - halterman_keith_cmp       7-class manifesto policy domain
+  - mellon_bes_mii_2024       50-class British Election Study MII
+  - chae_semeval_stance       3-class SemEval-2016 political stance
+  - wesleyan_creative_ads_2022 3-class political-ad tone
 
-Models (see MODELS list; supports any Ollama-hosted model + OpenAI API):
+Models (see MODELS list; works with any Ollama-hosted model plus OpenAI):
   Ollama (via localhost:11434):
     gemma4:31b-it-q4_K_M
     qwen3:14b-q4_K_M
     qwen3:30b-a3b-q4_K_M
     mistral-small:24b-instruct-2501-q4_K_M
   OpenAI:
-    gpt-5.4-nano
-    gpt-5.4-mini
-    gpt-5.4
+    gpt-5.5         (reasoning_effort=medium)
+    gpt-5.4-nano    (reasoning_effort=medium)
 
 Basic usage:
-  # Run full benchmark (all tasks × all models)
+  # Run full benchmark (all tasks x all models)
   python code/benchmark.py
 
   # Selective rerun of one (task, model) cell, merge into existing predictions
@@ -38,20 +41,19 @@ Basic usage:
   python code/benchmark.py --only-task gilardi_stance
 
 Parse strategy:
-  Primary — JSON via raw_decode (trailing content ignored).
-  Fallback — case-insensitive bare-label match against the task's enum.
+  Primary  - JSON via raw_decode (trailing content ignored).
+  Fallback - case-insensitive bare-label match against the task's enum.
   Both API and local models are supported. API models use structured outputs
   (JSON schema enforced server-side).
 
 Data files are expected at:
-  data/{task_name}.csv                 (public tasks)
-  data/private/bills_for_matthew.xlsx  (state_adaptation - not redistributed)
+  data/{task_name}.csv
 
 Prompts are expected at:
-  prompts/{task_name}.txt              (or with explicit label-task suffix)
+  prompts/{task_name}.txt
 
-Set OPENAI_API_KEY in env for OpenAI calls. For local models, make sure Ollama
-is running at http://localhost:11434 (or override with OLLAMA_URL env var).
+Set OPENAI_API_KEY in the environment for OpenAI calls. For local models,
+ensure Ollama is running at http://localhost:11434 (or override OLLAMA_URL).
 """
 import argparse
 import json
@@ -61,7 +63,6 @@ import time
 from pathlib import Path
 
 import httpx
-import openpyxl
 import pandas as pd
 from openai import OpenAI
 
@@ -93,49 +94,14 @@ MODELS = [
     {"name": "gpt-5.4-nano",                             "backend": "openai", "think": False, "reasoning_effort": "medium"},
 ]
 
-# (model_name, task_name) pairs to skip. Populated empirically — some Ollama
-# models are unusably slow on specific tasks due to long system prompts that
-# Ollama re-prefills on every call. Dropped cells are reported as absent (not
-# as parse errors) so the report can flag them explicitly.
-#
-# Note: state_adaptation is currently disabled at the TASKS-list level, so the
-# previously-needed ("gemma4:31b-it-q4_K_M", "state_adaptation") entry is gone
-# from this set. Reinstate it if state_adaptation is re-enabled.
+# (model_name, task_name) pairs to skip. Reserved for empirically-discovered
+# unusable cells (long system prompts that an Ollama backend re-prefills on
+# every call). Dropped cells are reported as absent (not as parse errors) so
+# the report can flag them explicitly.
 SKIP_COMBOS = set()
 
 
 # --------- Task loaders ---------
-
-STATE_ADAPTATION_DIMS = [
-    "adaptation", "mitigation", "relief", "irrelevant",
-    "regulatory", "fiscal", "symbolic", "reversal",
-]
-
-
-def load_state_adaptation():
-    path = DATA / "private" / "bills_for_matthew.xlsx"
-    if not path.exists():
-        raise FileNotFoundError(
-            f"state_adaptation task requires {path}\n"
-            "This data is private (single RA's coding) and not redistributed. "
-            "Contact the repo owner or supply your own labelled set."
-        )
-    wb = openpyxl.load_workbook(path, read_only=True)
-    ws = wb["Bills"]
-    rows = list(ws.iter_rows(values_only=True))
-    df = pd.DataFrame(rows[1:], columns=rows[0])
-    label_cols = [f"manual_{d}" for d in STATE_ADAPTATION_DIMS]
-    df = df[df[label_cols].notna().all(axis=1)].reset_index(drop=True)
-    v1_idxs, v2_idxs = _v1_v2_indices(len(df))
-    items = []
-    for idx in v1_idxs + v2_idxs:
-        r = df.iloc[idx]
-        items.append({
-            "item_id": r["identifier"],
-            "user_content": f"Title: {r['title']}\nText: {r['abstract'] or ''}",
-            "gt": {d: int(r[f"manual_{d}"]) for d in STATE_ADAPTATION_DIMS},
-        })
-    return items
 
 
 def _v1_v2_indices(n_total: int):
@@ -305,25 +271,6 @@ def load_wesleyan_creative_ads():
 
 
 # --------- Task definitions ---------
-
-# state_adaptation is temporarily disabled for the N=250 run. Its 24 KB
-# multi-binary prompt made some Ollama cells unusable (~150 s/item on gemma4)
-# and substantially lengthened the full grid even on faster models. Task
-# config is preserved below, commented out, so it can be reinstated for a
-# dedicated single-task run later. Labels and loader still defined above.
-_STATE_ADAPTATION_TASK_DEF = {
-    "name": "state_adaptation",
-    "loader": load_state_adaptation,
-    "prompt_file": "state_adaptation.txt",
-    "label_kind": "multi_binary",
-    "labels": STATE_ADAPTATION_DIMS,
-    "json_schema": {
-        "type": "object",
-        "properties": {d: {"type": "integer", "enum": [0, 1]} for d in STATE_ADAPTATION_DIMS},
-        "required": STATE_ADAPTATION_DIMS,
-        "additionalProperties": False,
-    },
-}
 
 TASKS = [
     {

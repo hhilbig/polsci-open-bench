@@ -21,10 +21,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import f1_score
 
-from benchmark import TASKS as ACTIVE_TASKS, _STATE_ADAPTATION_TASK_DEF
-
-# Include state_adaptation (it was reinstated for the batching study).
-TASKS = [_STATE_ADAPTATION_TASK_DEF] + ACTIVE_TASKS
+from benchmark import TASKS
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
@@ -131,8 +128,24 @@ def _compute_agreement(preds, task_def):
     return results
 
 
+def _load_b1_from_serial():
+    """Read v2 serial predictions and tag them as batch_size=1 for join with the
+    batched grid. Adds the missing batch_latency_s column (= latency_s for serial)."""
+    serial_path = OUT / "predictions.csv"
+    if not serial_path.exists():
+        return pd.DataFrame()
+    s = pd.read_csv(serial_path, low_memory=False)
+    s["batch_size"] = 1
+    s["batch_latency_s"] = s["latency_s"]
+    return s
+
+
 def main():
     preds = pd.read_csv(OUT / "predictions_batched.csv", low_memory=False)
+    serial_b1 = _load_b1_from_serial()
+    if len(serial_b1):
+        preds = pd.concat([preds, serial_b1], ignore_index=True, sort=False)
+        print(f"[serial b=1] merged {len(serial_b1)} rows from predictions.csv into baseline")
     task_defs = {t["name"]: t for t in TASKS}
 
     # Agreement computed per task (needs access to the full task's prediction grid).

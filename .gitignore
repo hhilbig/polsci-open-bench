@@ -14,6 +14,9 @@ venv/
 .vscode/
 .idea/
 
+# Claude Code local state
+.claude/
+
 # Quarto
 /.quarto/
 *_files/
@@ -27,22 +30,24 @@ output/rerun.log
 *.backup
 *~
 
-# If you later make this repo public, add:
-# data/private/
-
-# Claude Code local state
-.claude/
-
 # Mid-flight benchmark working dir (overwritten by run scripts)
 output/tmp/
 
 # Personal calendar / iCal files
 *.ics
 
-# Large raw archive files (>100MB; re-download from figshare/Dataverse)
-data/wmp2022_raw/fb_2022_adid_text.csv.gz
+# Private data (single-RA coding, not for redistribution)
+data/private/
+
+# Raw source archives. Re-download from upstream sources (CMP/MARPOR,
+# H&K replication, Mellon BES, Wesleyan/WMP) when needed; not redistributed
+# to keep the repo light.
+data/bes_mii_raw/
+data/hk2025_raw/
+data/wmp2022_raw/
+
+# Historical run archives (intermediate results from earlier rounds)
+output/archive/
 
 # Working research scratchbook (not part of the public repo)
-quality_reports/related_benchmarks.qmd
-quality_reports/related_benchmarks.html
-quality_reports/related_benchmarks_files/
+quality_reports/
