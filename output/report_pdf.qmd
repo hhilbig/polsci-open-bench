@@ -207,10 +207,10 @@ Figure \ref{fig-family} aggregates the ten tasks into four families. The family-
 
 ```{r fig-family, fig.width=6, fig.height=4, out.width="0.85\\linewidth", fig.cap="Mean macro F1 within task family, by model. Each family contains two to four tasks; family-level averages are descriptive only. \\label{fig-family}"}
 fam_levels <- c(
-  "Sentiment / Stance / Tone\nWhat's the writer's stance?",
-  "Relevance / Incivility\nDoes this text fit the topic / cross a norm?",
-  "Event coding\nWhat kind of event happened?",
-  "Policy-topic coding\nWhat issue does this address?"
+  "Sentiment / Stance / Tone\n\"What's the writer's stance?\"",
+  "Relevance / Incivility\n\"Does this text fit the topic / cross a norm?\"",
+  "Event coding\n\"What kind of event happened?\"",
+  "Policy-topic coding\n\"What issue does this address?\""
 )
 family_label <- function(f) {
   recode(f,

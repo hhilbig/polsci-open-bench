@@ -19,7 +19,7 @@ Main takeaway: local open-weight models are competitive on many tasks, but the b
 ![Mean macro F1 across ten tasks per model](output/figures/fig-mean-f1.png)
 
 - **Local models are competitive on average.** The top three models, `gpt-5.5`, `claude-sonnet-4-6`, and `gemma4:31b`, are within 0.002 mean macro F1, and all seven within roughly 0.05.
-- **No model wins everywhere.** Top point estimates are split across four of the seven models. Family-level averages do not show a simple local-versus-API hierarchy.
+- **No model wins everywhere.** Top point estimates are split across four of the seven models. Task-family averages also do not separate local and API models cleanly.
 
 ![Mean macro F1 within task family, by model](output/figures/fig-family.png)
 
