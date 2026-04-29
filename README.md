@@ -19,7 +19,10 @@ Main takeaway: local open-weight models are competitive on many tasks, but the b
 ![Mean macro F1 across ten tasks per model](output/figures/fig-mean-f1.png)
 
 - **Local models are competitive on average.** The top three models, `gpt-5.5`, `claude-sonnet-4-6`, and `gemma4:31b`, are within 0.002 mean macro F1.
-- **No model wins everywhere.** Top point estimates are split across four of the seven models.
+- **No model wins everywhere.** Top point estimates are split across four of the seven models. Family-level averages do not show a simple local-versus-API hierarchy.
+
+![Mean macro F1 within task family, by model](output/figures/fig-family.png)
+
 - **Local inference is not uniformly slower.** On the M2 Pro machine used here, local latency ranges from about 0.6 s/item for `qwen3:30b-a3b` to about 4.7 s/item for `gemma4:31b`.
 - **Batching helps on short prompts.** At `b=10`, short prompt tasks usually see 1.2-2.7x speedups with limited F1 loss.
 - **Batching is fragile on long codebooks.** Malformed output rates rise sharply on some long, multi-class tasks; `gpt-5.5` reaches 68% malformed output on Halterman CCC at `b=10`.

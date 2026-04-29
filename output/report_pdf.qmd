@@ -225,7 +225,7 @@ fam_df <- df |>
   summarise(family_mean_f1 = mean(headline_f1, na.rm = TRUE), .groups = "drop") |>
   mutate(family = factor(family_label(family), levels = fam_levels))
 
-ggplot(fam_df, aes(x = fct_rev(model_short), y = family_mean_f1, fill = model_short)) +
+p_family <- ggplot(fam_df, aes(x = fct_rev(model_short), y = family_mean_f1, fill = model_short)) +
   geom_col(width = 0.75) +
   geom_text(aes(label = sprintf("%.2f", family_mean_f1)),
             hjust = -0.15, size = 2.4) +
@@ -247,6 +247,11 @@ ggplot(fam_df, aes(x = fct_rev(model_short), y = family_mean_f1, fill = model_sh
   theme(legend.position = "none",
         panel.grid.major.y = element_blank(),
         strip.text = element_text(face = "bold", size = 8))
+
+ggsave("output/figures/fig-family.png", plot = p_family,
+       width = 6, height = 4, dpi = 300, bg = "white")
+
+p_family
 ```
 
 ## Local inference is not uniformly slower
