@@ -2,7 +2,7 @@
 
 A small benchmark of LLMs for political science text classification.
 
-The benchmark compares four local open-weight models, run through Ollama, against three commercial API models, two from OpenAI and one from Anthropic. The task set covers ten classification problems drawn from published political science replication archives.
+The benchmark compares four local open-weight models, run through Ollama, against three commercial API models, two from OpenAI and one from Anthropic, on ten classification tasks from published political science replication archives.
 
 The goal is narrower than a general leaderboard: can local models be useful for applied political-text coding, and what tradeoffs appear in practice?
 
@@ -18,7 +18,7 @@ Main takeaway: local open-weight models are competitive on many tasks, but the b
 
 ![Mean macro F1 across ten tasks per model](output/figures/fig-mean-f1.png)
 
-- **Local models are competitive on average.** The top three models, `gpt-5.5`, `claude-sonnet-4-6`, and `gemma4:31b`, are within 0.002 mean macro F1.
+- **Local models are competitive on average.** The top three models, `gpt-5.5`, `claude-sonnet-4-6`, and `gemma4:31b`, are within 0.002 mean macro F1, and all seven within roughly 0.05.
 - **No model wins everywhere.** Top point estimates are split across four of the seven models. Family-level averages do not show a simple local-versus-API hierarchy.
 
 ![Mean macro F1 within task family, by model](output/figures/fig-family.png)
@@ -26,7 +26,7 @@ Main takeaway: local open-weight models are competitive on many tasks, but the b
 - **Local inference is not uniformly slower.** On the M2 Pro machine used here, local latency ranges from about 0.6 s/item for `qwen3:30b-a3b` to about 4.7 s/item for `gemma4:31b`.
 - **Batching helps on short prompts.** At `b=10`, short prompt tasks usually see 1.2-2.7x speedups with limited F1 loss.
 - **Batching is fragile on long codebooks.** Malformed output rates rise sharply on some long, multi-class tasks; `gpt-5.5` reaches 68% malformed output on Halterman CCC at `b=10`.
-- **Cost differs sharply across API tiers.** `gpt-5.4-nano` costs about $1.20 for 5,000 predictions, compared with $21.66 for `gpt-5.5`, with a 0.021 mean F1 lag.
+- **API costs differ sharply.** `gpt-5.4-nano` costs about $1.20 for 5,000 predictions, compared with $21.66 for `gpt-5.5`, with a 0.021 mean F1 lag.
 
 ## Scope
 
