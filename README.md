@@ -1,8 +1,10 @@
 # polsci-open-bench
 
-A small benchmark of LLMs for political-science text classification.
+A small benchmark of LLMs for political science text classification.
 
-The benchmark compares four local open-weight models, run through Ollama, against two OpenAI API models on ten classification tasks from published political-science replication archives. The goal is practical guidance for applied researchers, not a definitive model leaderboard.
+The benchmark compares four local open-weight models, run through Ollama, against three commercial API models, two from OpenAI and one from Anthropic. The task set covers ten classification problems drawn from published political science replication archives.
+
+The goal is narrower than a general leaderboard: can local models be useful for applied political-text coding, and what tradeoffs appear in practice?
 
 ## Main outputs
 
@@ -12,39 +14,31 @@ The benchmark compares four local open-weight models, run through Ollama, agains
 
 ## Headline findings
 
-Across the ten tasks, the top three models (gpt-5.5, Claude Sonnet 4.6, Gemma 4 31B) sit within 0.002 macro F1 of each other on the cross-task average, with per-task winners split across four of the seven models. Local inference can match or beat the commercial API tier on speed, and batching helps on short prompt tasks but raises the rate of malformed output on tasks with long, multi-class codebooks.
+Main takeaway: local open-weight models are competitive on many tasks, but the benchmark does not support a simple local-versus-API ranking. Task family, metric choice, and batching strategy matter more.
 
-![Mean macro F1 across ten tasks per model. Large filled circles show cross-task means; small dots show per-task macro F1 values.](output/figures/fig-mean-f1.png)
+![Mean macro F1 across ten tasks per model](output/figures/fig-mean-f1.png)
 
-- **Local models are competitive on average.** Top three (gpt-5.5, Claude Sonnet 4.6, Gemma 4 31B) within 0.002 mean macro F1; all seven within roughly 0.05.
-- **No model wins everywhere.** Per-task winners split across four of the seven models; family-level patterns do not show a simple local-versus-API hierarchy.
-- **Local inference is not uniformly slower.** Per-item latency on the M2 Pro ranges from about 0.6 s (Qwen3-30B-A3B, MoE) to about 4.7 s (Gemma 4 31B, dense). Parameter count is a poor guide to speed.
-- **Batching helps on short prompts, hurts on long codebooks.** At b=10 short prompt tasks see 1.2-2.7x speedup with little F1 loss. On long codebooks, malformed-JSON rates climb sharply (gpt-5.5 hits 68% on Halterman CCC at b=10).
-- **Cost.** gpt-5.4-nano is roughly 17 times cheaper than gpt-5.5 ($1.20 vs $21.66 for 5,000 predictions) at a 0.021 F1 lag. Local models avoid per-item charges.
-
-Full discussion, metric robustness checks, and per-task tables are in [`output/report_pdf.pdf`](output/report_pdf.pdf).
+- **Local models are competitive on average.** The top three models, `gpt-5.5`, `claude-sonnet-4-6`, and `gemma4:31b`, are within 0.002 mean macro F1.
+- **No model wins everywhere.** Top point estimates are split across four of the seven models.
+- **Local inference is not uniformly slower.** On the M2 Pro machine used here, local latency ranges from about 0.6 s/item for `qwen3:30b-a3b` to about 4.7 s/item for `gemma4:31b`.
+- **Batching helps on short prompts.** At `b=10`, short prompt tasks usually see 1.2-2.7x speedups with limited F1 loss.
+- **Batching is fragile on long codebooks.** Malformed output rates rise sharply on some long, multi-class tasks; `gpt-5.5` reaches 68% malformed output on Halterman CCC at `b=10`.
+- **Cost differs sharply across API tiers.** `gpt-5.4-nano` costs about $1.20 for 5,000 predictions, compared with $21.66 for `gpt-5.5`, with a 0.021 mean F1 lag.
 
 ## Scope
 
-- **Tasks:** 10 political-science classification tasks
-- **Items:** 500 per task (random seed 20260422)
-- **Models:** 4 local Ollama models + 3 commercial API models (2 OpenAI, 1 Anthropic)
+- **Tasks:** 10 political science classification tasks
+- **Items:** 500 per task, fixed random seed
+- **Models:** 4 local Ollama models + 3 commercial API models
 - **Predictions:** 35,000 serial + 44,500 batched
-- **Metrics:** macro F1, accuracy, MCC, latency, parse-error rate
-- **Local hardware:** Apple M2 Pro, 32 GB unified memory, macOS Tahoe 26.1, Ollama
+- **Metrics:** macro F1, accuracy, MCC, latency, malformed-output rate
+- **Local hardware:** Apple M2 Pro, 32 GB unified memory, macOS Tahoe 26.1, Ollama 0.19.0
 
-## What this benchmark is for
+## What this benchmark is, and is not
 
-This benchmark is intended to help applied researchers decide whether local models are worth testing for political-text classification workflows. It is most useful for questions such as:
+This benchmark is for applied researchers considering local LLMs for political-text classification. It focuses on accuracy, speed, batching, and task heterogeneity under a realistic laptop setup.
 
-- Are local models competitive with commercial ones on common political science classification tasks?
-- How long do they take, and can they run on a single laptop?
-- Does batching speed them up?
-- How much does the answer vary across tasks?
-
-## What this benchmark is not
-
-This is not a universal LLM leaderboard. The model set is convenience-selected, prompts are not separately optimized for each model, and the task average is descriptive rather than an estimand. For a new project, the safest workflow is still to validate a few candidate models on a task-specific labeled sample.
+It is not a universal LLM leaderboard. The model set is practical rather than exhaustive, prompts are not optimized separately for each model, and the cross-task average is descriptive. For a new project, validate a few candidate models on labeled examples from the target task before scaling up.
 
 ## Tasks
 
@@ -79,31 +73,15 @@ Local models ran with thinking off. OpenAI calls used strict structured JSON out
 
 ## Reproduce
 
-Install dependencies:
+Install dependencies and set API keys:
 
 ```bash
-pip install openai httpx openpyxl pandas pyyaml scikit-learn
-```
-
-Set up backends:
-
-```bash
+pip install openai anthropic httpx openpyxl pandas pyyaml scikit-learn
 export OPENAI_API_KEY=...
-export ANTHROPIC_API_KEY=...   # or save to ~/.anthropic_api_key (mode 0600)
-export OLLAMA_URL=http://localhost:11434  # optional; default shown
-ollama pull gemma4:31b-it-q4_K_M
-ollama pull qwen3:14b-q4_K_M
-ollama pull qwen3:30b-a3b-q4_K_M
-ollama pull mistral-small:24b-instruct-2501-q4_K_M
+export ANTHROPIC_API_KEY=...
 ```
 
-The benchmark was run with Ollama 0.19.0; quantization is `Q4_K_M` for all four local models (the suffix in the model names).
-
-```bash
-pip install anthropic    # in addition to the dependencies above
-```
-
-Run the serial benchmark:
+Run the serial benchmark and rebuild summaries:
 
 ```bash
 python code/benchmark.py
@@ -123,40 +101,16 @@ Render the report:
 quarto render output/report_pdf.qmd
 ```
 
-<details>
-<summary>Advanced: selective reruns</summary>
-
-```bash
-# Run one task across all models (after editing a prompt)
-python code/benchmark.py --only-task gilardi_stance
-
-# Run one (task, model) cell and merge into the existing predictions CSV
-python code/benchmark.py \
-  --only-model qwen3:30b-a3b-q4_K_M \
-  --only-task halterman_ccc_protest \
-  --merge-into output/predictions.csv
-
-# Batched run for a single (task, model) cell
-python code/batch_benchmark.py \
-  --only-task gilardi_relevance \
-  --batch-sizes 10,20
-```
-</details>
-
-See [`docs/schema.md`](docs/schema.md) for output CSV column definitions.
+See [`docs/reproduce.md`](docs/reproduce.md) for Ollama setup, model pulls, selective reruns, and output schema.
 
 ## Repo layout
 
 ```
-code/
-  benchmark.py              serial runner
-  batch_benchmark.py        batched runner (b in {1, 10, 20})
-  build_summary.py          builds summary.csv
-  build_summary_batched.py  builds summary_batched.csv
-data/                       cleaned per-task CSVs
-prompts/                    one prompt file per task
-output/                     predictions, summaries, reports
-docs/                       prompt provenance, schema, twitter thread
+code/      benchmark runners and summary builders
+data/      cleaned per-task CSVs
+prompts/   one prompt file per task
+output/    predictions, summaries, and reports
+docs/      prompt provenance, schema, reproduction notes, public thread
 ```
 
 ## Add a task
@@ -167,11 +121,9 @@ docs/                       prompt provenance, schema, twitter thread
 4. Run `python code/benchmark.py --only-task {task_name}`.
 5. Rebuild summaries with `python code/build_summary.py`.
 
-See existing task loaders for examples.
-
 ## Citation
 
-If you use this benchmark in academic work, please cite both the report and the source papers for the individual tasks (listed in the Tasks table above and in [`docs/prompts_provenance.md`](docs/prompts_provenance.md)).
+If you use this benchmark in academic work, please cite both the report and the source papers for the individual tasks (listed in [`docs/prompts_provenance.md`](docs/prompts_provenance.md)).
 
 ## License
 
