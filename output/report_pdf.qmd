@@ -194,7 +194,7 @@ p_mean_f1 <- ggplot() +
 
 dir.create("output/figures", showWarnings = FALSE, recursive = TRUE)
 ggsave("output/figures/fig-mean-f1.png", plot = p_mean_f1,
-       width = 6, height = 3.5, dpi = 200, bg = "white")
+       width = 6, height = 3.5, dpi = 300, bg = "white")
 
 p_mean_f1
 ```
