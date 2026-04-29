@@ -6,8 +6,7 @@ The benchmark compares four local open-weight models, run through Ollama, agains
 
 ## Main outputs
 
-- Short PDF report: [`output/report_pdf.pdf`](output/report_pdf.pdf)
-- Full HTML report: [`output/report.html`](output/report.html)
+- PDF report: [`output/report_pdf.pdf`](output/report_pdf.pdf)
 - Serial predictions: [`output/predictions.csv`](output/predictions.csv)
 - Batched predictions: [`output/predictions_batched.csv`](output/predictions_batched.csv)
 
@@ -118,10 +117,9 @@ python code/batch_benchmark.py
 python code/build_summary_batched.py
 ```
 
-Render reports:
+Render the report:
 
 ```bash
-quarto render output/report.qmd
 quarto render output/report_pdf.qmd
 ```
 

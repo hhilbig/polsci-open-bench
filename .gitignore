@@ -28,6 +28,14 @@ output/*.fls
 output/*.synctex.gz
 output/*.tex
 
+# Internal long-form HTML report (not part of the public release;
+# the public deliverable is output/report_pdf.pdf)
+output/report.html
+output/report.qmd
+
+# Internal benchmark-candidates inventory schema (working notes)
+docs/inventory_schema.md
+
 # Logs / transient outputs
 *.log
 output/run.log

@@ -364,7 +364,7 @@ Zhang, M., Cakmak, F., Neumann, M., Zimmeck, S., Oleinikov, P., Yao, J., Yu, H.,
 
 # Companion materials {.unnumbered}
 
-Full per-task tables, malformed output tables, prompt provenance, batched inference details, summary CSVs, and reproduction instructions are in the HTML companion at `output/report.html` (and on the GitHub repository).
+Prompt provenance, batched inference details, summary CSVs, and reproduction instructions are on the GitHub repository at <https://github.com/hhilbig/polsci-open-bench>.
 
 ```{=latex}
 \begin{landscape}
