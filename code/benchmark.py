@@ -66,6 +66,11 @@ import httpx
 import pandas as pd
 from openai import OpenAI
 
+try:
+    import anthropic
+except ImportError:
+    anthropic = None
+
 
 # --------- Config ---------
 
@@ -86,12 +91,13 @@ SEED = 20260422
 SEED_V2 = SEED + 1            # secondary seed for v2-new draw
 
 MODELS = [
-    {"name": "gemma4:31b-it-q4_K_M",                     "backend": "ollama", "think": False},
-    {"name": "qwen3:14b-q4_K_M",                         "backend": "ollama", "think": False},
-    {"name": "qwen3:30b-a3b-q4_K_M",                     "backend": "ollama", "think": False},
-    {"name": "mistral-small:24b-instruct-2501-q4_K_M",   "backend": "ollama", "think": False},
-    {"name": "gpt-5.5",                                  "backend": "openai", "think": False, "reasoning_effort": "medium"},
-    {"name": "gpt-5.4-nano",                             "backend": "openai", "think": False, "reasoning_effort": "medium"},
+    {"name": "gemma4:31b-it-q4_K_M",                     "backend": "ollama",    "think": False},
+    {"name": "qwen3:14b-q4_K_M",                         "backend": "ollama",    "think": False},
+    {"name": "qwen3:30b-a3b-q4_K_M",                     "backend": "ollama",    "think": False},
+    {"name": "mistral-small:24b-instruct-2501-q4_K_M",   "backend": "ollama",    "think": False},
+    {"name": "gpt-5.5",                                  "backend": "openai",    "think": False, "reasoning_effort": "medium"},
+    {"name": "gpt-5.4-nano",                             "backend": "openai",    "think": False, "reasoning_effort": "medium"},
+    {"name": "claude-sonnet-4-6",                        "backend": "anthropic", "think": False},
 ]
 
 # (model_name, task_name) pairs to skip. Reserved for empirically-discovered
@@ -540,6 +546,52 @@ def classify_openai(client, model, system_prompt, user_content, json_schema,
     }
 
 
+def _load_anthropic_key():
+    """Return Anthropic API key from ~/.anthropic_api_key (preferred) or ANTHROPIC_API_KEY env var."""
+    key_file = Path.home() / ".anthropic_api_key"
+    if key_file.exists():
+        return key_file.read_text().strip()
+    return os.environ.get("ANTHROPIC_API_KEY", "").strip()
+
+
+def make_anthropic_client():
+    """Return an Anthropic client, or None if SDK or key unavailable.
+
+    300s timeout per request: long enough for any single classification call,
+    short enough that a hung connection bubbles up as an exception (caught by
+    run_task's try/except) instead of stalling the whole grid.
+    """
+    if anthropic is None:
+        return None
+    key = _load_anthropic_key()
+    if not key:
+        return None
+    return anthropic.Anthropic(api_key=key, timeout=300.0, max_retries=2)
+
+
+def classify_anthropic(client, model, system_prompt, user_content, json_schema):
+    """One-shot classification via Anthropic Messages API with tool-use forced
+    to return JSON matching the task schema. Mirrors classify_openai's interface."""
+    t0 = time.perf_counter()
+    resp = client.messages.create(
+        model=model,
+        max_tokens=2000,
+        system=system_prompt,
+        messages=[{"role": "user", "content": user_content}],
+        tools=[{
+            "name": "classify",
+            "description": "Return the classification for the input.",
+            "input_schema": json_schema,
+        }],
+        tool_choice={"type": "tool", "name": "classify"},
+    )
+    latency = time.perf_counter() - t0
+    tool_use = next((b for b in resp.content if getattr(b, "type", None) == "tool_use"), None)
+    content = json.dumps(tool_use.input) if tool_use is not None else ""
+    eval_count = resp.usage.output_tokens if resp.usage else None
+    return {"content": content, "latency_s": latency, "eval_count": eval_count}
+
+
 def warmup_ollama(model):
     try:
         with httpx.Client(timeout=600) as c:
@@ -555,7 +607,7 @@ def warmup_ollama(model):
 
 # --------- Orchestration ---------
 
-def run_task(task, models, oai, checkpoint_path, only_new_items=False):
+def run_task(task, models, oai, checkpoint_path, only_new_items=False, anthropic_client=None):
     system_prompt = (PROMPTS / task["prompt_file"]).read_text()
     items = task["loader"]()
     if only_new_items:
@@ -577,6 +629,11 @@ def run_task(task, models, oai, checkpoint_path, only_new_items=False):
             try:
                 if m["backend"] == "ollama":
                     r = classify_ollama(m["name"], system_prompt, it["user_content"], think=m["think"])
+                elif m["backend"] == "anthropic":
+                    if anthropic_client is None:
+                        raise RuntimeError("Anthropic backend selected but no client (SDK or key missing).")
+                    r = classify_anthropic(anthropic_client, m["name"], system_prompt,
+                                           it["user_content"], task["json_schema"])
                 else:
                     r = classify_openai(oai, m["name"], system_prompt, it["user_content"], task["json_schema"],
                                         reasoning_effort=m.get("reasoning_effort"))
@@ -672,6 +729,7 @@ def main():
 
     OUT.mkdir(parents=True, exist_ok=True)
     oai = OpenAI()
+    anth = make_anthropic_client()
 
     tasks = TASKS
     if args.only_task:
@@ -689,11 +747,14 @@ def main():
 
     all_rows = []
     for task in tasks:
-        all_rows.extend(run_task(task, models, oai, args.output, only_new_items=args.only_new_items))
+        task_rows = run_task(task, models, oai, args.output,
+                             only_new_items=args.only_new_items,
+                             anthropic_client=anth)
+        all_rows.extend(task_rows)
         pd.DataFrame(all_rows).to_csv(args.output, index=False)
-
-    if args.merge_into:
-        merge_into(Path(args.merge_into), all_rows)
+        # Per-task merge so a mid-run kill preserves completed tasks.
+        if args.merge_into:
+            merge_into(Path(args.merge_into), task_rows)
 
     print("\n=== ALL DONE ===", flush=True)
     print(f"  predictions: {args.output}", flush=True)
