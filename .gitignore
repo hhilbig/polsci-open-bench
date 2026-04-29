@@ -21,6 +21,13 @@ venv/
 /.quarto/
 *_files/
 
+# LaTeX intermediates from quarto pdf renders (output/report_pdf.qmd)
+output/*.aux
+output/*.fdb_latexmk
+output/*.fls
+output/*.synctex.gz
+output/*.tex
+
 # Logs / transient outputs
 *.log
 output/run.log
