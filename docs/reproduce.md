@@ -1,6 +1,6 @@
 # Reproduction guide
 
-Detailed setup, model pulls, and selective reruns for `polsci-open-bench`.
+Detailed setup, model pulls, selective reruns, and instructions for adding a new task.
 
 ## Backends
 
@@ -73,3 +73,13 @@ python code/build_summary_batched.py
 ## Output schema
 
 Column definitions for the predictions and summary CSVs are in [`schema.md`](schema.md).
+
+## Adding a new task
+
+1. Add a cleaned task CSV to `data/`.
+2. Add a prompt to `prompts/`.
+3. Add a task config and loader in `code/benchmark.py`.
+4. Run `python code/benchmark.py --only-task {task_name}`.
+5. Rebuild summaries with `python code/build_summary.py`.
+
+See existing task loaders in `code/benchmark.py` for examples.

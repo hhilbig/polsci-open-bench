@@ -16,10 +16,14 @@ The goal is narrower than a general leaderboard: can local models be useful for 
 
 Main takeaway: local open-weight models are competitive on many tasks, but the benchmark does not support a simple local-versus-API ranking. Task family, metric choice, and batching strategy matter more.
 
+**Figure 1. Mean macro F1 across ten tasks per model.**
+
 ![Mean macro F1 across ten tasks per model](output/figures/fig-mean-f1.png)
 
 - **Local models are competitive on average.** The top three models, `gpt-5.5`, `claude-sonnet-4-6`, and `gemma4:31b`, are within 0.002 mean macro F1, and all seven within roughly 0.05.
 - **No model wins everywhere.** Top point estimates are split across four of the seven models. Task-family averages also do not separate local and API models cleanly.
+
+**Figure 2. Mean macro F1 within task family, by model.**
 
 ![Mean macro F1 within task family, by model](output/figures/fig-family.png)
 
@@ -39,9 +43,7 @@ Main takeaway: local open-weight models are competitive on many tasks, but the b
 
 ## What this benchmark is, and is not
 
-This benchmark is for applied researchers considering local LLMs for political-text classification. It focuses on accuracy, speed, batching, and task heterogeneity under a realistic laptop setup.
-
-It is not a universal LLM leaderboard. The model set is practical rather than exhaustive, prompts are not optimized separately for each model, and the cross-task average is descriptive. For a new project, validate a few candidate models on labeled examples from the target task before scaling up.
+This benchmark is for applied researchers considering local LLMs for political-text classification. It is not a universal leaderboard: the model set is practical rather than exhaustive, prompts are not optimized separately for each model, and the cross-task average is descriptive. For a new project, validate a few candidate models on labeled examples from the target task before scaling up.
 
 ## Tasks
 
@@ -104,25 +106,17 @@ Render the report:
 quarto render output/report_pdf.qmd
 ```
 
-See [`docs/reproduce.md`](docs/reproduce.md) for Ollama setup, model pulls, selective reruns, and output schema.
+See [`docs/reproduce.md`](docs/reproduce.md) for setup, selective reruns, output schema, and adding new tasks.
 
 ## Repo layout
 
 ```
 code/      benchmark runners and summary builders
-data/      cleaned per-task CSVs
-prompts/   one prompt file per task
-output/    predictions, summaries, and reports
-docs/      prompt provenance, schema, reproduction notes, public thread
+data/      cleaned task files
+prompts/   task prompts
+output/    predictions, summaries, reports
+docs/      provenance, schema, reproduction notes
 ```
-
-## Add a task
-
-1. Add a cleaned task CSV to `data/`.
-2. Add a prompt to `prompts/`.
-3. Add a task config and loader in `code/benchmark.py`.
-4. Run `python code/benchmark.py --only-task {task_name}`.
-5. Rebuild summaries with `python code/build_summary.py`.
 
 ## Citation
 
