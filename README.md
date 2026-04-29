@@ -11,12 +11,26 @@ The benchmark compares four local open-weight models, run through Ollama, agains
 - Serial predictions: [`output/predictions.csv`](output/predictions.csv)
 - Batched predictions: [`output/predictions_batched.csv`](output/predictions_batched.csv)
 
+## Headline findings
+
+Across the ten tasks, the top three models (gpt-5.5, Claude Sonnet 4.6, Gemma 4 31B) sit within 0.002 macro F1 of each other on the cross-task average, with per-task winners split across four of the seven models. Local inference can match or beat the commercial API tier on speed, and batching helps on short prompt tasks but raises the rate of malformed output on tasks with long, multi-class codebooks.
+
+![Mean macro F1 across ten tasks per model. Large filled circles show cross-task means; small dots show per-task macro F1 values.](output/figures/fig-mean-f1.png)
+
+- **Local models are competitive on average.** Top three (gpt-5.5, Claude Sonnet 4.6, Gemma 4 31B) within 0.002 mean macro F1; all seven within roughly 0.05.
+- **No model wins everywhere.** Per-task winners split across four of the seven models; family-level patterns do not show a simple local-versus-API hierarchy.
+- **Local inference is not uniformly slower.** Per-item latency on the M2 Pro ranges from about 0.6 s (Qwen3-30B-A3B, MoE) to about 4.7 s (Gemma 4 31B, dense). Parameter count is a poor guide to speed.
+- **Batching helps on short prompts, hurts on long codebooks.** At b=10 short prompt tasks see 1.2-2.7x speedup with little F1 loss. On long codebooks, malformed-JSON rates climb sharply (gpt-5.5 hits 68% on Halterman CCC at b=10).
+- **Cost.** gpt-5.4-nano is roughly 17 times cheaper than gpt-5.5 ($1.20 vs $21.66 for 5,000 predictions) at a 0.021 F1 lag. Local models avoid per-item charges.
+
+Full discussion, metric robustness checks, and per-task tables are in [`output/report_pdf.pdf`](output/report_pdf.pdf).
+
 ## Scope
 
 - **Tasks:** 10 political-science classification tasks
 - **Items:** 500 per task (random seed 20260422)
-- **Models:** 4 local Ollama models + 2 OpenAI API models
-- **Predictions:** 30,000 serial + 44,500 batched
+- **Models:** 4 local Ollama models + 3 commercial API models (2 OpenAI, 1 Anthropic)
+- **Predictions:** 35,000 serial + 44,500 batched
 - **Metrics:** macro F1, accuracy, MCC, latency, parse-error rate
 - **Local hardware:** Apple M2 Pro, 32 GB unified memory, macOS Tahoe 26.1, Ollama
 
@@ -24,10 +38,10 @@ The benchmark compares four local open-weight models, run through Ollama, agains
 
 This benchmark is intended to help applied researchers decide whether local models are worth testing for political-text classification workflows. It is most useful for questions such as:
 
-- Are local models close to API models on common political-text coding tasks?
-- How large are speed differences on consumer hardware?
-- When does batching help, and when does it create parsing failures?
-- How sensitive are conclusions to task family and metric choice?
+- Are local models competitive with commercial ones on common political science classification tasks?
+- How long do they take, and can they run on a single laptop?
+- Does batching speed them up?
+- How much does the answer vary across tasks?
 
 ## What this benchmark is not
 
@@ -60,8 +74,9 @@ Prompt provenance is documented in [`docs/prompts_provenance.md`](docs/prompts_p
 | `mistral-small:24b-instruct-2501-q4_K_M` | Ollama | 24B dense, 4-bit |
 | `gpt-5.5` | OpenAI | flagship, `reasoning_effort=medium` |
 | `gpt-5.4-nano` | OpenAI | small/cheap, `reasoning_effort=medium` |
+| `claude-sonnet-4-6` | Anthropic | flagship-tier |
 
-Local models ran with thinking off. OpenAI calls used strict structured JSON outputs.
+Local models ran with thinking off. OpenAI calls used strict structured JSON outputs; Anthropic calls used tool-use forcing for the same schema.
 
 ## Reproduce
 
@@ -75,11 +90,18 @@ Set up backends:
 
 ```bash
 export OPENAI_API_KEY=...
+export ANTHROPIC_API_KEY=...   # or save to ~/.anthropic_api_key (mode 0600)
 export OLLAMA_URL=http://localhost:11434  # optional; default shown
 ollama pull gemma4:31b-it-q4_K_M
 ollama pull qwen3:14b-q4_K_M
 ollama pull qwen3:30b-a3b-q4_K_M
 ollama pull mistral-small:24b-instruct-2501-q4_K_M
+```
+
+The benchmark was run with Ollama 0.19.0; quantization is `Q4_K_M` for all four local models (the suffix in the model names).
+
+```bash
+pip install anthropic    # in addition to the dependencies above
 ```
 
 Run the serial benchmark:

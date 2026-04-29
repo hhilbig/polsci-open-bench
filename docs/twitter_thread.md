@@ -14,21 +14,21 @@ posting.
 
 ### Post 1 — Hook
 
-<!-- 271 chars -->
+<!-- 268 chars -->
 
-Can local LLMs do political-science text classification well enough to replace API models for some applied research tasks?
+Can local LLMs do political science text classification well enough to replace API models for some applied research tasks?
 
-I ran a small benchmark: 10 classification tasks, 6 models, 500 items per task, 30,000 predictions. The goal is practical guidance, not a definitive leaderboard.
+Small benchmark: 10 classification tasks, 7 models (4 local + gpt-5.5, gpt-5.4-nano, Claude Sonnet 4.6), 500 items per task. Practical guidance, not a leaderboard.
 
 ---
 
 ### Post 2 — Headline performance result
 
-<!-- 268 chars -->
+<!-- 269 chars -->
 
-Main result: the best local model is essentially tied with the strongest API model on average.
+Main result: the top three models (gpt-5.5, Claude Sonnet 4.6, Gemma 4 31B) are essentially tied on average, within 0.002 mean macro F1.
 
-gpt-5.5 has the highest mean F1, but Gemma 4 31B is only 0.002 points behind. Most task-level differences are within bootstrap-CI overlap, so I would not read this as a sharp ranking.
+Most task-level differences fall inside bootstrap-CI overlap, so I would not read this as a sharp ranking.
 
 > Attach Figure 1 (mean F1 with per-task dots)
 
@@ -60,23 +60,23 @@ Gemma 4 31B is the slowest in the grid, but Qwen3-30B-A3B (a local mixture-of-ex
 
 ### Post 5 — Batching
 
-<!-- 277 chars -->
+<!-- 273 chars -->
 
 Batching helps, but not everywhere.
 
-On short-prompt tasks, b=10 gives 1.5–4x speedups with little F1 loss. On long-codebook tasks, batching becomes fragile: gpt-5.5 batched on Halterman CCC at b=10 emits malformed JSON for 68% of items. gpt-5.4-nano is more robust there.
+On short prompt tasks, b=10 gives 1.2–2.7x speedups with little F1 loss. On long codebook tasks, batching becomes fragile: gpt-5.5 batched on Halterman CCC at b=10 emits malformed JSON for 68% of items. gpt-5.4-nano is more robust there.
 
-> Attach Figure 4 (speedup vs delta-F1, batched cells)
+> Attach Figure 4 (speedup vs delta F1, batched cells)
 
 ---
 
 ### Post 6 — Bottom line + link
 
-<!-- 277 chars -->
+<!-- 275 chars -->
 
-Bottom line: local open-weight models are credible for many political-science classification workflows, but not as a blanket replacement for API models.
+Bottom line: local open-weight models are credible for many political science classification workflows, but the results do not support a simple local versus API ranking.
 
-Task-level reversals are common. The aggregate leaderboard is useful for screening candidates, not for choosing a production model without validation.
+Task-level reversals are common. The aggregate leaderboard is for screening candidates, not for picking one without validation.
 
 PDF + code: <LINK>
 
@@ -85,6 +85,6 @@ PDF + code: <LINK>
 ## Notes for posting
 
 - Order: 1 → 2 → 3 → 4 → 5 → 6, replying to each previous post.
-- Alt text for images: keep short ("Figure 1: bar chart of mean F1 across 6 models with per-task dots overlaid").
+- Alt text for images: keep short ("Figure 1: bar chart of mean F1 across 7 models with per-task dots overlaid").
 - Bluesky: 300-char limit; thread reads identically.
 - Mastodon: 500-char limit; could merge posts 5 and 6 if desired.
