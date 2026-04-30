@@ -36,6 +36,9 @@ output/report.qmd
 # Internal benchmark-candidates inventory schema (working notes)
 docs/inventory_schema.md
 
+# Launch kit (figures + tweet drafts staged for posting; not part of the repo)
+launch/
+
 # Logs / transient outputs
 *.log
 output/run.log
