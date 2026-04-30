@@ -266,7 +266,7 @@ speed_df <- df |>
             median_latency = median(median_latency_s, na.rm = TRUE),
             .groups = "drop")
 
-ggplot(speed_df, aes(x = median_latency, y = mean_f1, color = model_short)) +
+p_speed <- ggplot(speed_df, aes(x = median_latency, y = mean_f1, color = model_short)) +
   geom_point(size = 4, stroke = 1.2) +
   geom_text_repel(aes(label = model_short), size = 2.8, box.padding = 0.6,
                   point.padding = 0.4, segment.size = 0.3, min.segment.length = 0,
@@ -284,6 +284,11 @@ ggplot(speed_df, aes(x = median_latency, y = mean_f1, color = model_short)) +
   theme_hanno(fontsize = 11) +
   theme(legend.position = "none",
         panel.grid.minor = element_blank())
+
+ggsave("output/figures/fig-speed.png", plot = p_speed,
+       width = 6, height = 3.5, dpi = 300, bg = "white")
+
+p_speed
 ```
 
 All four local models ran the full benchmark on a single 32 GB Apple Silicon MacBook; the largest, Gemma 4 31B, fit comfortably in unified memory. Latencies will reorder on different hardware, especially among the local models, depending on memory and compute. For reference, the API tiers in this run sat between roughly 0.7 and 1.8 s/item end-to-end, but those numbers mix model speed with provider serving load, network, and queueing, so they are not directly comparable to local inference time and are not shown in the figure.
