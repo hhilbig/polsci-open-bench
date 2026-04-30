@@ -1,6 +1,6 @@
 ---
 title: "Benchmarking local and commercial LLMs for political science text classification"
-author: "Hanno Hilbig"
+author: "Hanno Hilbig\\thanks{hhilbig@ucdavis.edu. Code and data: \\url{https://github.com/hhilbig/polsci-open-bench}.}"
 date: "2026-04-29"
 format:
   pdf:
