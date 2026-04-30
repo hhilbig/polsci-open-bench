@@ -1,7 +1,7 @@
 ---
 title: "Benchmarking local and commercial LLMs for political science text classification"
 author: "Hanno Hilbig"
-date: "2026-04-27"
+date: "2026-04-29"
 format:
   pdf:
     documentclass: article
@@ -423,7 +423,7 @@ winners <- df |>
     MCC         = sprintf("%.3f", mcc)
   )
 kable(winners, align = "lllll", booktabs = TRUE,
-      caption = "Top model per task by macro F1, with accuracy and MCC for the same model on the same task. CIs and the full per-(task, model) table are in the HTML companion.") |>
+      caption = "Top model per task by macro F1, with accuracy and MCC for the same model on the same task. CIs and the full per-(task, model) table are on the GitHub repository.") |>
   kable_styling(font_size = 9, latex_options = c("hold_position"))
 ```
 
