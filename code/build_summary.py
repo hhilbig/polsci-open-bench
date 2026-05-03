@@ -3,42 +3,26 @@
 Build output/summary.csv from output/predictions.csv.
 
 Per-(task, model) row includes headline_f1, accuracy, parse_err_rate,
-latency percentiles, GPU-hours-per-1000-items (Ollama only), and 95%
+latency percentiles, GPU-hours-per-1000-items (manifest `compute_class:
+local`), and 95%
 paired-bootstrap CIs on the headline metric (1000 iterations, paired
 by item across models so the CIs support model-vs-model comparison).
 
 Usage:
   python3 code/build_summary.py           # reads output/predictions.csv, writes output/summary.csv
 """
+import argparse
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from sklearn.metrics import f1_score, matthews_corrcoef
 
-from benchmark import TASKS  # reuse the canonical task definitions
+from model_registry import add_model_loading_args, load_model_definitions_from_args
+from task_registry import add_task_loading_args, load_task_definitions_from_args
 
 BOOTSTRAP_ITERS = 1000
 BOOTSTRAP_SEED = 20260424
-OLLAMA_MODELS = {
-    "gemma4:31b-it-q4_K_M",
-    "qwen3:14b-q4_K_M",
-    "qwen3:30b-a3b-q4_K_M",
-    "mistral-small:24b-instruct-2501-q4_K_M",
-}
-
-# Observed average $/call for OpenAI models in the v2 (2026-04-25) run.
-# Ground truth: /v1/organization/costs ledger entries for the v2 grid only,
-# divided by call count (5,000 per model = 10 tasks × 500 items).
-# Use as observed averages for cost_per_1000_correct estimates.
-USD_PER_CALL = {
-    # v2 medium reasoning, ground truth from cost ledger:
-    "gpt-5.5":      0.00433,    # $21.66 / 5,000 calls
-    "gpt-5.4-nano": 0.00024,    # $1.20 / 5,000 calls
-    # not in v2 grid (historical / placeholder):
-    "gpt-5.4":      0.00300,
-    "gpt-5.4-mini": 0.00100,
-}
 
 
 HERE = Path(__file__).resolve().parent
@@ -218,9 +202,21 @@ def _bootstrap_cis(preds, task_defs):
     return out
 
 
+def _model_lookup(models):
+    return {model["name"]: model for model in models}
+
+
 def main():
-    preds = pd.read_csv(OUT / "predictions.csv")
-    task_defs = {t["name"]: t for t in TASKS}
+    ap = argparse.ArgumentParser(description=__doc__)
+    add_task_loading_args(ap)
+    add_model_loading_args(ap)
+    ap.add_argument("--predictions", default=str(OUT / "predictions.csv"))
+    ap.add_argument("--output", default=str(OUT / "summary.csv"))
+    args = ap.parse_args()
+
+    preds = pd.read_csv(args.predictions, low_memory=False)
+    task_defs = {t["name"]: t for t in load_task_definitions_from_args(args)}
+    model_lookup = _model_lookup(load_model_definitions_from_args(args))
     rows = []
     for (task, model), g in preds.groupby(["task", "model"]):
         if task not in task_defs:
@@ -236,15 +232,22 @@ def main():
     df["headline_f1_lo"] = df.apply(lambda r: cis.get((r["task"], r["model"]), (np.nan, np.nan))[0], axis=1)
     df["headline_f1_hi"] = df.apply(lambda r: cis.get((r["task"], r["model"]), (np.nan, np.nan))[1], axis=1)
 
-    # GPU-hours per 1000 (Ollama only; OpenAI gets NaN)
+    # GPU-hours per 1000 for self-hosted / local models only.
     df["gpu_hours_per_1000"] = df.apply(
-        lambda r: (r["median_latency_s"] * 1000 / 3600) if r["model"] in OLLAMA_MODELS else np.nan,
+        lambda r: (
+            r["median_latency_s"] * 1000 / 3600
+            if model_lookup.get(r["model"], {}).get("compute_class") == "local"
+            else np.nan
+        ),
         axis=1,
     )
-    # USD per 1000 calls (OpenAI only; Ollama gets NaN). Uses observed averages
-    # from /v1/organization/costs in the v2 run (see USD_PER_CALL dict at the top).
+    # USD per 1000 calls for any model manifest that provides a per-call cost.
     df["usd_per_1000"] = df.apply(
-        lambda r: (USD_PER_CALL[r["model"]] * 1000) if r["model"] in USD_PER_CALL else np.nan,
+        lambda r: (
+            model_lookup[r["model"]]["cost_per_call_usd"] * 1000
+            if model_lookup.get(r["model"], {}).get("cost_per_call_usd") is not None
+            else np.nan
+        ),
         axis=1,
     )
     # Cost per 1000 *correct* predictions = cost_per_1000 / accuracy.
@@ -263,7 +266,7 @@ def main():
     ordered = leading + f1_cols + [c for c in trailing if c in df.columns]
     df = df[[c for c in ordered if c in df.columns]]
 
-    out_path = OUT / "summary.csv"
+    out_path = Path(args.output)
     df.to_csv(out_path, index=False)
     print(f"wrote {out_path} ({len(df)} rows)")
     print(df[["task", "model", "headline_f1", "headline_f1_lo", "headline_f1_hi"]].to_string(index=False))

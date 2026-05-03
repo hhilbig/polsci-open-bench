@@ -1,44 +1,31 @@
 #!/usr/bin/env python3
 """
-polsci-open-bench: classification benchmark for local LLMs vs OpenAI API.
+polsci-open-bench: classification benchmark for local and commercial LLMs.
 
-Covers 10 political-science classification tasks across 4 local Ollama
-models and 2 OpenAI API tiers, with N=500 items per task.
+Covers the built-in political-science classification task manifests across
+the built-in model manifests, with N=500 items per task.
 
-Tasks (canonical names; see TASKS list below):
-  - gilardi_relevance         binary content-moderation relevance
-  - gilardi_stance            3-class content-moderation stance
-  - ballard_incivility        binary congressional tweet incivility
-  - ornstein_scotus_sentiment 3-class SCOTUS tweet sentiment
-  - halterman_ccc_protest     4-class U.S. protest event type
-  - halterman_keith_bfrs      12-class Pakistani political violence
-  - halterman_keith_cmp       7-class manifesto policy domain
-  - mellon_bes_mii_2024       50-class British Election Study MII
-  - chae_semeval_stance       3-class SemEval-2016 political stance
-  - wesleyan_creative_ads_2022 3-class political-ad tone
+Default tasks are loaded from YAML manifests in `tasks/`. You can also supply a
+single custom task manifest or task directory at the CLI.
 
-Models (see MODELS list; works with any Ollama-hosted model plus OpenAI):
-  Ollama (via localhost:11434):
-    gemma4:31b-it-q4_K_M
-    qwen3:14b-q4_K_M
-    qwen3:30b-a3b-q4_K_M
-    mistral-small:24b-instruct-2501-q4_K_M
-  OpenAI:
-    gpt-5.5         (reasoning_effort=medium)
-    gpt-5.4-nano    (reasoning_effort=medium)
+Default models are loaded from YAML manifests in `models/`. You can also supply
+your own model manifest or model-manifest directory at the CLI.
 
 Basic usage:
   # Run full benchmark (all tasks x all models)
-  python code/benchmark.py
+  python3 code/benchmark.py
 
   # Selective rerun of one (task, model) cell, merge into existing predictions
-  python code/benchmark.py \\
+  python3 code/benchmark.py \\
     --only-model qwen3:30b-a3b-q4_K_M \\
     --only-task halterman_ccc_protest \\
     --merge-into output/predictions.csv
 
   # Run only one task across all models
-  python code/benchmark.py --only-task gilardi_stance
+  python3 code/benchmark.py --only-task gilardi_stance
+
+  # Run a self-contained custom task directory
+  python3 code/benchmark.py --task-dir examples/minimal_custom_task
 
 Parse strategy:
   Primary  - JSON via raw_decode (trailing content ignored).
@@ -46,25 +33,27 @@ Parse strategy:
   Both API and local models are supported. API models use structured outputs
   (JSON schema enforced server-side).
 
-Data files are expected at:
-  data/{task_name}.csv
-
-Prompts are expected at:
-  prompts/{task_name}.txt
-
-Set OPENAI_API_KEY in the environment for OpenAI calls. For local models,
-ensure Ollama is running at http://localhost:11434 (or override OLLAMA_URL).
+Set OPENAI_API_KEY in the environment for OpenAI calls. For Anthropic, either
+set ANTHROPIC_API_KEY or write the key to ~/.anthropic_api_key. For other
+OpenAI-compatible API providers such as DeepSeek, set the provider-specific key
+named in the model manifest. For local models, ensure Ollama is running at
+http://localhost:11434 (or override OLLAMA_URL).
 """
 import argparse
 import json
 import os
-import random
 import time
 from pathlib import Path
+from urllib.parse import urlparse
 
 import httpx
 import pandas as pd
 from openai import OpenAI
+from model_registry import (add_model_loading_args, load_model_definitions,
+                            load_model_definitions_from_args)
+from task_registry import (DEFAULT_SAMPLE_N_V1 as N_V1, add_task_loading_args,
+                           load_task_definitions,
+                           load_task_definitions_from_args)
 
 try:
     import anthropic
@@ -76,368 +65,17 @@ except ImportError:
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
-DATA = REPO / "data"
-PROMPTS = REPO / "prompts"
 OUT = REPO / "output"
 
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
-
-# v2 sampling: keep v1's 250 + add 250 disjoint new items for total N=500.
-# v1 used N_SAMPLE=250 with SEED. v2 uses (v1 sample) ∪ (new sample with SEED+1).
-N_V1 = 250
-N_V2_NEW = 250
-N_SAMPLE = N_V1 + N_V2_NEW   # = 500
-SEED = 20260422
-SEED_V2 = SEED + 1            # secondary seed for v2-new draw
-
-MODELS = [
-    {"name": "gemma4:31b-it-q4_K_M",                     "backend": "ollama",    "think": False},
-    {"name": "qwen3:14b-q4_K_M",                         "backend": "ollama",    "think": False},
-    {"name": "qwen3:30b-a3b-q4_K_M",                     "backend": "ollama",    "think": False},
-    {"name": "mistral-small:24b-instruct-2501-q4_K_M",   "backend": "ollama",    "think": False},
-    {"name": "gpt-5.5",                                  "backend": "openai",    "think": False, "reasoning_effort": "medium"},
-    {"name": "gpt-5.4-nano",                             "backend": "openai",    "think": False, "reasoning_effort": "medium"},
-    {"name": "claude-sonnet-4-6",                        "backend": "anthropic", "think": False},
-]
 
 # (model_name, task_name) pairs to skip. Reserved for empirically-discovered
 # unusable cells (long system prompts that an Ollama backend re-prefills on
 # every call). Dropped cells are reported as absent (not as parse errors) so
 # the report can flag them explicitly.
 SKIP_COMBOS = set()
-
-
-# --------- Task loaders ---------
-
-
-def _v1_v2_indices(n_total: int):
-    """Return (v1_idxs, v2_new_idxs) — both sorted, disjoint subsets of range(n_total).
-
-    v1 uses SEED + sample size N_V1; v2-new uses SEED_V2 sampling N_V2_NEW from the
-    remainder. If n_total < N_V1+N_V2_NEW, v2_new is shrunk to fit.
-    """
-    rng_v1 = random.Random(SEED)
-    n_v1 = min(N_V1, n_total)
-    v1_idxs = sorted(rng_v1.sample(range(n_total), n_v1))
-    remaining = sorted(set(range(n_total)) - set(v1_idxs))
-    n_v2 = min(N_V2_NEW, len(remaining))
-    rng_v2 = random.Random(SEED_V2)
-    v2_idxs = sorted(rng_v2.sample(remaining, n_v2)) if n_v2 > 0 else []
-    return v1_idxs, v2_idxs
-
-
-def _sample_csv(path, text_col, id_col, gt_builder):
-    df = pd.read_csv(path)
-    v1_idxs, v2_idxs = _v1_v2_indices(len(df))
-    items = []
-    # v1 items first — preserves existing item_ids (positional fallback uses i in 0..N_V1-1)
-    for i, idx in enumerate(v1_idxs):
-        r = df.iloc[idx]
-        items.append({
-            "item_id": str(r[id_col]) if id_col in r else f"{path.stem}_{i:03}",
-            "user_content": text_col(r),
-            "gt": gt_builder(r),
-        })
-    # v2-new items — positional fallback continues from N_V1 (250..)
-    for j, idx in enumerate(v2_idxs):
-        r = df.iloc[idx]
-        items.append({
-            "item_id": str(r[id_col]) if id_col in r else f"{path.stem}_{N_V1 + j:03}",
-            "user_content": text_col(r),
-            "gt": gt_builder(r),
-        })
-    return items
-
-
-def load_gilardi_relevance():
-    return _sample_csv(DATA / "gilardi_relevance.csv",
-                       text_col=lambda r: f"Tweet: {r['text']}",
-                       id_col="status_id",
-                       gt_builder=lambda r: {"relevant": int(r["gt_relevant"])})
-
-
-def load_ballard_incivility():
-    return _sample_csv(DATA / "ballard_incivility.csv",
-                       text_col=lambda r: f"Tweet: {r['text']}",
-                       id_col="status_id",
-                       gt_builder=lambda r: {"uncivil": int(r["gt_uncivil"])})
-
-
-def load_gilardi_stance():
-    return _sample_csv(DATA / "gilardi_stance.csv",
-                       text_col=lambda r: f"Tweet: {r['text']}",
-                       id_col="status_id",
-                       gt_builder=lambda r: {"stance": str(r["gt_stance"])})
-
-
-def load_ornstein_scotus():
-    return _sample_csv(DATA / "ornstein_scotus.csv",
-                       text_col=lambda r: f"Case: {r['case']}\nTweet: {r['text']}",
-                       id_col="tweet_id",
-                       gt_builder=lambda r: {"sentiment": r["gt_sentiment"]})
-
-
-def load_chae_semeval():
-    df = pd.read_csv(DATA / "semeval_stance.csv")
-    v1_idxs, v2_idxs = _v1_v2_indices(len(df))
-    items = []
-    for i, idx in enumerate(v1_idxs):
-        r = df.iloc[idx]
-        items.append({
-            "item_id": f"semeval_{i:03}",
-            "user_content": f"Target: {r['target_short']}\nTweet: {r['text']}",
-            "gt": {"stance": r["gt_stance"]},
-        })
-    for j, idx in enumerate(v2_idxs):
-        r = df.iloc[idx]
-        items.append({
-            "item_id": f"semeval_{N_V1 + j:03}",
-            "user_content": f"Target: {r['target_short']}\nTweet: {r['text']}",
-            "gt": {"stance": r["gt_stance"]},
-        })
-    return items
-
-
-def load_halterman_ccc():
-    # Upgraded 2026-04-24 to Halterman & Keith (2025) Dataverse ccc_test.tab
-    # (1,010 rows, 4-class). Previous version was N=50 with 8-class schema;
-    # archived as data/halterman_ccc.csv (legacy), still on disk.
-    df = pd.read_csv(DATA / "halterman_ccc_hk2025.csv")
-    v1_idxs, v2_idxs = _v1_v2_indices(len(df))
-    items = []
-    for i, idx in enumerate(v1_idxs):
-        r = df.iloc[idx]
-        items.append({
-            "item_id": f"ccc_{i:03}",
-            "user_content": f"News story:\n{r['text']}",
-            "gt": {"protest_type": r["gt_protest_type"]},
-        })
-    for j, idx in enumerate(v2_idxs):
-        r = df.iloc[idx]
-        items.append({
-            "item_id": f"ccc_{N_V1 + j:03}",
-            "user_content": f"News story:\n{r['text']}",
-            "gt": {"protest_type": r["gt_protest_type"]},
-        })
-    return items
-
-
-def load_halterman_keith_bfrs():
-    return _sample_csv(DATA / "halterman_keith_bfrs.csv",
-                       text_col=lambda r: f"News story from Pakistan:\n{r['text']}",
-                       id_col="__index__",  # no id col; fallback to row index
-                       gt_builder=lambda r: {"event_type": r["gt_event_type"]})
-
-
-def load_halterman_keith_cmp():
-    return _sample_csv(DATA / "halterman_keith_cmp.csv",
-                       text_col=lambda r: f"Manifesto quasi-sentence:\n{r['text']}",
-                       id_col="__index__",
-                       gt_builder=lambda r: {"policy_domain": r["gt_policy_domain"]})
-
-
-BES_MII_LABELS = [
-    "Referendum unspecified", "Coronavirus", "COVID-economy", "BLM and responses",
-    "health", "education", "election outcome", "pol-neg", "partisan-neg",
-    "societal divides", "morals", "nat ident, goals-loss", "racism/discrimination",
-    "welfare", "terrorism", "immigration", "asylum", "crime", "europe",
-    "constitutional", "international trade", "devolution", "scot-ind", "constitution",
-    "foreign affairs", "war", "defence", "foreign emergency", "domestic emergency",
-    "economy-general", "economy-personal", "unemployment", "taxation",
-    "debt/deficit", "inflation", "living costs", "poverty", "austerity",
-    "inequality", "housing", "social care", "pensions/ageing",
-    "transport/infrastructure", "environment", "pol value-auth", "pol values-liberal",
-    "pol values-right", "pol values-left", "other", "uncoded",
-]
-
-
-def load_mellon_bes_mii():
-    return _sample_csv(DATA / "mellon_bes_mii_2024.csv",
-                       text_col=lambda r: f"Open-ended response: {r['text']}",
-                       id_col="item_id",
-                       gt_builder=lambda r: {"issue": r["gt_issue"]})
-
-
-def load_wesleyan_creative_ads():
-    # Cap user content to keep Ollama prefill tractable. 90%+ of ads fit in 4000 chars.
-    MAX_CHARS = 4000
-    def text_col(r):
-        full = r["full_text"]
-        if len(full) > MAX_CHARS:
-            full = full[:MAX_CHARS] + f"... [truncated at {MAX_CHARS} chars]"
-        return (
-            f"Ad sponsor (page name): {r['page_name']}\n"
-            f"Candidate being evaluated: {r['candidate']}\n"
-            f"Ad content:\n{full}"
-        )
-    return _sample_csv(DATA / "wesleyan_creative_ads_2022.csv",
-                       text_col=text_col,
-                       id_col="ad_id",
-                       gt_builder=lambda r: {"tone": r["gt_tone"]})
-
-
-# --------- Task definitions ---------
-
-TASKS = [
-    {
-        "name": "gilardi_relevance",
-        "loader": load_gilardi_relevance,
-        "prompt_file": "gilardi_relevance.txt",
-        "label_kind": "binary",
-        "labels": ["relevant"],
-        "label_key": "relevant",
-        "json_schema": {
-            "type": "object",
-            "properties": {"relevant": {"type": "integer", "enum": [0, 1]}},
-            "required": ["relevant"],
-            "additionalProperties": False,
-        },
-    },
-    {
-        "name": "ballard_incivility",
-        "loader": load_ballard_incivility,
-        "prompt_file": "ballard_incivility.txt",
-        "label_kind": "binary",
-        "labels": ["uncivil"],
-        "label_key": "uncivil",
-        "json_schema": {
-            "type": "object",
-            "properties": {"uncivil": {"type": "integer", "enum": [0, 1]}},
-            "required": ["uncivil"],
-            "additionalProperties": False,
-        },
-    },
-    {
-        "name": "gilardi_stance",
-        "loader": load_gilardi_stance,
-        "prompt_file": "gilardi_stance.txt",
-        "label_kind": "categorical",
-        "labels": ["pro", "neutral", "contra"],
-        "label_key": "stance",
-        "json_schema": {
-            "type": "object",
-            "properties": {"stance": {"type": "string", "enum": ["pro", "neutral", "contra"]}},
-            "required": ["stance"],
-            "additionalProperties": False,
-        },
-    },
-    {
-        "name": "ornstein_scotus_sentiment",
-        "loader": load_ornstein_scotus,
-        "prompt_file": "ornstein_scotus_sentiment.txt",
-        "label_kind": "categorical",
-        "labels": ["Positive", "Negative", "Neutral"],
-        "label_key": "sentiment",
-        "json_schema": {
-            "type": "object",
-            "properties": {"sentiment": {"type": "string", "enum": ["Positive", "Negative", "Neutral"]}},
-            "required": ["sentiment"],
-            "additionalProperties": False,
-        },
-    },
-    {
-        "name": "halterman_ccc_protest",
-        "loader": load_halterman_ccc,
-        "prompt_file": "halterman_ccc_protest.txt",
-        "label_kind": "categorical",
-        "labels": ["PROTEST", "RALLY", "DEMONSTRATION", "MARCH"],
-        "label_key": "protest_type",
-        "json_schema": {
-            "type": "object",
-            "properties": {"protest_type": {
-                "type": "string",
-                "enum": ["PROTEST", "RALLY", "DEMONSTRATION", "MARCH"]}},
-            "required": ["protest_type"],
-            "additionalProperties": False,
-        },
-    },
-    {
-        "name": "halterman_keith_bfrs",
-        "loader": load_halterman_keith_bfrs,
-        "prompt_file": "halterman_keith_bfrs.txt",
-        "label_kind": "categorical",
-        "labels": ["ASSASSINATION", "DRONE_ASSASSINATION", "ATTACK_ON_STATE",
-                   "CONVENTIONAL_ATTACK_ON_GOV_FORCES", "GUERILLA_ATTACK_ON_GOV_FORCES",
-                   "GOV_ATTACK_ON_NONSTATE_COMBATANTS", "GOV_ATTACK_ON_CIVILIANS",
-                   "RIOT", "TERRORISM", "THREAT_OF_VIOLENCE",
-                   "VIOLENT_POLITICAL_DEMONSTRATION", "OTHER"],
-        "label_key": "event_type",
-        "json_schema": {
-            "type": "object",
-            "properties": {"event_type": {
-                "type": "string",
-                "enum": ["ASSASSINATION", "DRONE_ASSASSINATION", "ATTACK_ON_STATE",
-                         "CONVENTIONAL_ATTACK_ON_GOV_FORCES", "GUERILLA_ATTACK_ON_GOV_FORCES",
-                         "GOV_ATTACK_ON_NONSTATE_COMBATANTS", "GOV_ATTACK_ON_CIVILIANS",
-                         "RIOT", "TERRORISM", "THREAT_OF_VIOLENCE",
-                         "VIOLENT_POLITICAL_DEMONSTRATION", "OTHER"]}},
-            "required": ["event_type"],
-            "additionalProperties": False,
-        },
-    },
-    {
-        "name": "halterman_keith_cmp",
-        "loader": load_halterman_keith_cmp,
-        "prompt_file": "halterman_keith_cmp.txt",
-        "label_kind": "categorical",
-        "labels": ["External Relations", "Freedom and Democracy", "Political System",
-                   "Economy", "Welfare and Quality of Life", "Fabric of Society",
-                   "Social Groups"],
-        "label_key": "policy_domain",
-        "json_schema": {
-            "type": "object",
-            "properties": {"policy_domain": {
-                "type": "string",
-                "enum": ["External Relations", "Freedom and Democracy", "Political System",
-                         "Economy", "Welfare and Quality of Life", "Fabric of Society",
-                         "Social Groups"]}},
-            "required": ["policy_domain"],
-            "additionalProperties": False,
-        },
-    },
-    {
-        "name": "mellon_bes_mii_2024",
-        "loader": load_mellon_bes_mii,
-        "prompt_file": "mellon_bes_mii_2024.txt",
-        "label_kind": "categorical",
-        "labels": BES_MII_LABELS,
-        "label_key": "issue",
-        "json_schema": {
-            "type": "object",
-            "properties": {"issue": {"type": "string", "enum": BES_MII_LABELS}},
-            "required": ["issue"],
-            "additionalProperties": False,
-        },
-    },
-    {
-        "name": "wesleyan_creative_ads_2022",
-        "loader": load_wesleyan_creative_ads,
-        "prompt_file": "wesleyan_creative_ads_2022.txt",
-        "label_kind": "categorical",
-        "labels": ["promote", "attack", "unclear"],
-        "label_key": "tone",
-        "json_schema": {
-            "type": "object",
-            "properties": {"tone": {"type": "string", "enum": ["promote", "attack", "unclear"]}},
-            "required": ["tone"],
-            "additionalProperties": False,
-        },
-    },
-    {
-        "name": "chae_semeval_stance",
-        "loader": load_chae_semeval,
-        "prompt_file": "chae_semeval_stance.txt",
-        "label_kind": "categorical",
-        "labels": ["FAVOR", "AGAINST", "NONE"],
-        "label_key": "stance",
-        "json_schema": {
-            "type": "object",
-            "properties": {"stance": {"type": "string", "enum": ["FAVOR", "AGAINST", "NONE"]}},
-            "required": ["stance"],
-            "additionalProperties": False,
-        },
-    },
-]
+TASKS = load_task_definitions()
+MODELS = load_model_definitions()
 
 
 # --------- Parsing (JSON + bare-label fallback) ---------
@@ -492,20 +130,21 @@ def parse_content(content: str, task: dict):
 
 # --------- Inference ---------
 
-def classify_ollama(model, system_prompt, user_content, think=False):
+def classify_ollama(model_def, system_prompt, user_content):
+    ollama_url = model_def.get("ollama_url") or OLLAMA_URL
     payload = {
-        "model": model,
+        "model": model_def["name"],
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_content},
         ],
         "stream": False,
-        "think": think,
+        "think": model_def.get("think", False),
         "options": {"temperature": 0.1, "num_predict": 1024},
     }
     t0 = time.perf_counter()
     with httpx.Client(timeout=600) as c:
-        r = c.post(f"{OLLAMA_URL}/api/chat", json=payload)
+        r = c.post(f"{ollama_url}/api/chat", json=payload)
     latency = time.perf_counter() - t0
     r.raise_for_status()
     d = r.json()
@@ -516,26 +155,39 @@ def classify_ollama(model, system_prompt, user_content, think=False):
     }
 
 
-def classify_openai(client, model, system_prompt, user_content, json_schema,
-                    reasoning_effort=None):
+def classify_openai(client, model_def, task, system_prompt, user_content):
+    model = model_def["name"]
+    schema_mode = response_format_type(model_def)
+    if schema_mode == "json_object":
+        system_prompt = augment_system_prompt_for_json_object(system_prompt, task)
     kwargs = {
         "model": model,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_content},
         ],
-        "response_format": {
-            "type": "json_schema",
-            "json_schema": {"name": "classification", "strict": True, "schema": json_schema},
-        },
     }
+    if schema_mode == "json_schema":
+        kwargs["response_format"] = {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "classification",
+                "strict": True,
+                "schema": task["json_schema"],
+            },
+        }
+    else:
+        kwargs["response_format"] = {"type": "json_object"}
     if model.startswith("gpt-5"):
         kwargs["max_completion_tokens"] = 2000
     else:
         kwargs["max_tokens"] = 1024
         kwargs["temperature"] = 0.1
-    if reasoning_effort:
-        kwargs["reasoning_effort"] = reasoning_effort
+    if model_def.get("reasoning_effort"):
+        kwargs["reasoning_effort"] = model_def["reasoning_effort"]
+    extra_body = extra_body_for_openai_model(model_def)
+    if extra_body:
+        kwargs["extra_body"] = extra_body
     t0 = time.perf_counter()
     resp = client.chat.completions.create(**kwargs)
     latency = time.perf_counter() - t0
@@ -546,15 +198,90 @@ def classify_openai(client, model, system_prompt, user_content, json_schema,
     }
 
 
-def _load_anthropic_key():
-    """Return Anthropic API key from ~/.anthropic_api_key (preferred) or ANTHROPIC_API_KEY env var."""
-    key_file = Path.home() / ".anthropic_api_key"
-    if key_file.exists():
-        return key_file.read_text().strip()
-    return os.environ.get("ANTHROPIC_API_KEY", "").strip()
+def _load_api_key(model_def, default_env=None, default_file=None):
+    env_name = model_def.get("api_key_env") or default_env
+    if env_name:
+        key = os.environ.get(env_name, "").strip()
+        if key:
+            return key
+    key_file = model_def.get("api_key_file") or default_file
+    if key_file:
+        key_path = Path(key_file).expanduser()
+        if key_path.exists():
+            return key_path.read_text().strip()
+    return ""
 
 
-def make_anthropic_client():
+def _is_local_base_url(raw_url):
+    if not raw_url:
+        return False
+    host = urlparse(raw_url).hostname
+    return host in {"localhost", "127.0.0.1", "0.0.0.0", "::1"}
+
+
+def is_deepseek_model(model_def):
+    if model_def.get("provider") == "deepseek":
+        return True
+    raw_url = model_def.get("base_url")
+    if not raw_url:
+        return False
+    return urlparse(raw_url).hostname == "api.deepseek.com"
+
+
+def response_format_type(model_def):
+    if model_def.get("response_format_type"):
+        return model_def["response_format_type"]
+    if is_deepseek_model(model_def):
+        return "json_object"
+    return "json_schema"
+
+
+def extra_body_for_openai_model(model_def):
+    thinking_mode = model_def.get("thinking_mode")
+    if thinking_mode:
+        return {"thinking": {"type": thinking_mode}}
+    if is_deepseek_model(model_def):
+        return {"thinking": {"type": "disabled"}}
+    return None
+
+
+def example_payload_for_task(task):
+    kind = task["label_kind"]
+    if kind == "binary":
+        return {task["label_key"]: 0}
+    if kind == "categorical":
+        return {task["label_key"]: task["labels"][0]}
+    return {label: 0 for label in task["labels"]}
+
+
+def augment_system_prompt_for_json_object(system_prompt, task):
+    example = json.dumps(example_payload_for_task(task), ensure_ascii=False)
+    reminder = (
+        "\n\nOutput format reminder: return JSON only. "
+        f"Use exactly this JSON object shape:\n{example}\n"
+        "Do not include prose, markdown fences, or extra fields."
+    )
+    if reminder.strip() in system_prompt:
+        return system_prompt
+    return system_prompt.rstrip() + reminder
+
+
+def make_openai_client(model_def):
+    kwargs = {}
+    api_key = _load_api_key(model_def, default_env="OPENAI_API_KEY")
+    if api_key:
+        kwargs["api_key"] = api_key
+    elif _is_local_base_url(model_def.get("base_url")):
+        # OpenAI-compatible local servers often ignore the key but the SDK expects one.
+        kwargs["api_key"] = "DUMMY"
+    else:
+        return None
+    if model_def.get("base_url"):
+        kwargs["base_url"] = model_def["base_url"]
+    return OpenAI(**kwargs)
+
+
+def make_anthropic_client(model_def):
     """Return an Anthropic client, or None if SDK or key unavailable.
 
     300s timeout per request: long enough for any single classification call,
@@ -563,7 +290,11 @@ def make_anthropic_client():
     """
     if anthropic is None:
         return None
-    key = _load_anthropic_key()
+    key = _load_api_key(
+        model_def,
+        default_env="ANTHROPIC_API_KEY",
+        default_file=Path.home() / ".anthropic_api_key",
+    )
     if not key:
         return None
     return anthropic.Anthropic(api_key=key, timeout=300.0, max_retries=2)
@@ -592,11 +323,12 @@ def classify_anthropic(client, model, system_prompt, user_content, json_schema):
     return {"content": content, "latency_s": latency, "eval_count": eval_count}
 
 
-def warmup_ollama(model):
+def warmup_ollama(model_def):
+    ollama_url = model_def.get("ollama_url") or OLLAMA_URL
     try:
         with httpx.Client(timeout=600) as c:
-            c.post(f"{OLLAMA_URL}/api/chat", json={
-                "model": model,
+            c.post(f"{ollama_url}/api/chat", json={
+                "model": model_def["name"],
                 "messages": [{"role": "user", "content": "hi"}],
                 "stream": False, "think": False,
                 "options": {"num_predict": 1},
@@ -607,8 +339,8 @@ def warmup_ollama(model):
 
 # --------- Orchestration ---------
 
-def run_task(task, models, oai, checkpoint_path, only_new_items=False, anthropic_client=None):
-    system_prompt = (PROMPTS / task["prompt_file"]).read_text()
+def run_task(task, models, model_clients, checkpoint_path, only_new_items=False):
+    system_prompt = Path(task["prompt_path"]).read_text()
     items = task["loader"]()
     if only_new_items:
         # Items are returned as (v1, then v2-new). Skip the v1 items.
@@ -623,20 +355,21 @@ def run_task(task, models, oai, checkpoint_path, only_new_items=False, anthropic
             continue
         if m["backend"] == "ollama":
             print(f"\n--- Warming up {m['name']} ---", flush=True)
-            warmup_ollama(m["name"])
+            warmup_ollama(m)
         print(f"\n--- {m['name']} on {task['name']} ---", flush=True)
         for i, it in enumerate(items):
             try:
                 if m["backend"] == "ollama":
-                    r = classify_ollama(m["name"], system_prompt, it["user_content"], think=m["think"])
+                    r = classify_ollama(m, system_prompt, it["user_content"])
                 elif m["backend"] == "anthropic":
-                    if anthropic_client is None:
+                    client = model_clients.get(m["name"])
+                    if client is None:
                         raise RuntimeError("Anthropic backend selected but no client (SDK or key missing).")
-                    r = classify_anthropic(anthropic_client, m["name"], system_prompt,
+                    r = classify_anthropic(client, m["name"], system_prompt,
                                            it["user_content"], task["json_schema"])
                 else:
-                    r = classify_openai(oai, m["name"], system_prompt, it["user_content"], task["json_schema"],
-                                        reasoning_effort=m.get("reasoning_effort"))
+                    client = model_clients[m["name"]]
+                    r = classify_openai(client, m, task, system_prompt, it["user_content"])
                 preds, parse_err = parse_content(r["content"], task)
                 row = {
                     "task": task["name"], "model": m["name"],
@@ -714,6 +447,8 @@ def merge_into(existing_csv: Path, new_rows: list,
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    add_task_loading_args(ap)
+    add_model_loading_args(ap)
     ap.add_argument("--only-model", help="Restrict to one model by name")
     ap.add_argument("--only-task",  help="Restrict to one task by name")
     ap.add_argument("--output",     default=str(OUT / "predictions.csv"),
@@ -728,28 +463,55 @@ def main():
     args = ap.parse_args()
 
     OUT.mkdir(parents=True, exist_ok=True)
-    oai = OpenAI()
-    anth = make_anthropic_client()
 
-    tasks = TASKS
+    tasks = load_task_definitions_from_args(args)
     if args.only_task:
-        tasks = [t for t in TASKS if t["name"] == args.only_task]
+        tasks = [t for t in tasks if t["name"] == args.only_task]
         if not tasks:
             print(f"Unknown task: {args.only_task}"); return
         print(f"[selective] Running ONLY task: {args.only_task}", flush=True)
 
-    models = MODELS
+    models = load_model_definitions_from_args(args)
     if args.only_model:
-        models = [m for m in MODELS if m["name"] == args.only_model]
+        models = [m for m in models if m["name"] == args.only_model]
         if not models:
             print(f"Unknown model: {args.only_model}"); return
         print(f"[selective] Running ONLY model: {args.only_model}", flush=True)
 
+    model_clients = {}
+    unavailable = {}
+    for model in models:
+        if model["backend"] == "openai":
+            client = make_openai_client(model)
+            if client is None:
+                unavailable[model["name"]] = (
+                    f"missing API key for backend=openai "
+                    f"({model.get('api_key_env') or 'OPENAI_API_KEY'})"
+                )
+            else:
+                model_clients[model["name"]] = client
+        elif model["backend"] == "anthropic":
+            client = make_anthropic_client(model)
+            if client is None:
+                unavailable[model["name"]] = (
+                    f"missing API key or SDK for backend=anthropic "
+                    f"({model.get('api_key_env') or 'ANTHROPIC_API_KEY'})"
+                )
+            else:
+                model_clients[model["name"]] = client
+
+    if unavailable:
+        for model_name, reason in unavailable.items():
+            print(f"[skip unavailable model] {model_name}: {reason}", flush=True)
+        models = [m for m in models if m["name"] not in unavailable]
+        if not models:
+            print("No runnable models after filtering unavailable API models.", flush=True)
+            return
+
     all_rows = []
     for task in tasks:
-        task_rows = run_task(task, models, oai, args.output,
-                             only_new_items=args.only_new_items,
-                             anthropic_client=anth)
+        task_rows = run_task(task, models, model_clients, args.output,
+                             only_new_items=args.only_new_items)
         all_rows.extend(task_rows)
         pd.DataFrame(all_rows).to_csv(args.output, index=False)
         # Per-task merge so a mid-run kill preserves completed tasks.

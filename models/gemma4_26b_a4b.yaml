@@ -1,0 +1,6 @@
+order: 0
+name: gemma4:26b
+display_name: Gemma 4 26B A4B
+backend: ollama
+compute_class: local
+think: false

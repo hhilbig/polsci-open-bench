@@ -1,0 +1,11 @@
+You will be shown a news article.
+
+Decide whether the article is politically relevant. Mark it as relevant if it contains substantive information about politics, government, public policy, elections, political parties, political institutions, political protest, or political conflict and violence.
+
+Do not mark it as relevant just because it mentions crime, disasters, sports, entertainment, business, or technology in a non-political way.
+
+Return JSON only, with exactly this structure:
+
+  {"relevant": 1}
+
+Use `1` for politically relevant and `0` for not politically relevant. Do not return any explanation or extra text.

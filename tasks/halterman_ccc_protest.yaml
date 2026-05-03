@@ -1,0 +1,22 @@
+order: 7
+name: halterman_ccc_protest
+family: Event coding
+source: Halterman and Keith 2025
+data_file: ../data/halterman_ccc_hk2025.csv
+prompt_file: ../prompts/halterman_ccc_protest.txt
+label_kind: categorical
+label_key: protest_type
+labels:
+  - PROTEST
+  - RALLY
+  - DEMONSTRATION
+  - MARCH
+id:
+  kind: generated
+  prefix: ccc
+text:
+  template: |
+    News story:
+    {text}
+ground_truth:
+  column: gt_protest_type

@@ -1,41 +1,49 @@
 # Prompt provenance
 
-For each task, this records how the prompt in `prompts/` was obtained and what (if any) modifications were made.
+For each live task in the benchmark, this file records where the prompt in
+`prompts/` came from and what modifications were made.
 
 | Task | Prompt file | Source | Modifications |
 |---|---|---|---|
-| `state_adaptation` | `prompts/state_adaptation.txt` | Production few-shot prompt tuned on this corpus (25 examples, multiple iterations documented in the upstream `state_adaptation` repo's CLAUDE.md). Not from a published paper — from the user's own working pipeline. | None. |
-| `gilardi_relevance` | `prompts/gilardi_relevance.txt` | **Verbatim** from Gilardi, Alizadeh & Kubli (2023) PNAS replication: `dataverse_repo/src/03-01-chatgpt-Zeroshot-Task-template.py` lines 37 / 81 (same prompt duplicated across two calls). The last sentence instructs "just label 'relevant' or 'irrelevant' without any more explanation" — we replaced this with a JSON-output instruction for machine-readable parsing. | Replaced final single-sentence "just label 'relevant' or 'irrelevant'" with "Return JSON only, with a single field `relevant` equal to 0 or 1." |
-| `gilardi_stance` | `prompts/gilardi_stance.txt` | **Verbatim** from Gilardi, Alizadeh & Kubli (2023) PNAS SI §S1 Annotation Codebooks: "Background on content moderation" paragraph + "Task 6: Stance Detection" body. SI PDF archived locally at `docs/pnas.2305016120.sapp.pdf`. | Two documented modifications: (1) The SI codebook calls the three labels "positive / negative / neutral"; this prompt substitutes "pro / contra / neutral" to match the `gt_stance` values used in the replication archive's data + Python task template. (2) Appended a JSON-output instruction for machine-readable parsing (the SI is a human-coder codebook). |
-| `ballard_incivility` | `prompts/ballard_incivility.txt` | **Derived**. Ballard (2022, LSQ) used fine-tuned BERT; no LLM prompt was published. The prompt draws on Ballard's paper description of uncivil rhetoric + standard political-incivility literature (Brooks & Geer 2007; Mutz 2015). | Full derivation. Not apples-to-apples with the paper. |
-| `ornstein_scotus_sentiment` | `prompts/ornstein_scotus_sentiment.txt` | **Derived**. Ornstein, Blasingame & Truscott (2025, PSRM) used few-shot sentiment prompts in the `promptr` R package. The package uses example-based prompting with 12 seed examples. We did not replicate the few-shot structure — the current prompt is a zero-shot system-message version covering the same SCOTUS-sentiment task with three-class labels (Positive/Negative/Neutral). | Zero-shot derivation from promptr's codebook. Not matching the paper's few-shot format. |
-| `halterman_ccc_protest` | `prompts/halterman_ccc_protest.txt` | **Verbatim (subset)** from Halterman & Keith (2025, PA) replication archive: `data/codebooks/ccc_codebook_new_format.txt`. Restricted to the 4 classes present in H&K's `ccc_test.tab` labeled split (PROTEST, RALLY, DEMONSTRATION, MARCH). The original codebook also defined CARAVAN, BICYCLE_RIDE, DIRECT_ACTION, COUNTER_PROTEST; we drop those because H&K's labeled split has no gold items for them. | Subsetted label space + appended JSON-output instruction (same JSON wrapper rationale as before: some models emitted bare labels, which the case-insensitive fallback parser also catches). 2026-04-24: upgraded from the previous 50-row 8-class CSV to H&K's 1,010-row 4-class test split; previous N=50 predictions archived at `output/archive/predictions_halterman_ccc_v1_n50.csv`. |
-| `halterman_keith_bfrs` | `prompts/halterman_keith_bfrs.txt` | **Verbatim** from Halterman & Keith (2025, PA) replication archive: `data/codebooks/bfrs_codebook_new_format.txt`. Full 12-class Pakistani political-violence taxonomy with definitions, clarifications, and positive/negative examples per class. | Appended JSON-output instruction at the end. No other changes. |
-| `halterman_keith_cmp` | `prompts/halterman_keith_cmp.txt` | **Derived** from the CMP (Manifesto Project) "Aggregation1" major-domain structure used in H&K's `data/train_dev_test/manifestos_test.tab` `label_category` column. H&K ship a 142-label fine codebook (`data/codebooks/manifesto_codebook_new_hand.txt`); we target the 7 `Aggregation1` domains instead because their `label_category` column is the aggregation that produces the gold label. | Custom 7-domain prompt drawn from CMP documentation, not verbatim from H&K's fine codebook. Listing only the 7 Aggregation1 values (External Relations, Freedom and Democracy, Political System, Economy, Welfare and Quality of Life, Fabric of Society, Social Groups) with concise definitions + JSON-output instruction. |
-| `wesleyan_creative_ads_2022` | `prompts/wesleyan_creative_ads_2022.txt` | **Derived**. Zhang et al. (2025, *Sci Data*) / Wesleyan Media Project CREATIVE ad data. Gold labels are the WMP project's hand-coded TONE1 field (tone of the ad toward the first mentioned candidate). No LLM prompt published by WMP; ad tone classification is traditionally done by trained human coders using a Qualtrics survey (the raw fields are in `fb_2022_train.xlsx`). Our prompt paraphrases the WMP tone-coding construct (promote / attack / unclear) into a self-contained LLM prompt. | Derived from the WMP tone-coding construct with three compact labels (promote/attack/unclear). Ad text is capped at 4000 chars to keep Ollama prefill tractable; >90% of ads fit without truncation. |
-| `chae_semeval_stance` | `prompts/chae_semeval_stance.txt` | **Derived**. Chae & Davidson (2025, SMR) used prompts embedded in their notebooks but not in a standalone form. The SemEval-2016 Task 6 task (Trump / Clinton stance) is the underlying data. Our prompt is derived from the SemEval codebook's three-class stance definition (FAVOR/AGAINST/NONE) and covers the "negative sentiment toward someone else doesn't mean the target is opposed" edge case that SemEval's guidelines call out. | Full derivation. |
+| `gilardi_relevance` | `prompts/gilardi_relevance.txt` | Verbatim from Gilardi, Alizadeh, and Kubli (2023) PNAS replication template. | Replaced the final free-form label instruction with a JSON-output instruction returning `relevant` as `0/1`. |
+| `gilardi_stance` | `prompts/gilardi_stance.txt` | Verbatim from Gilardi, Alizadeh, and Kubli (2023) SI Task 6 codebook. | Renamed the stance labels to `pro / neutral / contra` to match the replication data, then appended a JSON-output instruction. |
+| `ballard_incivility` | `prompts/ballard_incivility.txt` | Derived. Ballard (2022) did not publish an LLM prompt; the task description is built from the paper's incivility definition and adjacent literature. | Fully derived. |
+| `brandt_political_relevance` | `prompts/brandt_political_relevance.txt` | Derived from Brandt et al. (2025) and the public binary-classification replication file `raw_bc_data.tab`, whose positive examples are politics-relevant articles and whose negative examples are non-political news articles. | Converted the article-level filtering task into a zero-shot binary prompt with a strict JSON-output instruction. |
+| `rheault_line_of_fire_incivility` | `prompts/rheault_line_of_fire_incivility.txt` | Derived from Rheault, Rayment, and Musulan (2019), which explicitly define uncivil tweets as those containing one or more of six elements: swear words, vulgarities, insults, threats, personal attacks on private life, or attacks targeted at groups. | Converted the paper definition into a zero-shot binary prompt and appended a strict JSON-output instruction. |
+| `ornstein_scotus_sentiment` | `prompts/ornstein_scotus_sentiment.txt` | Derived from Ornstein, Blasingame, and Truscott (2025) and the associated `promptr` task framing. | Converted a few-shot task into a zero-shot system prompt with the same three-class label space. |
+| `chae_semeval_stance` | `prompts/chae_semeval_stance.txt` | Derived from the SemEval-2016 Task 6 stance definitions used by Chae and Davidson (2025). | Fully derived. Includes the SemEval edge case that criticism of a third party does not necessarily imply stance toward the target. |
+| `halterman_ccc_protest` | `prompts/halterman_ccc_protest.txt` | Verbatim subset from Halterman and Keith (2025) CCC codebook. | Restricted to the four labels present in `halterman_ccc_hk2025.csv` and appended a JSON-output instruction. |
+| `halterman_keith_bfrs` | `prompts/halterman_keith_bfrs.txt` | Verbatim from Halterman and Keith (2025) BFRS codebook. | Appended a JSON-output instruction only. |
+| `haunss_papea_fgz_forms` | `prompts/haunss_papea_fgz_forms.txt` | Derived from the seven most common original PAPEA form labels in `AppendixB3_fgz_forms.tab`, which also exposes the source `FORM` codebook strings for each human-coded snippet. | Restricted the task to the seven most common source labels, renamed them into benchmark-stable output strings, and appended a strict JSON-output instruction. |
+| `halterman_keith_cmp` | `prompts/halterman_keith_cmp.txt` | Derived from the CMP Aggregation 1 domain structure used in Halterman and Keith's labeled split. | Custom seven-domain prompt plus JSON-output instruction. |
+| `osnabruegge_cross_domain_topic` | `prompts/osnabruegge_cross_domain_topic.txt` | Derived from the Osnabruegge, Ash, and Morelli (2023) eight-topic specification, using the same broad policy-domain label set as the paper's `target_corpus.csv` and the same CMP-style topic structure already used elsewhere in the benchmark. | Added brief domain definitions, added `No Topic`, and appended a strict JSON-output instruction. |
+| `mellon_bes_mii_2024` | `prompts/mellon_bes_mii_2024.txt` | Derived from Mellon et al. (2024) MII issue coding task and the labeled response categories in the replication materials. | Custom 50-class issue prompt plus JSON-output instruction. |
+| `wesleyan_creative_ads_2022` | `prompts/wesleyan_creative_ads_2022.txt` | Derived from the Wesleyan Media Project tone-coding construct used in Zhang et al. (2025). | Custom three-class tone prompt plus JSON-output instruction. Ad text is truncated at 4000 chars when necessary in the loader. |
 
 ## Rating summary
 
-Prompts we can reasonably call "apples-to-apples" with the original paper:
-- `gilardi_relevance` — verbatim structure + intent; only the output-format tail differs.
-- `gilardi_stance` — verbatim SI §S1 Task 6 codebook; labels renamed pro/contra/neutral to match the replication archive's data + JSON wrapper appended.
-- `halterman_ccc_protest` — verbatim codebook entries for 4 classes (subset of H&K's 8-class codebook; the other 4 classes have no gold items in H&K's test split) + added JSON wrapper.
-- `halterman_keith_bfrs` — verbatim codebook from H&K replication archive + added JSON wrapper.
+Closest to the original paper/codebook setup:
 
-Prompts we call "derived" (not apples-to-apples):
-- `ballard_incivility` (paper didn't use an LLM)
-- `ornstein_scotus_sentiment` (paper used few-shot, we did zero-shot)
-- `chae_semeval_stance` (no standalone prompt in the paper)
-- `halterman_keith_cmp` (H&K ship a 142-label fine codebook; we target the 7 Aggregation1 domains the gold labels use, with a custom 7-domain prompt)
-- `wesleyan_creative_ads_2022` (WMP uses a Qualtrics coder survey, not an LLM prompt; the tone construct is paraphrased into a self-contained LLM prompt)
+- `gilardi_relevance`
+- `gilardi_stance`
+- `halterman_ccc_protest`
+- `halterman_keith_bfrs`
 
-`state_adaptation` is "production" — tuned for this corpus, not drawn from a published paper.
+Derived rather than verbatim:
+
+- `ballard_incivility`
+- `brandt_political_relevance`
+- `rheault_line_of_fire_incivility`
+- `ornstein_scotus_sentiment`
+- `chae_semeval_stance`
+- `haunss_papea_fgz_forms`
+- `halterman_keith_cmp`
+- `osnabruegge_cross_domain_topic`
+- `mellon_bes_mii_2024`
+- `wesleyan_creative_ads_2022`
 
 ## Policy for future additions
 
-When adding a new task to the benchmark:
-
-1. Prefer **verbatim** prompts from the paper (replication archive > SI > paper body). If modifications are needed (e.g., JSON output instruction), document them here.
-2. When the paper didn't use an LLM, mark the prompt as **derived** and describe its source (codebook, paper prose, established literature).
-3. Note in the report's caveats which tasks use derived vs. verbatim prompts — cross-task F1 comparisons should weight derived-prompt tasks with a grain of salt.
+1. Prefer verbatim prompts from replication archives, supplemental material, or paper text.
+2. If you need to modify a verbatim prompt for machine-readable output, document the exact change here.
+3. If no prompt exists and you derive one from a codebook or paper description, mark it as derived here and note the source materials.

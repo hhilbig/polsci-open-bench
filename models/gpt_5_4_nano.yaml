@@ -1,0 +1,8 @@
+order: 6
+name: gpt-5.4-nano
+display_name: gpt-5.4-nano
+backend: openai
+compute_class: api
+reasoning_effort: medium
+cost_per_call_usd: 0.00024
+api_key_env: OPENAI_API_KEY

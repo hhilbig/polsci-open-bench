@@ -1,0 +1,6 @@
+order: 1
+name: gemma4:31b-it-q4_K_M
+display_name: Gemma 4 31B
+backend: ollama
+compute_class: local
+think: false

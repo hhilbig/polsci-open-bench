@@ -1,0 +1,8 @@
+order: 5
+name: gpt-5.5
+display_name: gpt-5.5
+backend: openai
+compute_class: api
+reasoning_effort: medium
+cost_per_call_usd: 0.00433
+api_key_env: OPENAI_API_KEY

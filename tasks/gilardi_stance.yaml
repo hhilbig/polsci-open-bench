@@ -1,0 +1,20 @@
+order: 3
+name: gilardi_stance
+family: Sentiment / Stance / Tone
+source: Gilardi et al. 2023
+data_file: ../data/gilardi_stance.csv
+prompt_file: ../prompts/gilardi_stance.txt
+label_kind: categorical
+label_key: stance
+labels:
+  - pro
+  - neutral
+  - contra
+id:
+  kind: column
+  column: status_id
+text:
+  template: |
+    Tweet: {text}
+ground_truth:
+  column: gt_stance

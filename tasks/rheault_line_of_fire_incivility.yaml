@@ -1,0 +1,19 @@
+order: 12
+name: rheault_line_of_fire_incivility
+family: Relevance / Incivility
+source: Rheault, Rayment, and Musulan 2019
+data_file: ../data/rheault_line_of_fire_incivility.csv
+prompt_file: ../prompts/rheault_line_of_fire_incivility.txt
+label_kind: binary
+label_key: uncivil
+labels:
+  - uncivil
+id:
+  kind: generated
+  prefix: rheault_line_of_fire
+text:
+  template: |
+    Tweet addressed to a politician:
+    {text}
+ground_truth:
+  column: gt_uncivil

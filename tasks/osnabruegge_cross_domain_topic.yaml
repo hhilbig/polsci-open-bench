@@ -1,0 +1,26 @@
+order: 11
+name: osnabruegge_cross_domain_topic
+family: Policy-topic coding
+source: Osnabruegge, Ash, and Morelli 2023
+data_file: ../data/osnabruegge_cross_domain_topic.csv
+prompt_file: ../prompts/osnabruegge_cross_domain_topic.txt
+label_kind: categorical
+label_key: policy_domain
+labels:
+  - External Relations
+  - Freedom and Democracy
+  - Political System
+  - Economy
+  - Welfare and Quality of Life
+  - Fabric of Society
+  - Social Groups
+  - No Topic
+id:
+  kind: generated
+  prefix: osnabruegge_cross_domain_topic
+text:
+  template: |
+    Parliamentary speech excerpt:
+    {text}
+ground_truth:
+  column: gt_policy_domain

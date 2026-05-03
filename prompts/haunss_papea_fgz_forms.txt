@@ -1,0 +1,19 @@
+You will be shown a short protest-related text span, usually extracted from a German-language newspaper article. Your job is to classify the form of protest action described in the span.
+
+Use exactly one of these seven labels:
+
+- `Demonstration / Assembly`: a public protest gathering, demonstration, rally, or assembly
+- `Petition`: a petition or signature-collection action
+- `Strike`: a strike, walkout, work stoppage, or labor stoppage
+- `Non-verbal Protest / Cultural Event`: a symbolic, performative, artistic, or otherwise non-verbal protest action
+- `Leaflet / Resolution / Open Letter`: distribution or publication of leaflets, resolutions, banners with written demands, or open letters
+- `Attack with Damage to Property`: a protest action centered on vandalism, arson, sabotage, or other damage to property
+- `Blockade / Sit-in`: a blockade, sit-in, obstruction, encampment, or occupation used to hinder access or activity
+
+The text span may be very short. Use the literal content of the span and choose the single best matching protest form.
+
+Return JSON only, with exactly this structure:
+
+  {"protest_form": "Demonstration / Assembly"}
+
+Do not return any explanation or extra text.

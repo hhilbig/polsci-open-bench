@@ -46,10 +46,13 @@ family_map <- tibble::tribble(
   "wesleyan_creative_ads_2022",   "Sentiment / Stance / Tone",
   "gilardi_relevance",            "Relevance / Incivility",
   "ballard_incivility",           "Relevance / Incivility",
+  "rheault_line_of_fire_incivility","Relevance / Incivility",
   "halterman_ccc_protest",        "Event coding",
   "halterman_keith_bfrs",         "Event coding",
+  "haunss_papea_fgz_forms",       "Event coding",
   "halterman_keith_cmp",          "Policy-topic coding",
-  "mellon_bes_mii_2024",          "Policy-topic coding"
+  "mellon_bes_mii_2024",          "Policy-topic coding",
+  "osnabruegge_cross_domain_topic","Policy-topic coding"
 )
 
 df <- summary_raw |>
@@ -67,13 +70,16 @@ df <- summary_raw |>
     task_short = recode(task,
       "gilardi_relevance"          = "Gilardi relevance",
       "ballard_incivility"         = "Ballard incivility",
+      "rheault_line_of_fire_incivility" = "Line of Fire incivility",
       "gilardi_stance"             = "Gilardi stance",
       "ornstein_scotus_sentiment"  = "SCOTUS sentiment",
       "halterman_ccc_protest"      = "CCC protest type",
+      "haunss_papea_fgz_forms"     = "PAPEA protest forms (7-cl)",
       "chae_semeval_stance"        = "SemEval 2016 stance",
       "halterman_keith_bfrs"       = "BFRS violence (12-cl)",
       "halterman_keith_cmp"        = "CMP manifestos (7-cl)",
       "mellon_bes_mii_2024"        = "BES MII (50-cl)",
+      "osnabruegge_cross_domain_topic" = "Cross-domain topics (8-cl)",
       "wesleyan_creative_ads_2022" = "Wesleyan ad tone"
     ),
     is_api = model %in% c("gpt-5.5", "gpt-5.4-nano", "claude-sonnet-4-6")
@@ -98,12 +104,15 @@ sb <- sb_raw |>
     task_short = recode(task,
       "gilardi_relevance"          = "Gilardi relevance",
       "ballard_incivility"         = "Ballard incivility",
+      "rheault_line_of_fire_incivility" = "Line of Fire incivility",
       "gilardi_stance"             = "Gilardi stance",
       "ornstein_scotus_sentiment"  = "SCOTUS sentiment",
       "halterman_ccc_protest"      = "CCC protest",
+      "haunss_papea_fgz_forms"     = "PAPEA protest forms",
       "halterman_keith_cmp"        = "CMP manifestos",
       "halterman_keith_bfrs"       = "BFRS Pakistan",
       "mellon_bes_mii_2024"        = "BES MII",
+      "osnabruegge_cross_domain_topic" = "Cross-domain topics",
       "wesleyan_creative_ads_2022" = "Wesleyan ads",
       "chae_semeval_stance"        = "SemEval stance"
     ),

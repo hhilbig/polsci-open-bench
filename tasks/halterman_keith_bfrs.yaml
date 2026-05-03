@@ -1,0 +1,30 @@
+order: 8
+name: halterman_keith_bfrs
+family: Event coding
+source: Halterman and Keith 2025
+data_file: ../data/halterman_keith_bfrs.csv
+prompt_file: ../prompts/halterman_keith_bfrs.txt
+label_kind: categorical
+label_key: event_type
+labels:
+  - ASSASSINATION
+  - DRONE_ASSASSINATION
+  - ATTACK_ON_STATE
+  - CONVENTIONAL_ATTACK_ON_GOV_FORCES
+  - GUERILLA_ATTACK_ON_GOV_FORCES
+  - GOV_ATTACK_ON_NONSTATE_COMBATANTS
+  - GOV_ATTACK_ON_CIVILIANS
+  - RIOT
+  - TERRORISM
+  - THREAT_OF_VIOLENCE
+  - VIOLENT_POLITICAL_DEMONSTRATION
+  - OTHER
+id:
+  kind: generated
+  prefix: halterman_keith_bfrs
+text:
+  template: |
+    News story from Pakistan:
+    {text}
+ground_truth:
+  column: gt_event_type

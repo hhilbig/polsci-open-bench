@@ -1,0 +1,10 @@
+order: 8
+name: deepseek-v4-pro
+display_name: DeepSeek V4 Pro
+backend: openai
+provider: deepseek
+compute_class: api
+base_url: https://api.deepseek.com
+api_key_env: DEEPSEEK_API_KEY
+response_format_type: json_object
+thinking_mode: disabled

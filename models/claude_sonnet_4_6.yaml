@@ -1,0 +1,6 @@
+order: 7
+name: claude-sonnet-4-6
+display_name: Claude Sonnet 4.6
+backend: anthropic
+compute_class: api
+api_key_env: ANTHROPIC_API_KEY

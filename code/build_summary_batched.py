@@ -15,13 +15,14 @@ by definition. This captures how much batching perturbs outputs.
 Usage:
   python3 code/build_summary_batched.py
 """
+import argparse
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from sklearn.metrics import f1_score
 
-from benchmark import TASKS
+from task_registry import add_task_loading_args, load_task_definitions_from_args
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
@@ -128,10 +129,10 @@ def _compute_agreement(preds, task_def):
     return results
 
 
-def _load_b1_from_serial():
+def _load_b1_from_serial(serial_path):
     """Read v2 serial predictions and tag them as batch_size=1 for join with the
     batched grid. Adds the missing batch_latency_s column (= latency_s for serial)."""
-    serial_path = OUT / "predictions.csv"
+    serial_path = Path(serial_path)
     if not serial_path.exists():
         return pd.DataFrame()
     s = pd.read_csv(serial_path, low_memory=False)
@@ -141,12 +142,19 @@ def _load_b1_from_serial():
 
 
 def main():
-    preds = pd.read_csv(OUT / "predictions_batched.csv", low_memory=False)
-    serial_b1 = _load_b1_from_serial()
+    ap = argparse.ArgumentParser(description=__doc__)
+    add_task_loading_args(ap)
+    ap.add_argument("--predictions", default=str(OUT / "predictions_batched.csv"))
+    ap.add_argument("--serial-predictions", default=str(OUT / "predictions.csv"))
+    ap.add_argument("--output", default=str(OUT / "summary_batched.csv"))
+    args = ap.parse_args()
+
+    preds = pd.read_csv(args.predictions, low_memory=False)
+    serial_b1 = _load_b1_from_serial(args.serial_predictions)
     if len(serial_b1):
         preds = pd.concat([preds, serial_b1], ignore_index=True, sort=False)
         print(f"[serial b=1] merged {len(serial_b1)} rows from predictions.csv into baseline")
-    task_defs = {t["name"]: t for t in TASKS}
+    task_defs = {t["name"]: t for t in load_task_definitions_from_args(args)}
 
     # Agreement computed per task (needs access to the full task's prediction grid).
     per_task_agreement = {}
@@ -173,7 +181,7 @@ def main():
     ordered = leading + f1_cols + [c for c in trailing if c in df.columns]
     df = df[[c for c in ordered if c in df.columns]]
 
-    out_path = OUT / "summary_batched.csv"
+    out_path = Path(args.output)
     df.to_csv(out_path, index=False)
     print(f"wrote {out_path} ({len(df)} rows)")
     print()

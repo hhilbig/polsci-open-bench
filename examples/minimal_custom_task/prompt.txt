@@ -1,0 +1,5 @@
+You are classifying whether a short text is politically relevant.
+
+Return JSON only with one field:
+- "relevant": 1 if the text is about politics, public policy, elections, government, or politicians
+- "relevant": 0 otherwise

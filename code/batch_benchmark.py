@@ -5,8 +5,8 @@ models as benchmark.py but at multiple batch sizes, writing to a
 separate predictions CSV so the main benchmark outputs stay canonical.
 
 Grid (default):
-  tasks       = benchmark.py TASKS (10 tasks)
-  models      = benchmark.py MODELS (4 Ollama + 2 OpenAI)
+  tasks       = task manifests in tasks/
+  models      = model manifests in models/
   batch_sizes = {1, 10, 20}
 
 Per-batch semantics:
@@ -26,26 +26,32 @@ Usage:
   python3 code/batch_benchmark.py
   python3 code/batch_benchmark.py --only-task gilardi_relevance --batch-sizes 10,20
   python3 code/batch_benchmark.py --resume    # skip cells already in output CSV
+  python3 code/batch_benchmark.py --task-dir examples/minimal_custom_task
+  python3 code/batch_benchmark.py --models-dir examples/minimal_custom_models
 """
 import argparse
 import json
-import os
 import sys
 import time
 from pathlib import Path
 
 import httpx
 import pandas as pd
-from openai import OpenAI
+from model_registry import add_model_loading_args, load_model_definitions_from_args
+from task_registry import (DEFAULT_SAMPLE_N_V1, add_task_loading_args,
+                           load_task_definitions_from_args)
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from benchmark import (  # noqa: E402
-    TASKS,
-    MODELS,
-    PROMPTS, OUT,
     OLLAMA_URL,
+    OUT,
+    augment_system_prompt_for_json_object,
+    extra_body_for_openai_model,
+    make_anthropic_client,
+    make_openai_client,
     parse_content as parse_single_content,
+    response_format_type,
     warmup_ollama,
 )
 
@@ -57,7 +63,7 @@ BATCH_SKIP_COMBOS = set()
 
 # --------- Prompt construction ---------
 
-def build_user_content(task_def, batch):
+def build_user_content(task_def, batch, wrap_results_object=False):
     """For b=1, pass through the single item's user_content unchanged (identical
     to the main benchmark's payload). For b>1, build a numbered-list prompt with
     an explicit JSON-array output instruction."""
@@ -78,13 +84,20 @@ def build_user_content(task_def, batch):
     else:
         fmt = "{}"
 
+    if wrap_results_object:
+        response_shape = (
+            f'a JSON object of the form {{"results": [{fmt}, ...]}} '
+            f'with exactly {len(batch)} objects inside `results`'
+        )
+    else:
+        response_shape = f"a JSON array of {len(batch)} objects"
     header = (
         f"You will receive {len(batch)} items below. Apply the classification "
-        f"rules from the instructions above to EACH item. Return ONLY a JSON "
-        f"array of {len(batch)} objects in the same order as the input items. "
-        f"Each object must have EXACTLY the format: {fmt}. Do not add any "
-        f"extra fields (no 'confidence', no 'reasoning', no comments). Do not "
-        f"include any prose before or after the JSON array."
+        f"rules from the instructions above to EACH item. Return ONLY {response_shape} "
+        f"in the same order as the input items. Each object must have EXACTLY "
+        f"the format: {fmt}. Do not add any extra fields (no 'confidence', "
+        f"no 'reasoning', no comments). Do not include any prose before or "
+        f"after the JSON output."
     )
     blocks = [header, ""]
     for i, it in enumerate(batch):
@@ -159,7 +172,7 @@ def parse_response(content: str, task_def, expected_n: int):
 
 # --------- Inference ---------
 
-def classify_ollama_batched(model, system_prompt, batch, task_def, think=False):
+def classify_ollama_batched(model_def, system_prompt, batch, task_def):
     user = build_user_content(task_def, batch)
     # num_predict must cover N items worth of output JSON plus any extra fields
     # the model decides to emit (some models add "confidence" / "reasoning").
@@ -171,18 +184,19 @@ def classify_ollama_batched(model, system_prompt, batch, task_def, think=False):
         per_item = 220 if task_def["label_kind"] == "multi_binary" else 80
         num_predict = 256 + per_item * len(batch)
     payload = {
-        "model": model,
+        "model": model_def["name"],
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user},
         ],
         "stream": False,
-        "think": think,
+        "think": model_def.get("think", False),
         "options": {"temperature": 0.1, "num_predict": num_predict},
     }
     t0 = time.perf_counter()
+    ollama_url = model_def.get("ollama_url") or OLLAMA_URL
     with httpx.Client(timeout=900) as c:
-        r = c.post(f"{OLLAMA_URL}/api/chat", json=payload)
+        r = c.post(f"{ollama_url}/api/chat", json=payload)
     latency = time.perf_counter() - t0
     r.raise_for_status()
     d = r.json()
@@ -206,9 +220,12 @@ def _build_batched_schema(task_def, batch_size):
     }
 
 
-def classify_openai_batched(client, model, system_prompt, batch, task_def,
-                            reasoning_effort=None):
-    user = build_user_content(task_def, batch)
+def classify_openai_batched(client, model_def, system_prompt, batch, task_def):
+    schema_mode = response_format_type(model_def)
+    wrap_results_object = len(batch) > 1 and schema_mode == "json_object"
+    if schema_mode == "json_object":
+        system_prompt = augment_system_prompt_for_json_object(system_prompt, task_def)
+    user = build_user_content(task_def, batch, wrap_results_object=wrap_results_object)
     if len(batch) == 1:
         schema = task_def["json_schema"]
         schema_name = "classification"
@@ -216,23 +233,29 @@ def classify_openai_batched(client, model, system_prompt, batch, task_def,
         schema = _build_batched_schema(task_def, len(batch))
         schema_name = "batched_classification"
     kwargs = {
-        "model": model,
+        "model": model_def["name"],
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user},
         ],
-        "response_format": {
+    }
+    if schema_mode == "json_schema":
+        kwargs["response_format"] = {
             "type": "json_schema",
             "json_schema": {"name": schema_name, "strict": True, "schema": schema},
-        },
-    }
-    if model.startswith("gpt-5"):
+        }
+    else:
+        kwargs["response_format"] = {"type": "json_object"}
+    if model_def["name"].startswith("gpt-5"):
         kwargs["max_completion_tokens"] = 256 + 80 * len(batch)
     else:
         kwargs["max_tokens"] = 128 + 64 * len(batch)
         kwargs["temperature"] = 0.1
-    if reasoning_effort:
-        kwargs["reasoning_effort"] = reasoning_effort
+    if model_def.get("reasoning_effort"):
+        kwargs["reasoning_effort"] = model_def["reasoning_effort"]
+    extra_body = extra_body_for_openai_model(model_def)
+    if extra_body:
+        kwargs["extra_body"] = extra_body
     t0 = time.perf_counter()
     resp = client.chat.completions.create(**kwargs)
     latency = time.perf_counter() - t0
@@ -241,11 +264,38 @@ def classify_openai_batched(client, model, system_prompt, batch, task_def,
     return content, latency, eval_count
 
 
+def classify_anthropic_batched(client, model, system_prompt, batch, task_def):
+    user = build_user_content(task_def, batch)
+    schema = (
+        task_def["json_schema"]
+        if len(batch) == 1
+        else _build_batched_schema(task_def, len(batch))
+    )
+    t0 = time.perf_counter()
+    resp = client.messages.create(
+        model=model,
+        max_tokens=256 + 80 * len(batch),
+        system=system_prompt,
+        messages=[{"role": "user", "content": user}],
+        tools=[{
+            "name": "classify",
+            "description": "Return the classification for the input.",
+            "input_schema": schema,
+        }],
+        tool_choice={"type": "tool", "name": "classify"},
+    )
+    latency = time.perf_counter() - t0
+    tool_use = next((b for b in resp.content if getattr(b, "type", None) == "tool_use"), None)
+    content = json.dumps(tool_use.input) if tool_use is not None else ""
+    eval_count = resp.usage.output_tokens if resp.usage else None
+    return content, latency, eval_count
+
+
 # --------- Orchestration ---------
 
-def run_cell(task, model_def, oai, batch_size, items):
+def run_cell(task, model_def, model_clients, batch_size, items):
     """Run one (task, model, batch_size) cell. Returns list of per-item row dicts."""
-    system_prompt = (PROMPTS / task["prompt_file"]).read_text()
+    system_prompt = Path(task["prompt_path"]).read_text()
     rows = []
     n_batches = (len(items) + batch_size - 1) // batch_size
     for bi, i in enumerate(range(0, len(items), batch_size)):
@@ -253,12 +303,19 @@ def run_cell(task, model_def, oai, batch_size, items):
         try:
             if model_def["backend"] == "ollama":
                 content, latency, eval_count = classify_ollama_batched(
-                    model_def["name"], system_prompt, batch, task, think=model_def["think"]
+                    model_def, system_prompt, batch, task
+                )
+            elif model_def["backend"] == "anthropic":
+                client = model_clients.get(model_def["name"])
+                if client is None:
+                    raise RuntimeError("Anthropic backend selected but no client (SDK or key missing).")
+                content, latency, eval_count = classify_anthropic_batched(
+                    client, model_def["name"], system_prompt, batch, task
                 )
             else:
+                client = model_clients[model_def["name"]]
                 content, latency, eval_count = classify_openai_batched(
-                    oai, model_def["name"], system_prompt, batch, task,
-                    reasoning_effort=model_def.get("reasoning_effort"),
+                    client, model_def, system_prompt, batch, task,
                 )
             parsed = parse_response(content, task, len(batch))
         except Exception as e:
@@ -295,6 +352,8 @@ def run_cell(task, model_def, oai, batch_size, items):
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    add_task_loading_args(ap)
+    add_model_loading_args(ap)
     ap.add_argument("--only-task", help="Restrict to one task by name")
     ap.add_argument("--only-model", help="Restrict to one model by name")
     ap.add_argument("--batch-sizes", default=",".join(str(b) for b in BATCH_SIZES_DEFAULT),
@@ -315,19 +374,47 @@ def main():
 
     batch_sizes = [int(x) for x in args.batch_sizes.split(",")]
 
-    oai = OpenAI()
-
-    tasks = TASKS
+    tasks = load_task_definitions_from_args(args)
     if args.only_task:
-        tasks = [t for t in TASKS if t["name"] == args.only_task]
+        tasks = [t for t in tasks if t["name"] == args.only_task]
         if not tasks:
             print(f"Unknown task: {args.only_task}"); return
 
-    models = MODELS
+    models = load_model_definitions_from_args(args)
     if args.only_model:
-        models = [m for m in MODELS if m["name"] == args.only_model]
+        models = [m for m in models if m["name"] == args.only_model]
         if not models:
             print(f"Unknown model: {args.only_model}"); return
+
+    model_clients = {}
+    unavailable = {}
+    for model in models:
+        if model["backend"] == "openai":
+            client = make_openai_client(model)
+            if client is None:
+                unavailable[model["name"]] = (
+                    f"missing API key for backend=openai "
+                    f"({model.get('api_key_env') or 'OPENAI_API_KEY'})"
+                )
+            else:
+                model_clients[model["name"]] = client
+        elif model["backend"] == "anthropic":
+            client = make_anthropic_client(model)
+            if client is None:
+                unavailable[model["name"]] = (
+                    f"missing API key or SDK for backend=anthropic "
+                    f"({model.get('api_key_env') or 'ANTHROPIC_API_KEY'})"
+                )
+            else:
+                model_clients[model["name"]] = client
+
+    if unavailable:
+        for model_name, reason in unavailable.items():
+            print(f"[skip unavailable model] {model_name}: {reason}", flush=True)
+        models = [m for m in models if m["name"] not in unavailable]
+        if not models:
+            print("No runnable models after filtering unavailable API models.", flush=True)
+            return
 
     # Resume support
     existing = set()
@@ -349,13 +436,10 @@ def main():
         print(f"  N cap      : {args.N}")
     print()
 
-    # Lazy-import N_V1 from benchmark to support --only-new-items.
-    from benchmark import N_V1 as N_V1_BENCHMARK
-
     for task in tasks:
         items = task["loader"]()
         if args.only_new_items:
-            n_skipped = min(N_V1_BENCHMARK, len(items))
+            n_skipped = min(DEFAULT_SAMPLE_N_V1, len(items))
             items = items[n_skipped:]
             print(f"[only-new-items] task {task['name']}: skipping first {n_skipped} v1 items, running {len(items)} new items", flush=True)
         if args.N is not None and len(items) > args.N:
@@ -366,7 +450,7 @@ def main():
         for m in models:
             if m["backend"] == "ollama":
                 print(f"\n  Warming up {m['name']}...", flush=True)
-                warmup_ollama(m["name"])
+                warmup_ollama(m)
 
             for b in batch_sizes:
                 cell_key = (task["name"], m["name"], b)
@@ -381,7 +465,7 @@ def main():
 
                 print(f"\n  --- {m['name']} × {task['name']} × b={b} ---", flush=True)
                 t0 = time.perf_counter()
-                rows = run_cell(task, m, oai, b, items)
+                rows = run_cell(task, m, model_clients, b, items)
                 cell_time = time.perf_counter() - t0
                 n_parse_err = sum(1 for r in rows if r.get("parse_error"))
                 print(f"    CELL DONE: {len(rows)} rows in {cell_time:.1f}s, "

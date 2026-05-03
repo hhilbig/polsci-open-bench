@@ -1,0 +1,25 @@
+order: 13
+name: haunss_papea_fgz_forms
+family: Event coding
+source: Haunss et al. 2025
+data_file: ../data/haunss_papea_fgz_forms.csv
+prompt_file: ../prompts/haunss_papea_fgz_forms.txt
+label_kind: categorical
+label_key: protest_form
+labels:
+  - Demonstration / Assembly
+  - Petition
+  - Strike
+  - Non-verbal Protest / Cultural Event
+  - Leaflet / Resolution / Open Letter
+  - Attack with Damage to Property
+  - Blockade / Sit-in
+id:
+  kind: generated
+  prefix: haunss_papea_fgz_forms
+text:
+  template: |
+    Protest-related text span:
+    {text}
+ground_truth:
+  column: gt_protest_form

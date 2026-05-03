@@ -1,0 +1,18 @@
+order: 1
+name: gilardi_relevance
+family: Relevance / Incivility
+source: Gilardi et al. 2023
+data_file: ../data/gilardi_relevance.csv
+prompt_file: ../prompts/gilardi_relevance.txt
+label_kind: binary
+label_key: relevant
+labels:
+  - relevant
+id:
+  kind: column
+  column: status_id
+text:
+  template: |
+    Tweet: {text}
+ground_truth:
+  column: gt_relevant

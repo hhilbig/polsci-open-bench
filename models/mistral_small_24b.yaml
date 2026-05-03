@@ -1,0 +1,6 @@
+order: 4
+name: mistral-small:24b-instruct-2501-q4_K_M
+display_name: Mistral Sm 24B
+backend: ollama
+compute_class: local
+think: false

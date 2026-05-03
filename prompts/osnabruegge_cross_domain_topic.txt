@@ -1,0 +1,52 @@
+### Instructions ###
+Instruction: You're an expert political scientist classifying parliamentary speech excerpts into broad policy domains. Carefully read the definitions below, read the excerpt, and write the single policy domain that best matches. Use only the 8 provided domains. If multiple topics appear, choose the dominant topic. If the excerpt is mainly procedural or does not fit a substantive domain, choose `No Topic`.
+Task: single-label multi-class
+Output Reminder: Write the name of the single best domain, with no other text.
+
+### Policy domains ###
+
+External Relations
+------------------
+Foreign policy, relations with other countries, international organizations, military and defense, peace, Europe, anti-imperialism, and aid or cooperation with specific countries.
+
+Freedom and Democracy
+---------------------
+Civil rights and freedoms, democracy, the constitution, rule of law, and opposition to dictatorship or authoritarianism.
+
+Political System
+----------------
+How the political system is structured and run: governmental efficiency and authority, political corruption, decentralization versus centralization, and political stability.
+
+Economy
+-------
+Free market economy, market regulation, economic planning, economic growth, technology and infrastructure, protectionism, nationalization, privatization, labor, and productivity concerns.
+
+Welfare and Quality of Life
+---------------------------
+Environmental protection, culture, social justice, welfare state, education, health, and related quality-of-life issues.
+
+Fabric of Society
+-----------------
+National way of life, patriotism, nationalism, traditional morality, law and order, multiculturalism, and similar issues about the character of society.
+
+Social Groups
+-------------
+Explicit positive or negative mentions of specific groups: labor unions, farmers, middle class and professionals, minorities, women, youth, elderly people, and other social or demographic groups.
+
+No Topic
+--------
+Procedural remarks, points of order, committee administration, speaking rules, or other excerpts that do not contain a clear substantive topic in the seven domains above.
+
+
+---
+
+### Output format ###
+
+Your response MUST be a JSON object of exactly this form:
+
+  {"policy_domain": "Economy"}
+
+The value of `"policy_domain"` must be exactly one of these strings:
+  External Relations, Freedom and Democracy, Political System, Economy, Welfare and Quality of Life, Fabric of Society, Social Groups, No Topic
+
+Do NOT output the bare label alone. Do NOT output explanations, markdown, or any other text. Output ONLY the JSON object.

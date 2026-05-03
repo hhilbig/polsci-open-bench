@@ -1,0 +1,21 @@
+order: 5
+name: ornstein_scotus_sentiment
+family: Sentiment / Stance / Tone
+source: Ornstein et al. 2025
+data_file: ../data/ornstein_scotus.csv
+prompt_file: ../prompts/ornstein_scotus_sentiment.txt
+label_kind: categorical
+label_key: sentiment
+labels:
+  - Positive
+  - Negative
+  - Neutral
+id:
+  kind: column
+  column: tweet_id
+text:
+  template: |
+    Case: {case}
+    Tweet: {text}
+ground_truth:
+  column: gt_sentiment

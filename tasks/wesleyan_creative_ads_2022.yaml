@@ -1,0 +1,27 @@
+order: 6
+name: wesleyan_creative_ads_2022
+family: Sentiment / Stance / Tone
+source: Zhang et al. 2025
+data_file: ../data/wesleyan_creative_ads_2022.csv
+prompt_file: ../prompts/wesleyan_creative_ads_2022.txt
+label_kind: categorical
+label_key: tone
+labels:
+  - promote
+  - attack
+  - unclear
+id:
+  kind: column
+  column: ad_id
+text:
+  template: |
+    Ad sponsor (page name): {page_name}
+    Candidate being evaluated: {candidate}
+    Ad content:
+    {full_text}
+  truncations:
+    full_text:
+      max_chars: 4000
+      suffix: "... [truncated at {max_chars} chars]"
+ground_truth:
+  column: gt_tone

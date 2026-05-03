@@ -1,0 +1,6 @@
+order: 2
+name: qwen3:14b-q4_K_M
+display_name: Qwen3 14B
+backend: ollama
+compute_class: local
+think: false

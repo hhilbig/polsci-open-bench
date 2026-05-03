@@ -1,0 +1,21 @@
+You will be shown a public tweet addressed to a politician. Your job is to decide whether the tweet is UNCIVIL.
+
+Use the definition from Rheault, Rayment, and Musulan (2019). A tweet is uncivil if it contains at least one of the following:
+- swear words
+- vulgarities
+- insults
+- threats
+- personal attacks on someone's private life
+- attacks targeted at groups (hate speech)
+
+A tweet can be angry, partisan, mocking of a policy, or strongly critical without being uncivil. Mark a tweet as uncivil only when it includes at least one of the six elements above.
+
+Classify as:
+- `1` if the tweet is uncivil
+- `0` if the tweet is not uncivil
+
+Return JSON only, with exactly one field:
+
+  {"uncivil": 0}
+
+Do not return any explanation or extra text.

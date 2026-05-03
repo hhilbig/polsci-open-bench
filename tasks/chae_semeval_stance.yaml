@@ -1,0 +1,21 @@
+order: 4
+name: chae_semeval_stance
+family: Sentiment / Stance / Tone
+source: Chae and Davidson 2025
+data_file: ../data/semeval_stance.csv
+prompt_file: ../prompts/chae_semeval_stance.txt
+label_kind: categorical
+label_key: stance
+labels:
+  - FAVOR
+  - AGAINST
+  - NONE
+id:
+  kind: generated
+  prefix: semeval
+text:
+  template: |
+    Target: {target_short}
+    Tweet: {text}
+ground_truth:
+  column: gt_stance

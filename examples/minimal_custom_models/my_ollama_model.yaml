@@ -1,0 +1,5 @@
+name: my-local-ollama-model
+display_name: My Local Ollama Model
+backend: ollama
+compute_class: local
+think: false

@@ -1,0 +1,19 @@
+name: minimal_custom_task
+family: Custom
+source: Example task bundled with the repo
+label_kind: binary
+label_key: relevant
+labels:
+  - relevant
+sampling:
+  n_v1: 4
+  n_v2_new: 0
+  seed: 20260422
+id:
+  kind: column
+  column: item_id
+text:
+  template: |
+    Text: {text}
+ground_truth:
+  column: gt_relevant

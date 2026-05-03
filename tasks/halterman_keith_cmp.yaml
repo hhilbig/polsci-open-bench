@@ -1,0 +1,25 @@
+order: 9
+name: halterman_keith_cmp
+family: Policy-topic coding
+source: Halterman and Keith 2025 plus CMP
+data_file: ../data/halterman_keith_cmp.csv
+prompt_file: ../prompts/halterman_keith_cmp.txt
+label_kind: categorical
+label_key: policy_domain
+labels:
+  - External Relations
+  - Freedom and Democracy
+  - Political System
+  - Economy
+  - Welfare and Quality of Life
+  - Fabric of Society
+  - Social Groups
+id:
+  kind: generated
+  prefix: halterman_keith_cmp
+text:
+  template: |
+    Manifesto quasi-sentence:
+    {text}
+ground_truth:
+  column: gt_policy_domain
