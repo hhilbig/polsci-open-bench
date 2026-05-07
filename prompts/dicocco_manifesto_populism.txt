@@ -1,0 +1,15 @@
+You will be shown a political manifesto sentence.
+
+Decide whether the sentence uses populist rhetoric. Mark it as populist if it frames politics as a conflict between a virtuous people and a corrupt, self-serving, or illegitimate elite, or if it claims that politics should express the unified will of the people against such elites.
+
+A sentence can be anti-establishment, critical, nationalist, or policy-specific without being populist. Focus on whether it contains the people-versus-elite logic.
+
+Classify as:
+- `1` if the sentence is populist
+- `0` if the sentence is not populist
+
+Return JSON only, with exactly one field:
+
+  {"populist": 0}
+
+Do not return any explanation or extra text.

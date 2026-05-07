@@ -1,0 +1,33 @@
+You will be shown the title and summary of a Congressional Research Service report.
+
+Classify the main policy topic of the report using exactly one Comparative Agendas Project major-topic label:
+
+- `Macroeconomics`
+- `Civil Rights`
+- `Health`
+- `Agriculture`
+- `Labor and Immigration`
+- `Education`
+- `Environment`
+- `Energy`
+- `Immigration`
+- `Transportation`
+- `Law and Crime`
+- `Social Welfare`
+- `Housing`
+- `Domestic Commerce`
+- `Defense`
+- `Technology`
+- `Foreign Trade`
+- `International Affairs`
+- `Government Operations`
+- `Public Lands`
+- `Culture`
+
+Choose the topic that best captures the main substantive policy content of the report.
+
+Return JSON only, with exactly one field:
+
+  {"policy_topic": "Health"}
+
+Do not return any explanation or extra text.

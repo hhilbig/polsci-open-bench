@@ -1,6 +1,6 @@
 # Project status
 
-Last updated: 2026-05-06
+Last updated: 2026-05-07
 
 ## Current snapshot
 
@@ -35,7 +35,7 @@ Last updated: 2026-05-06
 - Loader/item-id integrity checks live in [`tests/test_benchmark_integrity.py`](../tests/test_benchmark_integrity.py).
 - Built-in tasks are defined in YAML manifests under [`tasks/`](../tasks), and custom-task instructions are in [`docs/custom_tasks.md`](custom_tasks.md).
 - The live built-in task library now contains 18 manifests, with family counts of 5 `Relevance / Incivility`, 4 `Sentiment / Stance / Tone`, 4 `Event coding`, 4 `Policy-topic coding`, and 1 `Hypothesis-conditioned classification`.
-- Eight next-wave candidates are staged but not live-scored under [`tasks_next/`](../tasks_next): `toxicity_protests_es`, `brandt_gtd_attack_type`, `haunss_papea_claims`, `twitcivility_impoliteness`, `bestvater_wm_stance`, `erlich_ati_topics`, `plover_cameo_event`, and `burnham_polnli_event_entailment`. They are kept outside [`tasks/`](../tasks) so the current complete 18-task coverage matrix remains unchanged until scoring starts.
+- Sixteen next-wave candidates are staged but not live-scored under [`tasks_next/`](../tasks_next): `toxicity_protests_es`, `brandt_gtd_attack_type`, `haunss_papea_claims`, `twitcivility_impoliteness`, `bestvater_wm_stance`, `erlich_ati_topics`, `plover_cameo_event`, `burnham_polnli_event_entailment`, `burnham_trump_stance`, `burnham_covid_threat_minimization`, `dicocco_manifesto_populism`, `bestvater_kavanaugh_stance`, `politicause_causal_relation`, `cap_party_platform_policy_topic`, `cap_crs_policy_topic`, and `agoraspeech_criticism_agenda`. They are kept outside [`tasks/`](../tasks) so the current complete 18-task coverage matrix remains unchanged until scoring starts.
 - Built-in models are defined in YAML manifests under [`models/`](../models), and custom-model instructions are in [`docs/custom_models.md`](custom_models.md). The live built-in model set now includes `deepseek-v4-pro` and `gemma4:26b`.
 - DeepSeek, Gemma 4 26B, OpenAI v2pt2, and Sonnet expanded-task runs are currently represented through sidecar and complete-summary artifacts.
 - Full-grid batched inference remains outstanding for the expanded 18-task x 9-model benchmark.

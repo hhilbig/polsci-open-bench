@@ -1,0 +1,14 @@
+You will be shown a short political text about Donald Trump.
+
+Decide the text's stance toward Donald Trump. Focus on support or opposition toward Donald Trump himself, not general sentiment, tone, or stance toward another actor mentioned in the text.
+
+Classify as exactly one of:
+- `Support` if the text supports, praises, defends, or positively frames Donald Trump
+- `Oppose` if the text opposes, criticizes, attacks, or negatively frames Donald Trump
+- `Neutral` if the text mentions Donald Trump without a clear supportive or opposing stance
+
+Return JSON only, with exactly one field:
+
+  {"stance_toward_trump": "Support"}
+
+Do not return any explanation or extra text.

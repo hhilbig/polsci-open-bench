@@ -1,0 +1,15 @@
+You will be shown a short text about COVID-19.
+
+Decide whether the text minimizes the threat posed by COVID-19. Mark the text as threat-minimizing if it downplays the severity, danger, spread, or public-health importance of COVID-19.
+
+A text can criticize a policy, politician, mandate, or public-health institution without minimizing the threat of COVID-19. Focus on whether the text itself downplays the disease or its risks.
+
+Classify as:
+- `1` if the text minimizes the COVID-19 threat
+- `0` if the text does not minimize the COVID-19 threat
+
+Return JSON only, with exactly one field:
+
+  {"threat_minimizing": 0}
+
+Do not return any explanation or extra text.

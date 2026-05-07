@@ -1,0 +1,25 @@
+CAP_MAJOR_TOPIC_LABELS = {
+    1: "Macroeconomics",
+    2: "Civil Rights",
+    3: "Health",
+    4: "Agriculture",
+    5: "Labor and Immigration",
+    6: "Education",
+    7: "Environment",
+    8: "Energy",
+    9: "Immigration",
+    10: "Transportation",
+    12: "Law and Crime",
+    13: "Social Welfare",
+    14: "Housing",
+    15: "Domestic Commerce",
+    16: "Defense",
+    17: "Technology",
+    18: "Foreign Trade",
+    19: "International Affairs",
+    20: "Government Operations",
+    21: "Public Lands",
+    23: "Culture",
+}
+
+CAP_MAJOR_TOPIC_LABELS_IN_ORDER = list(CAP_MAJOR_TOPIC_LABELS.values())

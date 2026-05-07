@@ -18,6 +18,7 @@ import batch_benchmark  # noqa: E402
 import build_coverage_matrix  # noqa: E402
 import model_registry  # noqa: E402
 import task_registry  # noqa: E402
+from cap_topic_labels import CAP_MAJOR_TOPIC_LABELS_IN_ORDER  # noqa: E402
 
 
 class LoaderIntegrityTests(unittest.TestCase):
@@ -225,6 +226,157 @@ class LoaderIntegrityTests(unittest.TestCase):
         self.assertEqual(task["label_key"], "entails")
         self.assertEqual(len(items), 500)
         self.assertTrue(all(item["gt"]["entails"] in [0, 1] for item in items))
+
+
+class StagedNextTaskTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.tasks_next = {
+            task["name"]: task
+            for task in task_registry.load_task_definitions(tasks_dir=REPO / "tasks_next")
+        }
+
+    def test_all_staged_next_loaders_return_unique_item_ids(self):
+        for name, task in self.tasks_next.items():
+            with self.subTest(task=name):
+                items = task["loader"]()
+                self.assertEqual(len(items), len({item["item_id"] for item in items}))
+
+    def test_burnham_trump_stance_task_file_and_labels(self):
+        df = pd.read_csv(REPO / "data" / "burnham_trump_stance.csv")
+        self.assertEqual(len(df), 4776)
+        self.assertEqual(df["source_id"].duplicated().sum(), 0)
+        self.assertEqual(df["text"].isna().sum(), 0)
+        self.assertEqual(df["text"].eq("").sum(), 0)
+        self.assertEqual(df["text"].duplicated().sum(), 0)
+        labels = {"Oppose", "Neutral", "Support"}
+        self.assertEqual(set(df["gt_stance_toward_trump"]), labels)
+
+        task = self.tasks_next["burnham_trump_stance"]
+        items = task["loader"]()
+        self.assertEqual(task["family"], "Sentiment / Stance / Tone")
+        self.assertEqual(task["label_key"], "stance_toward_trump")
+        self.assertEqual(len(items), 500)
+        self.assertTrue(all(item["gt"]["stance_toward_trump"] in labels for item in items))
+
+    def test_burnham_covid_threat_minimization_task_file_and_labels(self):
+        df = pd.read_csv(REPO / "data" / "burnham_covid_threat_minimization.csv")
+        self.assertEqual(len(df), 293)
+        self.assertEqual(df["source_id"].duplicated().sum(), 0)
+        self.assertEqual(df["text"].isna().sum(), 0)
+        self.assertEqual(df["text"].eq("").sum(), 0)
+        self.assertEqual(df["text"].duplicated().sum(), 0)
+        self.assertEqual(set(df["gt_threat_minimizing"]), {0, 1})
+
+        task = self.tasks_next["burnham_covid_threat_minimization"]
+        items = task["loader"]()
+        self.assertEqual(task["family"], "Sentiment / Stance / Tone")
+        self.assertEqual(task["label_key"], "threat_minimizing")
+        self.assertEqual(len(items), 293)
+        self.assertTrue(all(item["gt"]["threat_minimizing"] in [0, 1] for item in items))
+
+    def test_dicocco_manifesto_populism_task_file_and_labels(self):
+        df = pd.read_csv(REPO / "data" / "dicocco_manifesto_populism.csv")
+        self.assertEqual(len(df), 7084)
+        self.assertEqual(df["source_id"].duplicated().sum(), 0)
+        self.assertEqual(df["text"].isna().sum(), 0)
+        self.assertEqual(df["text"].eq("").sum(), 0)
+        self.assertEqual(df["text"].duplicated().sum(), 0)
+        self.assertEqual(set(df["gt_populist"]), {0, 1})
+
+        task = self.tasks_next["dicocco_manifesto_populism"]
+        items = task["loader"]()
+        self.assertEqual(task["family"], "Rhetoric / Populism")
+        self.assertEqual(task["label_key"], "populist")
+        self.assertEqual(len(items), 500)
+        self.assertTrue(all(item["gt"]["populist"] in [0, 1] for item in items))
+
+    def test_bestvater_kavanaugh_stance_task_file_and_labels(self):
+        df = pd.read_csv(REPO / "data" / "bestvater_kavanaugh_stance.csv")
+        self.assertEqual(len(df), 3636)
+        self.assertEqual(df["source_id"].duplicated().sum(), 0)
+        self.assertEqual(df["text"].isna().sum(), 0)
+        self.assertEqual(df["text"].eq("").sum(), 0)
+        self.assertGreater(df["text"].duplicated().sum(), 2000)
+        self.assertEqual(df.groupby("text")["gt_pro_kavanaugh"].nunique().max(), 1)
+        self.assertEqual(set(df["gt_pro_kavanaugh"]), {0, 1})
+
+        task = self.tasks_next["bestvater_kavanaugh_stance"]
+        items = task["loader"]()
+        self.assertEqual(task["family"], "Sentiment / Stance / Tone")
+        self.assertEqual(task["label_key"], "pro_kavanaugh")
+        self.assertEqual(len(items), 500)
+        self.assertTrue(all(item["gt"]["pro_kavanaugh"] in [0, 1] for item in items))
+
+    def test_politicause_causal_relation_task_file_and_labels(self):
+        df = pd.read_csv(REPO / "data" / "politicause_causal_relation.csv")
+        self.assertEqual(len(df), 17771)
+        self.assertEqual(df["source_id"].duplicated().sum(), 0)
+        self.assertEqual(df["text"].isna().sum(), 0)
+        self.assertEqual(df["text"].eq("").sum(), 0)
+        self.assertEqual(df["text"].duplicated().sum(), 0)
+        self.assertEqual(set(df["gt_causal_relation"]), {0, 1})
+
+        task = self.tasks_next["politicause_causal_relation"]
+        items = task["loader"]()
+        self.assertEqual(task["family"], "Causal relation detection")
+        self.assertEqual(task["label_key"], "causal_relation")
+        self.assertEqual(len(items), 500)
+        self.assertTrue(all(item["gt"]["causal_relation"] in [0, 1] for item in items))
+
+    def test_cap_party_platform_policy_topic_task_file_and_labels(self):
+        df = pd.read_csv(REPO / "data" / "cap_party_platform_policy_topic.csv")
+        self.assertEqual(len(df), 37338)
+        self.assertEqual(df["source_id"].duplicated().sum(), 0)
+        self.assertEqual(df["text"].isna().sum(), 0)
+        self.assertEqual(df["text"].eq("").sum(), 0)
+        self.assertEqual(df["text"].duplicated().sum(), 0)
+        labels = set(CAP_MAJOR_TOPIC_LABELS_IN_ORDER)
+        self.assertEqual(set(df["gt_policy_topic"]), labels)
+
+        task = self.tasks_next["cap_party_platform_policy_topic"]
+        items = task["loader"]()
+        self.assertEqual(task["family"], "Policy-topic coding")
+        self.assertEqual(task["label_key"], "policy_topic")
+        self.assertEqual(task["labels"], CAP_MAJOR_TOPIC_LABELS_IN_ORDER)
+        self.assertEqual(len(items), 500)
+        self.assertTrue(all(item["gt"]["policy_topic"] in labels for item in items))
+
+    def test_cap_crs_policy_topic_task_file_and_labels(self):
+        df = pd.read_csv(REPO / "data" / "cap_crs_policy_topic.csv")
+        self.assertEqual(len(df), 16510)
+        self.assertEqual(df["source_id"].duplicated().sum(), 0)
+        self.assertEqual(df["title"].isna().sum(), 0)
+        self.assertEqual(df["text"].isna().sum(), 0)
+        self.assertEqual(df["text"].eq("").sum(), 0)
+        self.assertEqual(df["text"].duplicated().sum(), 0)
+        labels = set(CAP_MAJOR_TOPIC_LABELS_IN_ORDER)
+        self.assertEqual(set(df["gt_policy_topic"]), labels)
+
+        task = self.tasks_next["cap_crs_policy_topic"]
+        items = task["loader"]()
+        self.assertEqual(task["family"], "Policy-topic coding")
+        self.assertEqual(task["label_key"], "policy_topic")
+        self.assertEqual(task["labels"], CAP_MAJOR_TOPIC_LABELS_IN_ORDER)
+        self.assertEqual(len(items), 500)
+        self.assertTrue(all(item["gt"]["policy_topic"] in labels for item in items))
+
+    def test_agoraspeech_criticism_agenda_task_file_and_labels(self):
+        df = pd.read_csv(REPO / "data" / "agoraspeech_criticism_agenda.csv")
+        self.assertEqual(len(df), 5279)
+        self.assertEqual(df["source_id"].duplicated().sum(), 0)
+        self.assertEqual(df["text"].isna().sum(), 0)
+        self.assertEqual(df["text"].eq("").sum(), 0)
+        self.assertEqual(df["text"].duplicated().sum(), 0)
+        labels = {"criticism", "political agenda"}
+        self.assertEqual(set(df["gt_criticism_or_agenda"]), labels)
+
+        task = self.tasks_next["agoraspeech_criticism_agenda"]
+        items = task["loader"]()
+        self.assertEqual(task["family"], "Rhetoric / Discourse Function")
+        self.assertEqual(task["label_key"], "criticism_or_agenda")
+        self.assertEqual(len(items), 500)
+        self.assertTrue(all(item["gt"]["criticism_or_agenda"] in labels for item in items))
 
 
 class ModelRegistryTests(unittest.TestCase):

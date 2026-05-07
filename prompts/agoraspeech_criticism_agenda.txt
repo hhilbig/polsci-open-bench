@@ -1,0 +1,15 @@
+You will be shown a paragraph from a campaign speech.
+
+Decide whether the paragraph is primarily criticism or political agenda.
+
+Classify as:
+- `criticism` if the paragraph mainly criticizes an opponent, government, party, institution, policy, or past action
+- `political agenda` if the paragraph mainly presents the speaker's proposals, priorities, values, promises, plans, or governing program
+
+If both are present, choose the label that best describes the paragraph's main function.
+
+Return JSON only, with exactly one field:
+
+  {"criticism_or_agenda": "political agenda"}
+
+Do not return any explanation or extra text.

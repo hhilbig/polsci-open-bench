@@ -1,0 +1,23 @@
+order: 34
+name: agoraspeech_criticism_agenda
+family: Rhetoric / Discourse Function
+source: Sermpezis et al. 2026
+data_file: ../data/agoraspeech_criticism_agenda.csv
+prompt_file: ../prompts/agoraspeech_criticism_agenda.txt
+label_kind: categorical
+label_key: criticism_or_agenda
+labels:
+  - criticism
+  - political agenda
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Speaker: {source_politician}
+    Speech date: {source_date}
+
+    Paragraph:
+    {text}
+ground_truth:
+  column: gt_criticism_or_agenda

@@ -1,0 +1,15 @@
+You will be shown one sentence from political text.
+
+Decide whether the sentence contains a causal relation. Mark it as causal if it states or clearly implies that one event, condition, decision, action, or process causes, produces, enables, prevents, worsens, improves, or otherwise leads to another.
+
+A sentence can mention policy, chronology, goals, or correlations without making a causal claim. Focus on whether the sentence expresses a cause-effect relation.
+
+Classify as:
+- `1` if the sentence contains a causal relation
+- `0` if the sentence does not contain a causal relation
+
+Return JSON only, with exactly one field:
+
+  {"causal_relation": 1}
+
+Do not return any explanation or extra text.

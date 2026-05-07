@@ -49,6 +49,31 @@ Candidate additions should be screened with the following criteria:
 5. Benchmark practicality
    - The task should have enough labeled items, a clean text field, a stable label schema, and a task shape that can be benchmarked without turning into a one-off engineering special case.
 
+## Hard admissibility gates
+
+These are entry gates, not performance gates. Low F1 after scoring is acceptable
+and scientifically useful; degraded task quality or weak requirement adherence
+is not.
+
+Do not stage a task unless it passes all of the following checks:
+
+1. Public text plus labels are directly ingestible from the replication archive,
+   public corpus, or documented source.
+2. The benchmark target is a direct source label or a transparent codebook-level
+   collapse of direct labels, not a speculative derived outcome.
+3. The prompt can be anchored in the published task, codebook, or manifest
+   description without adding extra hidden assumptions.
+4. Cleaning does not silently discard more than 20% of rows or unique text units.
+   Any larger loss must be documented and justified before proceeding.
+5. Exact duplicate texts with conflicting labels are removed. Exact same-label
+   repeats should be deduplicated unless deduplication would discard more than
+   20% of the source rows.
+6. The task is not redundant with a task already live-scored or staged, except
+   where the new target, domain, country, or source type adds meaningful coverage.
+7. The generated manifest loads through `task_registry`, sampled `item_id`
+   values are unique, and the prompt schema can be parsed by the benchmark
+   runner.
+
 ## Verification status
 
 - On 2026-04-30, every candidate currently tagged as a `paper` below was
@@ -84,6 +109,36 @@ Candidate additions should be screened with the following criteria:
   at least one to each currently lower-count family.
 
 ## Candidate sources
+
+## Fresh screen on 2026-05-07
+
+Passed the hard gates and staged under `tasks_next/`:
+
+1. PolitiCAUSE
+   - Staged task: `politicause_causal_relation`
+   - Basis: public train/validation/test CSVs with sentence text and a direct binary causal-relation label.
+   - Cleaning result: 17,771 clean rows after removing exact text conflicts and same-label duplicates.
+
+2. Policy Agendas Project, Democratic and Republican Party Platforms
+   - Staged task: `cap_party_platform_policy_topic`
+   - Basis: public party-platform quasi-statements with direct CAP major-topic labels.
+   - Cleaning result: 37,338 clean rows after keeping standard CAP major topics and removing duplicate/conflicting exact texts.
+
+3. Policy Agendas Project, Congressional Research Service Reports
+   - Staged task: `cap_crs_policy_topic`
+   - Basis: public CRS report titles and summaries with direct CAP major-topic labels.
+   - Cleaning result: 16,510 clean rows after keeping standard CAP major topics and removing duplicate/conflicting exact texts.
+
+4. AgoraSpeech
+   - Staged task: `agoraspeech_criticism_agenda`
+   - Basis: public campaign-speech paragraphs with human-validated criticism-or-agenda labels and English translations.
+   - Cleaning result: 5,279 clean rows, no text or label drops.
+
+Rejected or held from this screen:
+
+- Media Frames Corpus: annotations are public, but article text requires LexisNexis access, so it fails direct public text-plus-label ingest.
+- CAP State of the Union: plausible but held because the first clean formulation dropped just over 20% of rows when non-policy and unsupported-topic observations were removed.
+- AgoraSpeech sentiment, polarization, and populism: held because the human columns are continuous scores; benchmarking them as binary or categorical tasks would require derived thresholds.
 
 ### Relevance / Incivility
 

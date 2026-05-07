@@ -1,0 +1,21 @@
+order: 27
+name: burnham_trump_stance
+family: Sentiment / Stance / Tone
+source: Burnham 2025
+data_file: ../data/burnham_trump_stance.csv
+prompt_file: ../prompts/burnham_trump_stance.txt
+label_kind: categorical
+label_key: stance_toward_trump
+labels:
+  - Oppose
+  - Neutral
+  - Support
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Text:
+    {text}
+ground_truth:
+  column: gt_stance_toward_trump

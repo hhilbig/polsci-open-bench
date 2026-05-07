@@ -1,0 +1,15 @@
+You will be shown a tweet about Brett Kavanaugh's Supreme Court confirmation.
+
+Decide whether the tweet expresses a pro-Kavanaugh stance. Mark the tweet as pro-Kavanaugh if it supports, praises, defends, or positively frames Brett Kavanaugh or his confirmation.
+
+A tweet can use negative sentiment toward Kavanaugh's opponents while still being pro-Kavanaugh. A tweet can mention Kavanaugh without taking a pro stance. Focus on stance toward Brett Kavanaugh, not general emotional tone.
+
+Classify as:
+- `1` if the tweet is pro-Kavanaugh
+- `0` if the tweet is not pro-Kavanaugh
+
+Return JSON only, with exactly one field:
+
+  {"pro_kavanaugh": 1}
+
+Do not return any explanation or extra text.

@@ -1,0 +1,19 @@
+order: 30
+name: bestvater_kavanaugh_stance
+family: Sentiment / Stance / Tone
+source: Bestvater and Monroe 2023
+data_file: ../data/bestvater_kavanaugh_stance.csv
+prompt_file: ../prompts/bestvater_kavanaugh_stance.txt
+label_kind: binary
+label_key: pro_kavanaugh
+labels:
+  - pro_kavanaugh
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Tweet:
+    {text}
+ground_truth:
+  column: gt_pro_kavanaugh

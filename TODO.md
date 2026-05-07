@@ -23,8 +23,19 @@
   6. `erlich_ati_topics`, a seven-label multi-binary ATI request-topic task built from Erlich et al.'s public human-coded Mexican access-to-information requests.
   7. `plover_cameo_event`, an 18-class event-type task built from PLOVER gold-standard CAMEO records. This is usable but small, with 312 clean examples.
   8. `burnham_polnli_event_entailment`, an event-extraction-only PolNLI entailment subset.
+  9. `burnham_trump_stance`, a three-class Trump stance task built from Burnham's public train file and adjudicated test file.
+  10. `burnham_covid_threat_minimization`, a binary COVID threat-minimization task built from Burnham's public labeled sample.
+  11. `dicocco_manifesto_populism`, a binary manifesto-sentence populism task built from Di Cocco and Monechi's public Italian manual annotations.
+  12. `bestvater_kavanaugh_stance`, a binary Brett Kavanaugh stance task built from Bestvater and Monroe's public ground-truth tweets. Exact same-label repeats are retained because deduplicating them would discard more than 20% of source rows; conflicting duplicate texts are removed.
+  13. `politicause_causal_relation`, a binary causal-relation sentence task built from the public PolitiCAUSE train/validation/test splits.
+  14. `cap_party_platform_policy_topic`, a 21-class CAP major-topic task built from public Democratic and Republican Party Platform quasi-statements.
+  15. `cap_crs_policy_topic`, a 21-class CAP major-topic task built from public Congressional Research Service report titles and summaries.
+  16. `agoraspeech_criticism_agenda`, a two-class Greek campaign-speech paragraph task built from AgoraSpeech's human-validated criticism-or-agenda labels and English translations.
   These candidates are intentionally staged under `tasks_next/` rather than `tasks/`, so the current 18-task complete matrix remains unchanged until scoring starts.
+  Hard entry threshold for future task additions: public text plus labels must be directly ingestible, labels must be direct or transparently collapsed from direct codebook labels, any >20% cleaning or unique-unit drop must be flagged and justified before staging, conflicting duplicate labels must be removed, and the manifest must load with unique sampled `item_id` values. Low downstream F1 is not a rejection criterion by itself.
   Candidate screened but not staged: `wang_2023_topic_classification_pretrained_lms`; the Dataverse archive notebooks reference `data_and_models.zip`, but that zip is absent from the visible Dataverse file list, so the labeled corpus is not directly ingestible from the archive as inspected.
+  Additional candidates screened but not staged in the 2026-05-06 pass: Policlim is locked in Dataverse review; Ziegler's manipulation-check archive did not expose a direct text-plus-label response file; Hobbs and Green required impractical Code Ocean ingestion rather than a direct benchmark table; Ivanusch et al. exposed manual labels but the public corpora inspected had empty text fields; MaML did not expose a clean direct text-label validation set.
+  Additional candidates screened but not staged in the 2026-05-07 pass: Media Frames Corpus annotations require separate LexisNexis access for article text; CAP State of the Union required dropping just over 20% of rows to remove non-policy or unsupported-topic material; AgoraSpeech sentiment, polarization, and populism are continuous scores that would require thresholding rather than direct categorical labels.
   Next task-collection step: once mac2 or another runner is available, either start scoring the staged candidates or continue balancing additions across the other original task families.
   Immediate fallbacks if one of the locked four fails verification:
   1. `The Silenced Text`, only if a derived rating threshold is acceptable
