@@ -27,6 +27,20 @@ Task-specific label columns are wide and sparse: each row carries only the
 `pred_*` and `gt_*` columns relevant to its task, and all unrelated task columns
 are null.
 
+Latency contract:
+
+- `latency_s` is a required benchmark field, not auxiliary metadata.
+- For serial rows, `latency_s` is the wall-clock time for exactly one item-level
+  model call, measured around the backend request and response.
+- For API models, this includes provider/network request time as observed by the
+  benchmark runner. For local models, it includes the local serving request time
+  as observed by the runner.
+- Cleanly parsed rows must have positive, non-missing `latency_s`. Rows that fail
+  before receiving a model response may have missing `latency_s`, but those rows
+  must carry a non-null `parse_error`.
+- New backends and custom runners should preserve this field so downstream users
+  can compare practical throughput, not just classification accuracy.
+
 Active task label columns:
 
 | Task | Label kind | Prediction / ground-truth columns |
@@ -34,17 +48,21 @@ Active task label columns:
 | `gilardi_relevance` | binary | `pred_relevant`, `gt_relevant` |
 | `ballard_incivility` | binary | `pred_uncivil`, `gt_uncivil` |
 | `rheault_line_of_fire_incivility` | binary | `pred_uncivil`, `gt_uncivil` |
+| `theocharis_dynamics_incivility` | binary | `pred_uncivil`, `gt_uncivil` |
 | `brandt_political_relevance` | binary | `pred_relevant`, `gt_relevant` |
 | `gilardi_stance` | categorical | `pred_stance`, `gt_stance` |
 | `chae_semeval_stance` | categorical | `pred_stance`, `gt_stance` |
 | `ornstein_scotus_sentiment` | categorical | `pred_sentiment`, `gt_sentiment` |
 | `halterman_ccc_protest` | categorical | `pred_protest_type`, `gt_protest_type` |
 | `halterman_keith_bfrs` | categorical | `pred_event_type`, `gt_event_type` |
+| `douglass_icbe_sentence_event_type` | categorical | `pred_event_type`, `gt_event_type` |
 | `haunss_papea_fgz_forms` | categorical | `pred_protest_form`, `gt_protest_form` |
 | `halterman_keith_cmp` | categorical | `pred_policy_domain`, `gt_policy_domain` |
 | `osnabruegge_cross_domain_topic` | categorical | `pred_policy_domain`, `gt_policy_domain` |
+| `muller_fujimura_campaign_policy_area` | categorical | `pred_policy_area`, `gt_policy_area` |
 | `wesleyan_creative_ads_2022` | categorical | `pred_tone`, `gt_tone` |
 | `mellon_bes_mii_2024` | categorical | `pred_issue`, `gt_issue` |
+| `burnham_polnli_entailment` | binary | `pred_entails`, `gt_entails` |
 
 ### `output/predictions_batched.csv`
 
@@ -66,6 +84,11 @@ Core columns:
 
 The task-specific `pred_*` and `gt_*` columns follow the same live task schema
 as `predictions.csv`.
+
+For batched runs, `batch_latency_s` is the full wall-clock time for the backend
+call, and `latency_s` is the per-item latency defined as `batch_latency_s`
+divided by the actual number of items in that batch. Both fields are required
+for cleanly parsed rows.
 
 ## Summary files
 

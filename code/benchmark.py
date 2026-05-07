@@ -523,6 +523,13 @@ def main():
     if args.merge_into:
         print(f"  merged into: {args.merge_into}", flush=True)
 
+    try:
+        from build_coverage_matrix import refresh as refresh_coverage
+        refresh_coverage(verbose=False)
+        print("  coverage matrix: docs/coverage_matrix.md", flush=True)
+    except Exception as exc:
+        print(f"  coverage matrix refresh skipped: {exc}", flush=True)
+
 
 if __name__ == "__main__":
     main()

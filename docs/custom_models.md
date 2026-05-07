@@ -48,6 +48,25 @@ the model:
 - `openai`: OpenAI chat completions, including OpenAI-compatible servers via `base_url`
 - `anthropic`: Anthropic Messages API with tool-use forcing
 
+## Latency tracking
+
+Per-item latency is a core benchmark outcome. Every supported backend must
+return a wall-clock latency measurement for each successful call so raw
+prediction rows can populate `latency_s`.
+
+Backend expectations:
+
+- serial runs: `latency_s` is one item-level request-response wall time
+- batched runs: `batch_latency_s` is one batch request-response wall time, and
+  `latency_s` is `batch_latency_s / actual_batch_size`
+- cleanly parsed rows must have positive, non-missing latency values
+- rows that fail before a model response may have missing latency, but must keep
+  the error in `parse_error`
+
+If you add a new backend adapter later, treat latency capture as part of the
+minimum interface alongside `content` and token-count metadata. Accuracy without
+timing is not enough for this benchmark.
+
 For remote OpenAI-compatible providers, set the provider-specific API key in
 the manifest via `api_key_env`. If that key is unavailable at runtime, the
 built-in benchmark runners skip the model with a notice. Local OpenAI-compatible

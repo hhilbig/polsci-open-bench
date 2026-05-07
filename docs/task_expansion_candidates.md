@@ -3,6 +3,10 @@
 This note records the first sourcing pass for expanding the benchmark within
 the existing four-family structure.
 
+Structured companion file:
+
+- [`docs/task_expansion_candidates.csv`](task_expansion_candidates.csv)
+
 ## Current family counts
 
 - Relevance / Incivility: 2 tasks
@@ -27,8 +31,9 @@ just manifest plumbing.
 
 Candidate additions should be screened with the following criteria:
 
-1. Political-science relevance
-   - Hard filter. The task should map clearly onto substantive political-science research rather than generic NLP alone.
+1. Political-science research relevance
+   - Hard filter. The task should map clearly onto substantive or methodological political-science research rather than generic NLP alone.
+   - This includes tasks that are useful for how political scientists work with text, not just tasks with obviously political subject matter.
 
 2. Labeled data and replication access
    - Hard filter. The underlying labeled text and replication materials need to be obtainable in practice.
@@ -403,11 +408,18 @@ Incivility` and `Event coding`.
    - Public repo: https://github.com/CenterForPeaceAndSecurityStudies/ICBEdataset
    - What is confirmed:
      - The Dataverse replication package is public.
-     - The GitHub README explicitly documents public agreed datasets, public span data in `icb_long_spans.Rds`, and a public crisis-narrative corpus under `replication_corpus`.
+     - The public agreed event file `ICBe_V1.1_events_agreed.Rds` contains `18,783` rows and direct text/label columns including `crisno`, `sentence_number_int_aligned`, `sentence_span_text`, and `event_type`.
+     - The public sentence corpus `icb_long_crisis_sentence_unique.Rds` contains `12,680` aligned sentence rows with `crisno` and `sentence_clean`.
+     - Grouping the sentence corpus by `crisno` and taking `row_number()` reproduces `sentence_number_int_aligned` exactly, so the full public sentence text can be joined cleanly to the agreed event labels.
+     - The direct `event_type` space is effectively `action`, `speech`, and `thought`, but many sentences contain either no agreed event type or multiple event types.
    - Current read:
-     - This is the strongest next `Event coding` addition.
-     - It adds a substantively different international-crisis ontology instead of another protest-only task.
-     - The main implementation decision will be how to collapse or subset the label space into a benchmarkable classification task.
+      - This is the strongest next `Event coding` addition.
+      - It adds a substantively different international-crisis ontology instead of another protest-only task.
+      - The cleanest first slice is now a sentence-level task built from the public sentence corpus plus the agreed event file.
+      - The best default formulation is probably a `5`-class sentence task: `No Event`, `Action`, `Speech`, `Thought`, and `Mixed`.
+      - The cleaner but narrower alternative is a `3`-class sentence task using only the `7,513` sentences with exactly one agreed event type.
+      - Important tradeoff: the narrower `3`-class version would exclude `5,167 / 12,680` public sentences (`40.7%`), because `3,765` have no agreed event type and `1,402` are mixed-type sentences.
+      - This task is now implemented in the live manifests as `douglass_icbe_sentence_event_type`, using the broader `5`-class sentence formulation and dropping only `4` malformed sentence rows from the public corpus.
 
 2. `Extractive versus Generative Language Models for Political Conflict Text Classification`
    - Family: `Event coding`
@@ -476,4 +488,211 @@ Incivility` and `Event coding`.
 
 1. Implement the strongest refreshed event-side addition
    - `brandt_political_relevance` is now implemented in the live manifests, using the public binary-classification corpus from Brandt et al. (2025) after exact-text deduplication.
-   - The next best expansion target is now `ICBe`, with the main remaining design choice being a defensible label collapse or subset.
+   - `ICBe` is now replication-verified.
+   - The main remaining design choice is whether the first live ICBe task should be the broader `5`-class sentence task (`No Event` / `Action` / `Speech` / `Thought` / `Mixed`) or the narrower `3`-class sentence task that keeps only single-type sentences.
+
+## Second sourcing pass via parallel search
+
+On 2026-05-03, a second sourcing pass looked specifically for additional
+candidates not already represented in the structured queue. The strongest new
+results fell into four buckets:
+
+1. `Relevance / Incivility`
+   - strongest new organic-text lead: `Clicks and Stones`
+   - strongest new methodological lead: `Super-Unsupervised Classification for Labelling Text`
+   - strongest new archive-backed stimulus candidates:
+     - `Citizens’ Perceptions of Online Abuse Directed at Politicians`
+     - `Online Abuse of Politicians`
+
+2. `Event coding`
+   - strongest new benchmark-ready lead: `Political DEBATE / PolNLI event-detection subset`
+   - strongest genuinely new event domain: `Automated Dictionary Generation for Political Event Coding`
+   - strongest non-paper fallback: `Count Love Protest Dataset`
+
+3. `Policy-topic coding`
+   - strongest new lead: `Campaign communication and legislative leadership`
+   - strongest cross-channel lead: `Where do parties talk about what?`
+   - strongest narrower topical lead: `Policlim`
+
+4. `New family / broader benchmark direction`
+   - strongest overall new direction: `Political DEBATE / PolNLI`
+   - strongest open-ended survey-response lead: `Categorizing Topics Versus Inferring Attitudes`
+   - strongest longer-document rhetoric lead: `How Populist are Parties?`
+   - strongest structured prompt-response lead: `A Text-As-Data Approach for Using Open-Ended Responses as Manipulation Checks`
+
+The structured companion CSV has been updated with these new candidates and
+their current provisional statuses.
+
+## Locked broader next 4
+
+For the next verification wave, the benchmark will prioritize this broader set
+of four additions:
+
+1. `Campaign communication and legislative leadership`
+   - Family: `Policy-topic coding`
+   - Reason: strongest next policy-topic addition and clearly non-redundant relative to the current manifesto/speech mix.
+   - Implementation result:
+     - The public Dataverse archive is directly downloadable.
+     - The archive includes explicit supervised sentence files: `data_sentences_train.tab`, `data_sentences_test.tab`, and `data_sentences_eval.tab`.
+     - Those split files expose `policy_area_num`, `policy_area`, `text`, and `ntoken`.
+     - The combined supervised split has `2,985` labeled sentence rows and `12` labels, including `No policy area`.
+     - There are only `3` exact duplicate sentence strings with conflicting labels. Dropping those conflict texts removes `12 / 2,985` rows (`0.4%`).
+     - The live build also deduplicates exact repeated text-label pairs. Final live size is `2,915` rows, a total drop of `70 / 2,985` (`2.35%`).
+   - Current read:
+     - This is now implemented in the live manifests as `muller_fujimura_campaign_policy_area`.
+     - The benchmark uses the combined `train + test + eval` sentence corpus rather than the broader raw hand-coded file, because the split files already encode the final supervised classification dataset.
+     - The task is a `12`-class statement-level policy-topic benchmark, with `No Policy Area` kept as an explicit class.
+
+2. `Clicks and Stones`
+   - Family: `Relevance / Incivility`
+   - Reason: strongest new organic-text hostility candidate.
+   - Verification result:
+     - The public Dataverse archive contains `maindata.tab`, `CAdata.csv`, `codebook.rtf`, `replication.R`, and related files.
+     - Direct inspection shows that `maindata.tab` is a `1,949`-row legislator-level aggregate file with variables such as `pctHostile`, `pctNHGen`, and `pcthostthatisgen`.
+     - The replication code reads `maindata.csv` and `CAdata.csv`; it does not expose or download tweet-level public text plus labels.
+   - Current read:
+     - This fails the direct-ingest screen for the benchmark.
+     - It remains substantively relevant, but it cannot become a text-classification task without reconstructing or reacquiring the underlying tweet-level corpus.
+
+3. `Political DEBATE / PolNLI`
+   - Family: `new family candidate`
+   - Reason: deliberate broader-direction pilot that would test whether the benchmark should expand into hypothesis-conditioned political text classification.
+   - Implementation result:
+     - The public Hugging Face dataset exposes train, validation, and test parquet splits with `premise`, `hypothesis`, `entailment`, `dataset`, and `task`.
+     - The live task uses the public test split only.
+     - The source coding uses `entailment = 0` for entailed pairs and `entailment = 1` for non-entailed pairs. The benchmark maps this to `gt_entails = 1` for supported hypotheses and `0` otherwise.
+     - The raw test split has `15,366` rows. Dropping duplicate or conflicting premise-hypothesis pairs removes `52` rows and leaves `15,314` cleaned pairs.
+   - Current read:
+     - This is implemented in the live manifests as `burnham_polnli_entailment`.
+     - It is a deliberate broader-direction pilot rather than part of the original four-family schema.
+
+`ICBe`, `Campaign communication and legislative leadership`, and `Political
+DEBATE / PolNLI` have now been implemented from that broader set as
+`douglass_icbe_sentence_event_type`, `muller_fujimura_campaign_policy_area`,
+and `burnham_polnli_entailment`. `Clicks and Stones` failed the direct-ingest
+screen because the public archive does not expose tweet-level public text plus
+labels.
+
+## Replacement Relevance / Incivility screen
+
+On 2026-05-04, three replacement leads for the failed `Clicks and Stones`
+slot were screened for directly usable public text plus labels:
+
+1. `Super-Unsupervised Classification for Labelling Text: Online Political Hostility as an Illustration`
+   - Replication archive: https://doi.org/10.7910/DVN/4X7IMW
+   - Verification result:
+     - `annotation_sample.parquet` has `2,471` rows and annotation/score columns such as `pol_hate`, `hostile`, `predicted_class`, and model distances, but no text column.
+     - `full_df_scores.parquet` has `4,392,368` score rows, but no text column.
+     - `graph_examples.csv` has public text, but only `35` examples and no clear human ground-truth labels.
+   - Current read:
+     - Reject for the live benchmark unless a text-bearing labeled file becomes available.
+
+2. `Citizens' Perceptions of Online Abuse Directed at Politicians`
+   - Replication archive: https://doi.org/10.7910/DVN/LIXDR1
+   - Verification result:
+     - The public tab file has `2,050` respondent rows.
+     - It exposes numeric `message1`-`message4` IDs and respondent ratings such as `abusive`, `legit`, and `report`, but not the text of the messages.
+     - The README describes the replication files but does not expose a message-text codebook.
+   - Current read:
+     - Reject for the live benchmark unless the stimulus text can be recovered from a public source.
+
+3. `Online Abuse of Politicians: Experimental Evidence on Politicians' Own Perceptions`
+   - Replication archive: https://doi.org/10.7910/DVN/PKPOCD
+   - Verification result:
+     - The public tab file has `9,804` respondent-message rows.
+     - It exposes numeric `message` IDs, `messagetype`, and politician ratings such as `abusive`, `legit`, `report`, and `aversion`, but not the text of the messages.
+     - The README describes the replication files but does not expose a message-text codebook.
+   - Current read:
+     - Reject for the live benchmark unless the stimulus text can be recovered from a public source.
+
+The same 2026-05-04 replacement pass also surfaced three directly usable
+alternatives:
+
+1. `The Dynamics of Political Incivility on Twitter`
+   - Source: Theocharis et al. 2020, *Sage Open*
+   - Paper URL: https://journals.sagepub.com/doi/10.1177/2158244020919447
+   - Public repo: https://github.com/pablobarbera/incivility-sage-open
+   - Verification result:
+     - The public repo contains `data/training-data.csv`.
+     - Direct inspection confirms `4,000` rows with columns `uncivil`, `id_str`, `created_at`, and `text`.
+     - Label counts are `2,961` `no` and `1,039` `yes`.
+   - Current read:
+     - This is now implemented in the live manifests as `theocharis_dynamics_incivility`.
+     - The live build drops `3` duplicate or conflicting exact-text rows and keeps `3,997` usable tweets.
+     - Main weakness: it is substantively close to existing Twitter-incivility tasks, so it improves family size more than task diversity.
+
+2. `toxicity-protests-ES`
+   - Source: Gonzalez-Bustamante 2024, LLM political-content annotation benchmark
+   - Paper / dataset page: https://huggingface.co/papers/2409.09741
+   - Data URL: https://huggingface.co/datasets/bgonzalezbustamante/toxicity-protests-ES
+   - Verification result:
+     - The public CSV has `1,000` Spanish protest-discourse rows.
+     - It contains public text, two human coder columns, a consensus column, and several toxicity / insult threshold columns.
+     - Direct inspection found no duplicate full rows.
+   - Current read:
+     - This is the strongest diversity-oriented fallback because it adds protest discourse and multilingual coverage.
+     - Non-English tasks are acceptable for this benchmark if the source otherwise satisfies the task criteria.
+     - Main weakness: it is a preprint / dataset release rather than a published political-science replication archive.
+
+3. `TwitCivility`
+   - Data URL: https://huggingface.co/datasets/incivility-UOH/TwitCivility
+   - Verification result:
+     - The public train/test parquet splits contain `13,124` rows.
+     - There are no missing or duplicate text strings.
+     - Direct binary labels are available for `impoliteness` and `intolerance`.
+   - Current read:
+     - This is staged as `twitcivility_impoliteness` using the direct `impoliteness` label.
+     - Main weakness: it is weaker on the published political-science paper criterion.
+
+`The Silenced Text` remains viable only as a derived-label backup rather than a
+direct-label replacement. Direct inspection confirms `text-ratings-clean.csv`
+has `2,989` rows, `2,988` non-missing text strings, and average rating columns
+`offensive_avg` and `discourage_avg`. After requiring non-missing text and both
+ratings, `2,867` rows remain. A conservative `offensive_avg > 50` threshold
+would yield `169` positive and `2,698` negative cases; lower thresholds improve
+balance but make the label rule more arbitrary.
+
+Current ranked replacement list:
+
+1. `The Dynamics of Political Incivility on Twitter`: implemented as `theocharis_dynamics_incivility`
+2. `toxicity-protests-ES`: staged as `toxicity_protests_es`
+3. `TwitCivility`: staged as `twitcivility_impoliteness`
+4. `The Silenced Text`, only if a derived label is acceptable
+
+## Additional staged candidates on 2026-05-06
+
+After the first `tasks_next/` wave, four additional candidates were inspected
+for staged scaffolding.
+
+1. `Bestvater and Monroe 2023, Sentiment Is Not Stance`
+   - Staged as `bestvater_wm_stance`.
+   - Source file: `WM_tweets_groundtruth.tab`.
+   - Cleaned size: `19,516` tweets.
+   - Cleaning drop: `441 / 19,957` rows (`2.21%`).
+   - Current read: clean, paper-backed, and useful as target-aware stance, but class-imbalanced and in an already well-covered family.
+
+2. `Erlich et al. 2022, Multi-Label Prediction for Political Text-as-Data`
+   - Staged as `erlich_ati_topics`.
+   - Source file: `hc_new.tab`.
+   - Cleaned size: `4,751` Spanish access-to-information requests.
+   - Cleaning drop: `171 / 4,922` rows (`3.47%`).
+   - Current read: clean and useful because it exercises multi-binary political text coding, but it adds a special task shape.
+
+3. `PLOVER gold-standard records`
+   - Staged as `plover_cameo_event`.
+   - Source file: `PLOVER_GSR_CAMEO.txt`.
+   - Cleaned size: `312` event sentences across `18` event labels.
+   - Cleaning drop: `10 / 322` records (`3.11%`).
+   - Current read: usable event-coding fallback, but small and weaker on the published-paper replication criterion.
+
+4. `Political DEBATE / PolNLI event subset`
+   - Staged as `burnham_polnli_event_entailment`.
+   - Source file: existing cleaned `burnham_polnli_entailment.csv`, restricted to `source_task == "event extraction"`.
+   - Staged size: `2,854` event-extraction premise-hypothesis pairs.
+   - Current read: clean and benchmark-ready, but correlated with the already live PolNLI entailment task.
+
+`Wang 2023, Topic Classification for Political Texts with Pretrained Language
+Models` was screened but not staged. The visible Dataverse archive contains
+notebooks and a README; the notebooks reference `data_and_models.zip`, but that
+zip is absent from the visible Dataverse file list, so the labeled corpus was
+not directly ingestible from the archive as inspected.

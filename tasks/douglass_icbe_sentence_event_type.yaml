@@ -1,0 +1,23 @@
+order: 15
+name: douglass_icbe_sentence_event_type
+family: Event coding
+source: Douglass et al. 2024
+data_file: ../data/douglass_icbe_sentence_event_type.csv
+prompt_file: ../prompts/douglass_icbe_sentence_event_type.txt
+label_kind: categorical
+label_key: event_type
+labels:
+  - No Event
+  - Action
+  - Speech
+  - Thought
+  - Mixed
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Crisis title: {crisis_title}
+    Sentence: {text}
+ground_truth:
+  column: gt_event_type

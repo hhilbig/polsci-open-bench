@@ -1,0 +1,11 @@
+source,path,rows_used
+canonical,/Users/hanno/Documents/GitHub/polsci-open-bench/output/predictions.csv,35000
+live_sidecar_api_v2pt2,/Users/hanno/Documents/GitHub/polsci-open-bench/output/sidecar/api_v2pt2_predictions.csv,6000
+live_sidecar_sonnet_missing,/Users/hanno/Documents/GitHub/polsci-open-bench/output/sidecar/sonnet_missing_predictions.csv,3820
+deepseek_sidecar_2026-05-02,/Users/hanno/Documents/GitHub/polsci-open-bench/output/archive/deepseek_sidecar_2026-05-02/deepseek_full_predictions_nonthinking.csv,6820
+deepseek_sidecar_2026-05-02,/Users/hanno/Documents/GitHub/polsci-open-bench/output/archive/deepseek_sidecar_2026-05-02/deepseek_full_predictions_thinking.csv,6820
+openweight_gemma26_others_2026-05-05,/Users/hanno/Documents/GitHub/polsci-open-bench/output/archive/openweight_gemma26_others_2026-05-05/openweight_gemma26_others_predictions.csv,6820
+openweight_new_tasks_2026-05-02,/Users/hanno/Documents/GitHub/polsci-open-bench/output/archive/openweight_new_tasks_2026-05-02/new_tasks_openweight_predictions.csv,7280
+openweight_v2pt2_new_tasks_2026-05-04,/Users/hanno/Documents/GitHub/polsci-open-bench/output/archive/openweight_v2pt2_new_tasks_2026-05-04/openweight_v2pt2_gemma26_predictions.csv,2000
+openweight_v2pt2_new_tasks_2026-05-04,/Users/hanno/Documents/GitHub/polsci-open-bench/output/archive/openweight_v2pt2_new_tasks_2026-05-04/openweight_v2pt2_predictions.csv,10000
+proprietary_openai_only_new_tasks_2026-05-03,/Users/hanno/Documents/GitHub/polsci-open-bench/output/archive/proprietary_openai_only_new_tasks_2026-05-03/proprietary_openai_only_predictions.csv,3640

@@ -112,6 +112,19 @@ prediction artifacts.
      - this public corpus has 320 usable rows after exact-text deduplication, so
        the live loader uses all available rows rather than forcing a 500-item sample
 
+5. `theocharis_dynamics_incivility`
+   - Source: Theocharis et al. (2020)
+   - Family: `Relevance / Incivility`
+   - Files:
+     - [`code/build_theocharis_dynamics_incivility_task.py`](../code/build_theocharis_dynamics_incivility_task.py)
+     - [`data/theocharis_dynamics_incivility.csv`](../data/theocharis_dynamics_incivility.csv)
+     - [`tasks/theocharis_dynamics_incivility.yaml`](../tasks/theocharis_dynamics_incivility.yaml)
+     - [`prompts/theocharis_dynamics_incivility.txt`](../prompts/theocharis_dynamics_incivility.txt)
+   - Note:
+     - this public replication training file has 4,000 labeled rows; the live
+       build drops 3 rows during exact-text conflict and duplicate handling,
+       leaving 3,997 usable tweets
+
 ## 4. Diagnostics, tests, and reporting
 
 - Added a task-length audit build:
@@ -142,6 +155,7 @@ prediction artifacts.
   - [`docs/release_workflow.md`](release_workflow.md)
 - Added sourcing notes for benchmark expansion:
   - [`docs/task_expansion_candidates.md`](task_expansion_candidates.md)
+  - [`docs/task_expansion_candidates.csv`](task_expansion_candidates.csv)
 - The roadmap now also records a possible future local-model expansion pass,
   including a concrete shortlist:
   - add next: run the prepared built-in `gemma4:26b` manifest
@@ -151,18 +165,53 @@ prediction artifacts.
     `DeepSeek-R1-Distill-Qwen-32B`, `gpt-oss:120b`, and `Qwen 2.5-72B`
   - the new built-in manifest lives at
     [`models/gemma4_26b_a4b.yaml`](../models/gemma4_26b_a4b.yaml)
+- A second parallel sourcing pass on 2026-05-03 expanded the structured task
+  candidate queue with new `Relevance / Incivility`, `Event coding`,
+  `Policy-topic coding`, and `new family` leads, including `Clicks and Stones`,
+  `Political DEBATE / PolNLI`, and `Campaign communication and legislative leadership`.
+- That sourcing pass also produced a locked broader next verification wave of
+  four targets:
+  - `ICBe`
+  - `Campaign communication and legislative leadership`
+  - `Clicks and Stones`
+  - `Political DEBATE / PolNLI`
+- `ICBe` has now been replication-verified as the first target in that wave.
+  Direct inspection of the public files shows a clean path to a sentence-level
+  event task using the aligned agreed-event file plus the public sentence
+  corpus. The current recommended first slice is a `5`-class sentence task:
+  `No Event`, `Action`, `Speech`, `Thought`, and `Mixed`.
+- That `ICBe` sentence task is now live in the repo as
+  [`douglass_icbe_sentence_event_type`](../tasks/douglass_icbe_sentence_event_type.yaml),
+  built from the public RDS files with `12,676` cleaned sentence rows after
+  dropping `4` malformed sentence rows from the public corpus.
+- `Campaign communication and legislative leadership` has now also been
+  implemented in the live manifests as
+  [`muller_fujimura_campaign_policy_area`](../tasks/muller_fujimura_campaign_policy_area.yaml),
+  built from the public supervised sentence splits. The live task keeps `12`
+  policy-area labels, drops `12` rows tied to exact-text label conflicts, then
+  deduplicates exact repeated text-label pairs to leave `2,915` cleaned rows.
+- `Clicks and Stones` failed the direct-ingest screen. The public archive
+  exposes legislator-level aggregate hostility rates and replication code for
+  those aggregates, but not tweet-level public text plus labels.
+- `Political DEBATE / PolNLI` has now been implemented as
+  [`burnham_polnli_entailment`](../tasks/burnham_polnli_entailment.yaml), using
+  the public PolNLI test split. The live task keeps `15,314` cleaned
+  premise-hypothesis pairs after dropping `52` duplicate or conflicting pairs
+  and maps the source coding so `gt_entails = 1` means the hypothesis is
+  supported by the premise.
 
 ## 6. Current live state after the post-release wave
 
 - Checked-in scored benchmark: still 10 tasks
-- Live built-in task library: now 14 tasks
+- Live built-in task library: now 18 tasks
 - Live built-in model manifests: now 9 models, including `deepseek-v4-pro`
   and the prepared `gemma4:26b` local manifest
 - New task families are more balanced than at release:
-  - `Relevance / Incivility`: now 4 live tasks
+  - `Relevance / Incivility`: now 5 live tasks
   - `Sentiment / Stance / Tone`: 4 live tasks
-  - `Event coding`: 3 live tasks
-  - `Policy-topic coding`: 3 live tasks
+  - `Event coding`: 4 live tasks
+  - `Policy-topic coding`: 4 live tasks
+  - `Hypothesis-conditioned classification`: 1 live pilot task
 
 ## 7. Not done yet
 
@@ -172,9 +221,29 @@ prediction artifacts.
 - No post-release full serial rerun with the main API models has been committed
   yet.
 - No post-release batched rerun has been committed yet.
-- The next recommended implementation target after this wave is `ICBe` for
-  `Event coding`, unless the priority shifts from task collection to selective
-  rerunning.
+- A 2026-05-04 replacement screen for the failed `Clicks and Stones` slot
+  rejected three additional `Relevance / Incivility` candidates for the live
+  benchmark:
+  - `Super-Unsupervised Classification for Labelling Text`: label/score files
+    do not expose text, and the only public text example file has 35 rows.
+  - `Citizens' Perceptions of Online Abuse Directed at Politicians`: public
+    data expose numeric message IDs and respondent ratings, but not message text.
+  - `Online Abuse of Politicians`: public data expose numeric message IDs and
+    politician ratings, but not message text.
+- The same screen verified three direct-label alternatives:
+  - `The Dynamics of Political Incivility on Twitter`: `4,000` public English
+    tweets with direct `uncivil` labels in a paper-backed replication repo,
+    now implemented as `theocharis_dynamics_incivility`.
+  - `toxicity-protests-ES`: `1,000` public Spanish protest-discourse rows with
+    human coder labels, useful for multilingual coverage.
+  - `TwitCivility`: `13,124` public rows with direct `impoliteness` and
+    `intolerance` labels, but weaker on the published-political-science-paper
+    criterion.
+- Non-English tasks are acceptable for future benchmark expansion if they
+  otherwise satisfy the task-selection criteria.
+- The next recommended task-collection step is to either implement the
+  multilingual `toxicity-protests-ES` fallback or return to balancing additions
+  across the other original task families.
 
 ## 8. DeepSeek Sidecar Runs
 
@@ -228,3 +297,46 @@ prediction artifacts.
   - they are not merged into `output/predictions.csv`, `output/summary.csv`, or
     `output/report_pdf.pdf` because the main API models have not yet been rerun
     on the same four tasks
+
+## 10. OpenAI-only proprietary sidecar for new tasks
+
+- An OpenAI-only rerun for the four post-release tasks was completed and stored
+  as a dated sidecar archive:
+  - [`output/archive/proprietary_openai_only_new_tasks_2026-05-03/`](../output/archive/proprietary_openai_only_new_tasks_2026-05-03)
+- Sidecar contents:
+  - `proprietary_openai_only_predictions.csv`
+  - `proprietary_openai_only_summary.csv`
+  - `proprietary_openai_only.log`
+- Coverage:
+  - 4 tasks
+  - 2 OpenAI models
+  - 3,640 scored rows
+  - 0 parse errors
+- Best sidecar model by task:
+  - `brandt_political_relevance`: `gpt-5.4-nano` (`0.646`)
+  - `haunss_papea_fgz_forms`: `gpt-5.5` (`0.965`)
+  - `osnabruegge_cross_domain_topic`: `gpt-5.5` (`0.443`)
+  - `rheault_line_of_fire_incivility`: `gpt-5.4-nano` (`0.607`)
+- Merge decision:
+  - these results are being kept as sidecar artifacts for now
+  - they are not merged into `output/predictions.csv`, `output/summary.csv`, or
+    `output/report_pdf.pdf` because the Claude run is still missing for the
+    same four tasks
+
+## 11. Combined six-model comparison table for new tasks
+
+- Added a helper archive that combines the existing open-weight and OpenAI-only
+  sidecars for the four post-release tasks:
+  - [`output/archive/new_tasks_full_comparison_2026-05-03/`](../output/archive/new_tasks_full_comparison_2026-05-03)
+- Files:
+  - `combined_new_tasks_summary_long.csv`
+  - `combined_new_tasks_headline_f1_wide.csv`
+  - `combined_new_tasks_headline_f1.md`
+- Scope:
+  - 4 tasks
+  - 6 models
+  - 24 `(task, model)` cells
+- Purpose:
+  - provide one compact comparison table across the currently completed local
+    and OpenAI reruns
+  - remain non-canonical until the same task set is completed for Claude

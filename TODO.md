@@ -2,14 +2,33 @@
 
 ## Next iterations
 
+- Complete full-grid batched inference. Current batched artifacts cover the original 10-task grid for six models at `b=10` and `b=20`, with Claude Sonnet 4.6 only present as a serial `b=1` baseline in `summary_batched.csv`. Batched inference is still outstanding for the expanded 18-task x 9-model benchmark, including `deepseek-v4-pro`, `gemma4:26b`, Claude Sonnet `b=10/20`, and all eight expanded tasks.
 - Add more tasks to each of the four existing task families: Relevance / Incivility, Sentiment / Stance / Tone, Event coding, and Policy-topic coding. This should be treated as the main content-expansion track for the next benchmark iteration, with the goal of adding multiple new tasks within each family rather than deepening only one family at a time. The current family averages are based on a small number of tasks, so broader within-family coverage should make cross-family comparisons more stable and reduce the influence of any single dataset.
-  Selection criteria: politically relevant, replication-accessible, prompt or codebook preferably directly obtainable, non-redundant within the family, and practical to benchmark cleanly.
+  Selection criteria: substantively or methodologically relevant to political-science research, replication-accessible, prompt or codebook preferably directly obtainable, non-redundant within the family, and practical to benchmark cleanly.
   Balancing rule: prioritize the currently underrepresented families, and do not add two new tasks to the same family before adding at least one to each lower-count family.
-  Implemented in the live manifests: `Cross-Domain Topic Classification`, `Politicians in the Line of Fire`, `PAPEA`, and `brandt_political_relevance`.
+  Implemented in the live manifests: `Cross-Domain Topic Classification`, `Politicians in the Line of Fire`, `PAPEA`, `brandt_political_relevance`, `douglass_icbe_sentence_event_type`, `muller_fujimura_campaign_policy_area`, and `burnham_polnli_entailment`.
   Refreshed next-target queue after that first implementation wave:
-  1. `ICBe` for `Event coding`
-  2. Brandt et al. GTD attack-type classification or PAPEA protest-claim classification as easier event-side fallbacks
-  3. Revisit `The Silenced Text` only if a derived rating threshold is acceptable for `Relevance / Incivility`
+  Result of the broader next-target wave:
+  1. `Clicks and Stones` failed the direct-ingest screen because the public archive exposes aggregate legislator-level hostility rates rather than tweet-level public text and labels.
+  2. `Political DEBATE / PolNLI` is implemented as `burnham_polnli_entailment`, a deliberate broader-direction pilot for hypothesis-conditioned political text classification.
+  Replacement `Relevance / Incivility` screen on 2026-05-04: `Super-Unsupervised Classification for Labelling Text`, `Citizens' Perceptions of Online Abuse Directed at Politicians`, and `Online Abuse of Politicians` all failed the direct-ingest screen because the public archives do not expose directly usable public text plus labels.
+  Verified replacement candidates from the same screen: `The Dynamics of Political Incivility on Twitter` is implemented as `theocharis_dynamics_incivility`; `toxicity-protests-ES` is now staged as `tasks_next/toxicity_protests_es.yaml` with a cleaned 972-row data file; `TwitCivility` is now staged as `tasks_next/twitcivility_impoliteness.yaml` with a cleaned 13,124-row data file. Non-English benchmark tasks are acceptable if they otherwise satisfy the task-selection criteria.
+  Prepared but not live-scored candidates for the next benchmark wave:
+  1. `toxicity_protests_es`, a Spanish protest-toxicity binary task built from coder-agreement rows.
+  2. `brandt_gtd_attack_type`, a nine-class GTD primary attack-type task built from Brandt et al.'s public GTD multi-label file.
+  3. `haunss_papea_claims`, a 28-class PAPEA protest-claim task built from the public FGZ claim annotations.
+  4. `twitcivility_impoliteness`, a binary impoliteness task built from the public TwitCivility train/test splits.
+  Additional prepared but not live-scored candidates:
+  5. `bestvater_wm_stance`, a Women's March stance task built from Bestvater and Monroe's public ground-truth tweets.
+  6. `erlich_ati_topics`, a seven-label multi-binary ATI request-topic task built from Erlich et al.'s public human-coded Mexican access-to-information requests.
+  7. `plover_cameo_event`, an 18-class event-type task built from PLOVER gold-standard CAMEO records. This is usable but small, with 312 clean examples.
+  8. `burnham_polnli_event_entailment`, an event-extraction-only PolNLI entailment subset.
+  These candidates are intentionally staged under `tasks_next/` rather than `tasks/`, so the current 18-task complete matrix remains unchanged until scoring starts.
+  Candidate screened but not staged: `wang_2023_topic_classification_pretrained_lms`; the Dataverse archive notebooks reference `data_and_models.zip`, but that zip is absent from the visible Dataverse file list, so the labeled corpus is not directly ingestible from the archive as inspected.
+  Next task-collection step: once mac2 or another runner is available, either start scoring the staged candidates or continue balancing additions across the other original task families.
+  Immediate fallbacks if one of the locked four fails verification:
+  1. `The Silenced Text`, only if a derived rating threshold is acceptable
+  2. PLOVER gold-standard records
 - Add a new long-document task family. The current benchmark is dominated by short inputs, so it does not say much about performance on longer passages, full documents, or more complex structured-input problems. Candidate additions include longer political texts, research-paper passages, OCR-heavy material, or table-structure tasks.
 - Maybe add `ling-2.6-1T` to the benchmark model set in a future model-expansion pass.
 - Keep a concrete local-model shortlist for the `v2` benchmark expansion rather than adding popular releases ad hoc.

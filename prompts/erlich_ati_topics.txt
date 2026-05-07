@@ -1,0 +1,19 @@
+You will be shown a Spanish-language access-to-information request submitted to a public institution.
+
+Code which request topics are present. A request may contain more than one topic. Return `1` for each topic that is clearly requested and `0` otherwise.
+
+Use these topic definitions:
+
+- `Activities`: actions, programs, services, procedures, operations, or work carried out by the institution.
+- `Budget`: budgets, spending, payments, salaries, costs, contracts with monetary amounts, or financial resources.
+- `Evaluation`: audits, assessments, indicators, results, performance, compliance, or evaluations.
+- `External Contracts`: procurement, tenders, adjudications, outsourced services, suppliers, or contracts with external parties.
+- `Institutional Structure`: organizational units, personnel structure, functions, internal rules, manuals, or responsibilities.
+- `Other`: the request subject does not fit the other listed topics.
+- `Regulatory`: laws, regulations, legal norms, authorizations, permits, resolutions, or formal regulatory decisions.
+
+Return JSON only, with exactly these fields:
+
+  {"Activities": 0, "Budget": 0, "Evaluation": 0, "External Contracts": 0, "Institutional Structure": 0, "Other": 0, "Regulatory": 0}
+
+Do not return any explanation or extra text.

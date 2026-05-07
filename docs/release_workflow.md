@@ -65,6 +65,17 @@ Each sidecar folder should contain:
 - summary outputs
 - a short `README.md` describing scope, model/task coverage, and merge status
 
+## Coverage matrix
+
+The model x task coverage matrix lives at [`docs/coverage_matrix.md`](coverage_matrix.md)
+and [`output/coverage_matrix.csv`](../output/coverage_matrix.csv). It is rebuilt by
+`python3 code/build_coverage_matrix.py`, which scans `output/predictions.csv`, every
+`*predictions*.csv` under `output/sidecar/`, and every `*predictions*.csv` under
+`output/archive/`. `code/benchmark.py` calls the same refresh at the end of every
+run, so the matrix stays in sync with active sidecar files as well as archived
+sidecars. After moving a sidecar into `output/archive/<sidecar>/` by hand, rerun
+the script so the matrix records the archived source label.
+
 ## Promotion rule
 
 Do not merge sidecar outputs into canonical outputs until the comparison set is

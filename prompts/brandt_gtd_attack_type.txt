@@ -1,0 +1,19 @@
+You will be shown a short event summary from the Global Terrorism Database.
+
+Classify the primary attack type described in the summary. Use exactly one of these labels:
+
+- `Assassination`: an attack whose primary purpose is killing a specific, prominent, or individually targeted person.
+- `Armed Assault`: a direct attack using firearms, knives, or other weapons, without explosives as the primary method.
+- `Bombing/Explosion`: an attack using bombs, grenades, rockets, mines, suicide explosives, or other explosive devices.
+- `Facility/Infrastructure Attack`: sabotage or physical attack against a building, facility, vehicle, pipeline, communications asset, or other infrastructure.
+- `Hijacking`: seizure or attempted seizure of an aircraft, vehicle, vessel, or other transport while it is in transit.
+- `Hostage Taking (Barricade Incident)`: seizure of hostages in a fixed location during a standoff or barricade situation.
+- `Hostage Taking (Kidnapping)`: abduction, seizure, or attempted abduction of people for ransom, coercion, or intimidation.
+- `Unarmed Assault`: attack or attempted attack without firearms, explosives, or other conventional weapons.
+- `Unknown`: the summary does not provide enough information to identify the primary attack type.
+
+Return JSON only, with exactly one field:
+
+  {"attack_type": "Bombing/Explosion"}
+
+Do not return any explanation or extra text.

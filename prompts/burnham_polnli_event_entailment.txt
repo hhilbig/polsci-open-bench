@@ -1,0 +1,13 @@
+You will be shown a short political event text and a hypothesis about that event.
+
+Decide whether the event text supports the hypothesis. The hypothesis may ask whether the text describes a particular event type or event attribute.
+
+Classify as:
+- `1` if the hypothesis is supported by the event text
+- `0` if the hypothesis is not supported by the event text
+
+Return JSON only, with exactly one field:
+
+  {"entails": 1}
+
+Do not return any explanation or extra text.

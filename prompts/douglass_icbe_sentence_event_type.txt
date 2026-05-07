@@ -1,0 +1,17 @@
+You will be shown one sentence from a narrative about an international crisis, along with the crisis title.
+
+Classify the sentence using exactly one of these five labels:
+
+- `No Event`: the sentence does not contain an event expression of the relevant ICBe types
+- `Action`: the sentence describes an action, move, intervention, attack, deployment, military step, or other concrete behavior
+- `Speech`: the sentence contains a public statement, warning, accusation, demand, appeal, promise, rejection, ultimatum, or other communicative act
+- `Thought`: the sentence expresses a belief, fear, perception, desire, intention, realization, or other mental-state content
+- `Mixed`: the sentence clearly contains more than one of the above event types
+
+Use the crisis title as light context, but classify the sentence itself.
+
+Return JSON only, with exactly this structure:
+
+  {"event_type": "Action"}
+
+Do not return any explanation or extra text.

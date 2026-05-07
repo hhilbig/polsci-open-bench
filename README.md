@@ -2,7 +2,7 @@
 
 A small benchmark of LLMs for political science text classification.
 
-The checked-in benchmark outputs compare four local open-weight models, run through Ollama, against three commercial API models, two from OpenAI and one from Anthropic, on ten classification tasks from published political science replication archives. The live built-in task library now includes four additional tasks, `osnabruegge_cross_domain_topic`, `rheault_line_of_fire_incivility`, `haunss_papea_fgz_forms`, and `brandt_political_relevance`, which are ready for future reruns but are not yet included in the committed prediction and report artifacts. The live built-in model library now also includes `deepseek-v4-pro` for future API-side comparisons and a prepared `gemma4:26b` local manifest for the `v2` expansion branch.
+The checked-in benchmark outputs compare four local open-weight models, run through Ollama, against three commercial API models, two from OpenAI and one from Anthropic, on ten classification tasks from published political science replication archives. The live built-in task library now includes eight additional tasks, `osnabruegge_cross_domain_topic`, `rheault_line_of_fire_incivility`, `haunss_papea_fgz_forms`, `brandt_political_relevance`, `douglass_icbe_sentence_event_type`, `muller_fujimura_campaign_policy_area`, `burnham_polnli_entailment`, and `theocharis_dynamics_incivility`, which are ready for future reruns but are not yet included in the committed prediction and report artifacts. The live built-in model library now also includes `deepseek-v4-pro` for future API-side comparisons and a prepared `gemma4:26b` local manifest for the `v2` expansion branch.
 
 The goal is narrower than a general leaderboard: can local models be useful for applied political-text coding, and what tradeoffs appear in practice?
 
@@ -35,12 +35,12 @@ Main takeaway: local open-weight models are competitive on many tasks, but the b
 ## Scope
 
 - **Tasks in committed outputs:** 10 political science classification tasks
-- **Built-in task manifests:** 14 tasks
+- **Built-in task manifests:** 18 tasks
 - **Items:** typically 500 per task, fixed random seed; smaller public extension tasks use all available rows
 - **Models in committed outputs:** 4 local Ollama models + 3 commercial API models
 - **Built-in model manifests:** 8 models
 - **Predictions:** 35,000 serial + 44,500 batched
-- **Metrics:** macro F1, accuracy, MCC, latency, malformed-output rate
+- **Metrics:** macro F1, accuracy, MCC, required per-item latency, malformed-output rate
 - **Local hardware:** Apple M2 Pro, 32 GB unified memory, macOS Tahoe 26.1, Ollama 0.19.0
 
 ## What this benchmark is, and is not
@@ -55,6 +55,7 @@ This benchmark is for applied researchers considering local LLMs for political-t
 | `ballard_incivility` | Ballard 2022 | Relevance / Incivility | binary |
 | `rheault_line_of_fire_incivility` | Rheault, Rayment, & Musulan 2019 | Relevance / Incivility | binary |
 | `brandt_political_relevance` | Brandt et al. 2025 | Relevance / Incivility | binary |
+| `theocharis_dynamics_incivility` | Theocharis et al. 2020 | Relevance / Incivility | binary |
 | `gilardi_stance` | Gilardi et al. 2023 | Sentiment / Stance / Tone | 3-class |
 | `chae_semeval_stance` | Chae & Davidson 2025 | Sentiment / Stance / Tone | 3-class |
 | `ornstein_scotus_sentiment` | Ornstein et al. 2025 | Sentiment / Stance / Tone | 3-class |
@@ -62,14 +63,18 @@ This benchmark is for applied researchers considering local LLMs for political-t
 | `halterman_ccc_protest` | Halterman & Keith 2025 | Event coding | 4-class |
 | `halterman_keith_bfrs` | Halterman & Keith 2025 | Event coding | 12-class |
 | `haunss_papea_fgz_forms` | Haunss et al. 2025 | Event coding | 7-class |
+| `douglass_icbe_sentence_event_type` | Douglass et al. 2024 | Event coding | 5-class |
 | `halterman_keith_cmp` | Halterman & Keith 2025 + CMP | Policy-topic coding | 7-class |
 | `osnabruegge_cross_domain_topic` | Osnabruegge, Ash, & Morelli 2023 | Policy-topic coding | 8-class |
+| `muller_fujimura_campaign_policy_area` | Muller & Fujimura 2024 | Policy-topic coding | 12-class |
 | `mellon_bes_mii_2024` | Mellon et al. 2024 | Policy-topic coding | 50-class |
+| `burnham_polnli_entailment` | Burnham et al. 2025 | Hypothesis-conditioned classification | binary |
 
 Prompt provenance is documented in [`docs/prompts_provenance.md`](docs/prompts_provenance.md).
 The committed benchmark outputs still cover the original 10-task run; the new
-Cross-Domain, Line-of-Fire, PAPEA, and Brandt relevance tasks are present in
-the live manifests for future reruns.
+Cross-Domain, Line-of-Fire, PAPEA, Brandt relevance, ICBe sentence-event, and
+Campaign policy-area tasks, plus the PolNLI entailment pilot and Theocharis
+incivility task, are present in the live manifests for future reruns.
 
 ## Models
 

@@ -1,0 +1,27 @@
+order: 20
+name: brandt_gtd_attack_type
+family: Event coding
+source: Brandt et al. 2025
+data_file: ../data/brandt_gtd_attack_type.csv
+prompt_file: ../prompts/brandt_gtd_attack_type.txt
+label_kind: categorical
+label_key: attack_type
+labels:
+  - Assassination
+  - Armed Assault
+  - Bombing/Explosion
+  - Facility/Infrastructure Attack
+  - Hijacking
+  - Hostage Taking (Barricade Incident)
+  - Hostage Taking (Kidnapping)
+  - Unarmed Assault
+  - Unknown
+id:
+  kind: column
+  column: source_row
+text:
+  template: |
+    Event summary:
+    {text}
+ground_truth:
+  column: gt_attack_type

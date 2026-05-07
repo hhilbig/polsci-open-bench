@@ -1,0 +1,15 @@
+You will be shown a Spanish-language social media post about protests.
+
+Decide whether the post is TOXIC. Mark it as toxic if it contains insulting, abusive, threatening, demeaning, hateful, or personally attacking language toward a person or group.
+
+A post can be angry, partisan, sarcastic, or strongly critical of a policy, protest, institution, or political actor without being toxic. Mark it as toxic only when the wording itself is abusive, insulting, threatening, or degrading.
+
+Classify as:
+- `1` if the post is toxic
+- `0` if the post is not toxic
+
+Return JSON only, with exactly one field:
+
+  {"toxic": 0}
+
+Do not return any explanation or extra text.

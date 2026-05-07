@@ -1,0 +1,19 @@
+order: 18
+name: theocharis_dynamics_incivility
+family: Relevance / Incivility
+source: Theocharis et al. 2020
+data_file: ../data/theocharis_dynamics_incivility.csv
+prompt_file: ../prompts/theocharis_dynamics_incivility.txt
+label_kind: binary
+label_key: uncivil
+labels:
+  - uncivil
+id:
+  kind: column
+  column: source_tweet_id
+text:
+  template: |
+    Tweet:
+    {text}
+ground_truth:
+  column: gt_uncivil

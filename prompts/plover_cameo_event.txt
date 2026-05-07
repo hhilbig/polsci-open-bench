@@ -1,0 +1,28 @@
+You will be shown a news sentence describing a political event.
+
+Classify the main event type. Use exactly one of these labels:
+
+- `AGREE`
+- `AID`
+- `ASSAULT`
+- `COERCE`
+- `CONCEDE`
+- `CONSULT`
+- `COOPERATE`
+- `DEMAND`
+- `DISAPPROVE`
+- `FIGHT`
+- `INVESTIGATE`
+- `MOBILIZE`
+- `PROTEST`
+- `REJECT`
+- `RETREAT`
+- `SANCTION`
+- `SUPPORT`
+- `THREATEN`
+
+Return JSON only, with exactly one field:
+
+  {"event_type": "PROTEST"}
+
+Do not return any explanation or extra text.

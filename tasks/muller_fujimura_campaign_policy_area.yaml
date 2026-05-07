@@ -1,0 +1,30 @@
+order: 16
+name: muller_fujimura_campaign_policy_area
+family: Policy-topic coding
+source: Müller and Fujimura 2024
+data_file: ../data/muller_fujimura_campaign_policy_area.csv
+prompt_file: ../prompts/muller_fujimura_campaign_policy_area.txt
+label_kind: categorical
+label_key: policy_area
+labels:
+  - Agriculture, Forestry, and Fisheries
+  - Committees on Cabinet
+  - Economy, Trade and Industry
+  - Education, Culture, Sports, Science, and Technology
+  - Environment
+  - Financial Affairs
+  - Foreign Affairs
+  - Health, Labour, and Welfare
+  - Internal Affairs and Communications
+  - Land, Infrastructure, Transport, and Tourism
+  - No Policy Area
+  - Security
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Japanese campaign statement:
+    {text}
+ground_truth:
+  column: gt_policy_area

@@ -15,6 +15,7 @@ sys.path.insert(0, str(REPO / "code"))
 
 import benchmark  # noqa: E402
 import batch_benchmark  # noqa: E402
+import build_coverage_matrix  # noqa: E402
 import model_registry  # noqa: E402
 import task_registry  # noqa: E402
 
@@ -98,6 +99,24 @@ class LoaderIntegrityTests(unittest.TestCase):
         self.assertEqual(len(items), 500)
         self.assertTrue(all(item["gt"]["uncivil"] in [0, 1] for item in items))
 
+    def test_theocharis_dynamics_incivility_task_file_and_labels(self):
+        df = pd.read_csv(REPO / "data" / "theocharis_dynamics_incivility.csv")
+        self.assertEqual(len(df), 3997)
+        self.assertEqual(df["source_tweet_id"].duplicated().sum(), 0)
+        self.assertEqual(df["text"].isna().sum(), 0)
+        self.assertEqual(df["text"].eq("").sum(), 0)
+        self.assertEqual(df["gt_uncivil"].isna().sum(), 0)
+        self.assertEqual(df["text"].duplicated().sum(), 0)
+        self.assertEqual(set(df["source_uncivil_raw"]), {"no", "yes"})
+        self.assertEqual(set(df["gt_uncivil"]), {0, 1})
+
+        task = next(t for t in benchmark.TASKS if t["name"] == "theocharis_dynamics_incivility")
+        items = task["loader"]()
+        self.assertEqual(task["family"], "Relevance / Incivility")
+        self.assertEqual(task["label_key"], "uncivil")
+        self.assertEqual(len(items), 500)
+        self.assertTrue(all(item["gt"]["uncivil"] in [0, 1] for item in items))
+
     def test_papea_fgz_forms_task_file_and_labels(self):
         df = pd.read_csv(REPO / "data" / "haunss_papea_fgz_forms.csv")
         self.assertEqual(len(df), 4816)
@@ -136,6 +155,76 @@ class LoaderIntegrityTests(unittest.TestCase):
         self.assertEqual(task["label_key"], "relevant")
         self.assertEqual(len(items), 320)
         self.assertTrue(all(item["gt"]["relevant"] in [0, 1] for item in items))
+
+    def test_icbe_sentence_event_type_task_file_and_labels(self):
+        df = pd.read_csv(REPO / "data" / "douglass_icbe_sentence_event_type.csv")
+        self.assertEqual(len(df), 12676)
+        self.assertEqual(df["source_id"].duplicated().sum(), 0)
+        self.assertEqual(df["crisis_title"].isna().sum(), 0)
+        self.assertEqual(df["text"].isna().sum(), 0)
+        self.assertEqual(df["text"].eq("").sum(), 0)
+        self.assertEqual(df["gt_event_type"].isna().sum(), 0)
+        labels = {"No Event", "Action", "Speech", "Thought", "Mixed"}
+        self.assertEqual(set(df["gt_event_type"]), labels)
+
+        task = next(t for t in benchmark.TASKS if t["name"] == "douglass_icbe_sentence_event_type")
+        items = task["loader"]()
+        self.assertEqual(task["family"], "Event coding")
+        self.assertEqual(task["label_key"], "event_type")
+        self.assertEqual(len(task["labels"]), 5)
+        self.assertEqual(len(items), 500)
+        self.assertTrue(all(item["gt"]["event_type"] in labels for item in items))
+
+    def test_muller_fujimura_campaign_policy_area_task_file_and_labels(self):
+        df = pd.read_csv(REPO / "data" / "muller_fujimura_campaign_policy_area.csv")
+        self.assertEqual(len(df), 2915)
+        self.assertEqual(df["source_id"].duplicated().sum(), 0)
+        self.assertEqual(df["text"].isna().sum(), 0)
+        self.assertEqual(df["text"].eq("").sum(), 0)
+        self.assertEqual(df["gt_policy_area"].isna().sum(), 0)
+        self.assertEqual(df["text"].duplicated().sum(), 0)
+        labels = {
+            "Agriculture, Forestry, and Fisheries",
+            "Committees on Cabinet",
+            "Economy, Trade and Industry",
+            "Education, Culture, Sports, Science, and Technology",
+            "Environment",
+            "Financial Affairs",
+            "Foreign Affairs",
+            "Health, Labour, and Welfare",
+            "Internal Affairs and Communications",
+            "Land, Infrastructure, Transport, and Tourism",
+            "No Policy Area",
+            "Security",
+        }
+        self.assertEqual(set(df["gt_policy_area"]), labels)
+
+        task = next(t for t in benchmark.TASKS if t["name"] == "muller_fujimura_campaign_policy_area")
+        items = task["loader"]()
+        self.assertEqual(task["family"], "Policy-topic coding")
+        self.assertEqual(task["label_key"], "policy_area")
+        self.assertEqual(len(task["labels"]), 12)
+        self.assertEqual(len(items), 500)
+        self.assertTrue(all(item["gt"]["policy_area"] in labels for item in items))
+
+    def test_burnham_polnli_entailment_task_file_and_labels(self):
+        df = pd.read_csv(REPO / "data" / "burnham_polnli_entailment.csv")
+        self.assertEqual(len(df), 15314)
+        self.assertEqual(df["source_id"].duplicated().sum(), 0)
+        self.assertEqual(df["premise"].isna().sum(), 0)
+        self.assertEqual(df["premise"].eq("").sum(), 0)
+        self.assertEqual(df["hypothesis"].isna().sum(), 0)
+        self.assertEqual(df["hypothesis"].eq("").sum(), 0)
+        self.assertEqual(df.duplicated(["premise", "hypothesis"]).sum(), 0)
+        self.assertEqual(set(df["gt_entails"]), {0, 1})
+        self.assertEqual(set(df["source_entailment"]), {0, 1})
+
+        task = next(t for t in benchmark.TASKS if t["name"] == "burnham_polnli_entailment")
+        items = task["loader"]()
+        self.assertEqual(task["family"], "Hypothesis-conditioned classification")
+        self.assertEqual(task["label_key"], "entails")
+        self.assertEqual(len(items), 500)
+        self.assertTrue(all(item["gt"]["entails"] in [0, 1] for item in items))
 
 
 class ModelRegistryTests(unittest.TestCase):
@@ -372,6 +461,43 @@ class MergeIntoTests(unittest.TestCase):
             pd.testing.assert_frame_equal(merged, expected)
 
 
+class CoverageMatrixTests(unittest.TestCase):
+    def test_find_predictions_files_includes_live_sidecar_and_archive(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            canonical = root / "predictions.csv"
+            sidecar = root / "sidecar"
+            archive = root / "archive"
+            archived_run = archive / "archived_run"
+            sidecar.mkdir()
+            archived_run.mkdir(parents=True)
+
+            for path in [
+                canonical,
+                sidecar / "api_v2pt2_predictions.csv",
+                archived_run / "archived_predictions.csv",
+                sidecar / "not_predictions.txt",
+            ]:
+                path.write_text("task,model,item_id\n")
+
+            files = build_coverage_matrix.find_predictions_files(
+                canonical_path=canonical,
+                sidecar_root=sidecar,
+                archive_root=archive,
+            )
+
+            labels = [label for label, _ in files]
+            paths = [path.name for _, path in files]
+            self.assertEqual(
+                labels,
+                ["canonical", "live_sidecar_api_v2pt2", "archived_run"],
+            )
+            self.assertEqual(
+                paths,
+                ["predictions.csv", "api_v2pt2_predictions.csv", "archived_predictions.csv"],
+            )
+
+
 class ArtifactIntegrityTests(unittest.TestCase):
     def _allowed_task_columns(self):
         allowed = set()
@@ -390,6 +516,12 @@ class ArtifactIntegrityTests(unittest.TestCase):
         key_cols = ["task", "model", "item_id"]
         self.assertEqual(len(preds), preds[key_cols].drop_duplicates().shape[0])
 
+    def test_serial_predictions_have_latency_for_clean_rows(self):
+        preds = pd.read_csv(REPO / "output" / "predictions.csv", low_memory=False)
+        clean = preds[preds["parse_error"].isna()]
+        self.assertEqual(clean["latency_s"].isna().sum(), 0)
+        self.assertTrue((clean["latency_s"] > 0).all())
+
     def test_batched_predictions_have_unique_keys_and_no_stale_task_columns(self):
         preds = pd.read_csv(REPO / "output" / "predictions_batched.csv", low_memory=False)
         key_cols = ["task", "model", "batch_size", "item_id"]
@@ -399,6 +531,14 @@ class ArtifactIntegrityTests(unittest.TestCase):
             c for c in preds.columns if c.startswith("pred_") or c.startswith("gt_")
         }
         self.assertEqual(observed_task_cols - self._allowed_task_columns(), set())
+
+    def test_batched_predictions_have_latency_for_clean_rows(self):
+        preds = pd.read_csv(REPO / "output" / "predictions_batched.csv", low_memory=False)
+        clean = preds[preds["parse_error"].isna()]
+        self.assertEqual(clean["latency_s"].isna().sum(), 0)
+        self.assertTrue((clean["latency_s"] > 0).all())
+        self.assertEqual(clean["batch_latency_s"].isna().sum(), 0)
+        self.assertTrue((clean["batch_latency_s"] > 0).all())
 
 
 class TaskAuditTests(unittest.TestCase):

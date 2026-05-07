@@ -277,6 +277,11 @@ python3 code/build_summary_batched.py
 Column definitions for the predictions and summary CSVs are in
 [`schema.md`](schema.md).
 
+Latency is part of the reproducibility contract. After any serial or batched
+rerun, clean prediction rows should have positive `latency_s`; batched rows
+should also have positive `batch_latency_s`. The summary builders use these
+fields for `mean_latency_s`, `median_latency_s`, and batched wall-time summaries.
+
 ## Adding a new task
 
 1. Add a cleaned task CSV to `data/`.
@@ -296,9 +301,11 @@ See the built-in manifests in [`tasks/`](../tasks) for examples.
 2. If needed, set `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or a backend-specific key env var named in the manifest.
 3. Run `python3 code/benchmark.py --only-model {model_name}` or point the runner at the new manifest with `--model-manifest`.
 4. Rebuild summaries with `python3 code/build_summary.py`.
-5. If you want rough benchmark USD columns populated, add
+5. Confirm the resulting clean prediction rows have positive `latency_s`; this
+   is required for model comparisons.
+6. If you want rough benchmark USD columns populated, add
    `cost_per_call_usd` to the model manifest.
-6. If the model is token-priced and you need exact spend, keep provider-side
+7. If the model is token-priced and you need exact spend, keep provider-side
    accounting separately from the manifest-level `cost_per_call_usd`.
 
 See the built-in manifests in [`models/`](../models) for examples.

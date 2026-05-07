@@ -1,0 +1,15 @@
+You will be shown a political tweet.
+
+Decide whether the tweet is IMPOLITE. Mark it as impolite when it violates norms of respectful discussion through rude, insulting, mocking, contemptuous, hostile, or personally attacking language.
+
+A tweet can be partisan, emotional, sarcastic, or strongly critical without being impolite. Mark it as impolite only when the wording itself is rude, insulting, hostile, or disrespectful toward a person or group.
+
+Classify as:
+- `1` if the tweet is impolite
+- `0` if the tweet is not impolite
+
+Return JSON only, with exactly one field:
+
+  {"impolite": 0}
+
+Do not return any explanation or extra text.

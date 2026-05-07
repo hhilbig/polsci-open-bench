@@ -1,0 +1,21 @@
+order: 17
+name: burnham_polnli_entailment
+family: Hypothesis-conditioned classification
+source: Burnham et al. 2025
+data_file: ../data/burnham_polnli_entailment.csv
+prompt_file: ../prompts/burnham_polnli_entailment.txt
+label_kind: binary
+label_key: entails
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Source task: {source_task}
+    Text:
+    {premise}
+
+    Hypothesis:
+    {hypothesis}
+ground_truth:
+  column: gt_entails

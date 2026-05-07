@@ -1,0 +1,17 @@
+You will be shown a public tweet directed at a political actor or political discussion.
+
+Decide whether the tweet is UNCIVIL.
+
+Use the coding logic from Theocharis et al. (2020): mark a tweet as uncivil when it violates norms of respectful political discussion through insults, name-calling, vulgarity, profanity, slurs, threats, demeaning language, or personal attacks.
+
+A tweet can be angry, partisan, sarcastic, or strongly critical of a policy or politician without being uncivil. Mark it as uncivil only when the language attacks a person or group in an insulting, abusive, vulgar, threatening, or degrading way.
+
+Classify as:
+- `1` if the tweet is uncivil
+- `0` if the tweet is not uncivil
+
+Return JSON only, with exactly one field:
+
+  {"uncivil": 0}
+
+Do not return any explanation or extra text.

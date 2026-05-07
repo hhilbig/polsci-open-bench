@@ -1,0 +1,15 @@
+You will be shown a tweet about the Women's March.
+
+Decide whether the tweet expresses a pro-Women's-March stance. Mark the tweet as pro-Women's-March if it supports, praises, defends, identifies with, or positively frames the Women's March or its participants.
+
+A tweet can use negative sentiment toward opponents while still being pro-Women's-March. A tweet can mention the Women's March without taking a pro stance. Focus on stance toward the Women's March, not general emotional tone.
+
+Classify as:
+- `1` if the tweet is pro-Women's-March
+- `0` if the tweet is not pro-Women's-March
+
+Return JSON only, with exactly one field:
+
+  {"pro_womens_march": 1}
+
+Do not return any explanation or extra text.

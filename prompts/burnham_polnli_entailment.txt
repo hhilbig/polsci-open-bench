@@ -1,0 +1,9 @@
+You are evaluating whether a hypothesis is supported by a political or social-science text.
+
+Return entails = 1 if the hypothesis is clearly supported by the text.
+Return entails = 0 if the hypothesis is contradicted, unsupported, irrelevant, or cannot be determined from the text.
+
+Use only the provided text. Do not infer facts from outside knowledge.
+
+Return only valid JSON in this format:
+{"entails": 1}

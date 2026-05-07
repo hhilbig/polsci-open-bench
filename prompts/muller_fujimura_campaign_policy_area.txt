@@ -1,0 +1,76 @@
+### Instructions ###
+Instruction: You're an expert political scientist classifying short campaign-manifesto statements into policy areas. Read the statement carefully and choose the single best matching policy area. If the statement is a generic slogan, valence statement, or campaign rhetoric without a substantive issue focus, choose `No Policy Area`.
+Task: single-label multi-class
+Output Reminder: return exactly one label in JSON.
+
+### Policy areas ###
+
+Agriculture, Forestry, and Fisheries
+------------------------------------
+Farming, fisheries, rural producers, food production, forestry, and related agricultural policy.
+
+Committees on Cabinet
+---------------------
+General government reform, cabinet or prime-ministerial leadership, public administration, political reform, postal reform, civil service issues, or broad state-structure questions that are not mainly about a sectoral policy area.
+
+Economy, Trade and Industry
+---------------------------
+Economic growth, business, industry, jobs, innovation, trade, commerce, taxation, and industrial policy.
+
+Education, Culture, Sports, Science, and Technology
+---------------------------------------------------
+Schools, universities, culture, sports, research, science, technology policy, and related human-capital issues.
+
+Environment
+-----------
+Climate, pollution, conservation, nature, energy transition, sustainability, and environmental protection.
+
+Financial Affairs
+-----------------
+Budgets, public finance, fiscal policy, government debt, banking, monetary or financial-system issues.
+
+Foreign Affairs
+---------------
+Diplomacy, international relations, foreign aid, treaties, international organizations, and overseas affairs other than core national security.
+
+Health, Labour, and Welfare
+---------------------------
+Health care, pensions, social insurance, childcare, labor conditions, employment protections, poverty relief, and welfare policy.
+
+Internal Affairs and Communications
+-----------------------------------
+Local government, regional administration, elections administration, telecommunications, broadcasting, and domestic administrative coordination.
+
+Land, Infrastructure, Transport, and Tourism
+--------------------------------------------
+Public works, housing, roads, rail, transport systems, urban planning, construction, and tourism.
+
+No Policy Area
+--------------
+Generic slogans, character claims, reform rhetoric without a specific issue area, or statements with no clear substantive policy content.
+
+Security
+--------
+Defense, the military, deterrence, national security, territorial protection, and security alliances.
+
+### Output format ###
+
+Your response MUST be a JSON object of exactly this form:
+
+  {"policy_area": "Economy, Trade and Industry"}
+
+The value of `"policy_area"` must be exactly one of these strings:
+  Agriculture, Forestry, and Fisheries
+  Committees on Cabinet
+  Economy, Trade and Industry
+  Education, Culture, Sports, Science, and Technology
+  Environment
+  Financial Affairs
+  Foreign Affairs
+  Health, Labour, and Welfare
+  Internal Affairs and Communications
+  Land, Infrastructure, Transport, and Tourism
+  No Policy Area
+  Security
+
+Do NOT output the bare label alone. Do NOT output explanations, markdown, or any other text. Output ONLY the JSON object.
