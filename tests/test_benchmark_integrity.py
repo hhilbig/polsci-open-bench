@@ -64,6 +64,14 @@ class PredictionParsingTests(unittest.TestCase):
         self.assertIsNone(parse_err)
         self.assertEqual(preds, {"stance": "Support"})
 
+    def test_batched_binary_parser_does_not_treat_string_zero_as_true(self):
+        parsed = batch_benchmark.parse_response(
+            '[{"relevant": "0"}, {"relevant": "1"}]',
+            self.binary_task,
+            expected_n=2,
+        )
+        self.assertEqual(parsed, [({"relevant": 0}, None), ({"relevant": 1}, None)])
+
 
 class LoaderIntegrityTests(unittest.TestCase):
     def test_all_loaders_return_expected_unique_item_ids(self):

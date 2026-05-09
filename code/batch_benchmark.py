@@ -47,6 +47,7 @@ sys.path.insert(0, str(HERE))
 from benchmark import (  # noqa: E402
     OLLAMA_URL,
     OUT,
+    _coerce_binary_label,
     augment_system_prompt_for_json_object,
     extra_body_for_openai_model,
     make_anthropic_client,
@@ -128,17 +129,23 @@ def _empty_pred(task_def):
 def _pred_from_obj(obj, task_def):
     """Extract pred_dict from a single JSON object. Returns (pred_dict, err_or_None)."""
     kind = task_def["label_kind"]
-    if kind == "multi_binary":
-        return {k: int(bool(obj.get(k, 0))) for k in task_def["labels"]}, None
-    if kind == "binary":
-        key = task_def["label_key"]
-        return {key: int(bool(obj.get(key, 0)))}, None
-    if kind == "categorical":
-        key = task_def["label_key"]
-        v = obj.get(key, "")
-        if v in task_def["labels"]:
-            return {key: v}, None
-        return {key: None}, f"invalid_label: {v!r}"
+    try:
+        if kind == "multi_binary":
+            return {
+                k: _coerce_binary_label(obj.get(k, 0))
+                for k in task_def["labels"]
+            }, None
+        if kind == "binary":
+            key = task_def["label_key"]
+            return {key: _coerce_binary_label(obj.get(key, 0))}, None
+        if kind == "categorical":
+            key = task_def["label_key"]
+            v = obj.get(key, "")
+            if v in task_def["labels"]:
+                return {key: v}, None
+            return {key: None}, f"invalid_label: {v!r}"
+    except ValueError as exc:
+        return _empty_pred(task_def), f"invalid_binary_label: {exc}"
     return _empty_pred(task_def), "unknown_label_kind"
 
 

@@ -1,12 +1,14 @@
 # Run status
 
-Last rendered: 2026-05-09T21:28:52Z
+Last rendered: 2026-05-09T22:41:14Z
 
 Open this file at the start of a session before reconstructing runs from logs.
 
 ## Active Runs
 
-- **mac2-granite41-8b-serial-20260509**: status: `running`; runner: `benchmark.py`; host: `mac2`; task scope: `tasks`; model scope: `ibm/granite4.1:8b`; output: `/Users/hannohilbig/sidecar-runs/phi4-mini-2026-05-09/output/sidecar/granite41_8b_predictions.csv`; log: `/Users/hannohilbig/sidecar-runs/phi4-mini-2026-05-09/logs/granite41_8b_serial_20260509.log`; note: Phi dependency finished; queue wrapper is pulling ibm/granite4.1:8b (5.3 GB) before starting the full 18-task benchmark.
+- **mac2-local-batched-smoke-20260509**: status: `queued`; runner: `batch_benchmark.py`; host: `mac2`; task scope: `tasks_batched_smoke`; model scope: `qwen3:30b-a3b-q4_K_M,ibm/granite4.1:8b`; batch sizes: `10,20`; output: `/Users/hannohilbig/sidecar-runs/phi4-mini-2026-05-09/output/sidecar/local_batched_smoke_predictions.csv`; log: `/Users/hannohilbig/sidecar-runs/phi4-mini-2026-05-09/logs/local_batched_smoke_20260509.log`; note: Queued after Granite serial. Smoke test: two expanded tasks, qwen3:30b-a3b and ibm/granite4.1:8b, b=10/20, N=50. Main run proceeds only if parse error rate <=5%.
+- **mac2-local-batched-expanded-20260509**: status: `queued`; runner: `batch_benchmark.py`; host: `mac2`; task scope: `tasks_expanded_only`; model scope: `qwen3:30b-a3b-q4_K_M,ibm/granite4.1:8b`; batch sizes: `10,20`; output: `/Users/hannohilbig/sidecar-runs/phi4-mini-2026-05-09/output/sidecar/local_batched_expanded_predictions.csv`; log: `/Users/hannohilbig/sidecar-runs/phi4-mini-2026-05-09/logs/local_batched_expanded_20260509.log`; note: Queued after local batched smoke passes. Main local batched expanded-task run: eight expanded tasks, qwen3:30b-a3b and ibm/granite4.1:8b, b=10/20.
+- **mac2-granite41-8b-serial-20260509**: status: `running`; runner: `benchmark.py`; host: `mac2`; task scope: `tasks`; model scope: `ibm/granite4.1:8b`; output: `/Users/hannohilbig/sidecar-runs/phi4-mini-2026-05-09/output/sidecar/granite41_8b_predictions.csv`; log: `/Users/hannohilbig/sidecar-runs/phi4-mini-2026-05-09/logs/granite41_8b_serial_20260509.log`; task: `osnabruegge_cross_domain_topic`; note: Status check: 10/18 tasks complete; current task osnabruegge_cross_domain_topic around 480/500; live partial CSV has 0 parse errors.
 
 ## Failed Or Needs Attention
 
@@ -22,8 +24,8 @@ Open this file at the start of a session before reconstructing runs from logs.
 ## Ledger
 
 - Source: `output/run_registry.jsonl`
-- Events: 20
-- Runs: 6
+- Events: 23
+- Runs: 8
 
 ## Operating Rule
 
