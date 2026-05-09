@@ -2,6 +2,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
@@ -17,8 +19,50 @@ import benchmark  # noqa: E402
 import batch_benchmark  # noqa: E402
 import build_coverage_matrix  # noqa: E402
 import model_registry  # noqa: E402
+import run_registry  # noqa: E402
 import task_registry  # noqa: E402
 from cap_topic_labels import CAP_MAJOR_TOPIC_LABELS_IN_ORDER  # noqa: E402
+
+
+class PredictionParsingTests(unittest.TestCase):
+    def setUp(self):
+        self.binary_task = {
+            "label_kind": "binary",
+            "label_key": "relevant",
+            "labels": [0, 1],
+        }
+        self.categorical_task = {
+            "label_kind": "categorical",
+            "label_key": "stance",
+            "labels": ["Support", "Oppose", "Neutral"],
+        }
+
+    def test_binary_parser_accepts_bare_scalar_outputs(self):
+        preds, parse_err = benchmark.parse_content("```json\n0\n```", self.binary_task)
+        self.assertIsNone(parse_err)
+        self.assertEqual(preds, {"relevant": 0})
+
+        preds, parse_err = benchmark.parse_content("1", self.binary_task)
+        self.assertIsNone(parse_err)
+        self.assertEqual(preds, {"relevant": 1})
+
+    def test_binary_parser_accepts_singleton_json_list(self):
+        preds, parse_err = benchmark.parse_content(
+            '```json\n[{"relevant": "1"}]\n```',
+            self.binary_task,
+        )
+        self.assertIsNone(parse_err)
+        self.assertEqual(preds, {"relevant": 1})
+
+    def test_binary_parser_rejects_non_binary_scalars(self):
+        preds, parse_err = benchmark.parse_content("2", self.binary_task)
+        self.assertIsNotNone(parse_err)
+        self.assertEqual(preds, {"relevant": None})
+
+    def test_categorical_parser_accepts_fenced_bare_label(self):
+        preds, parse_err = benchmark.parse_content("```json\nSupport\n```", self.categorical_task)
+        self.assertIsNone(parse_err)
+        self.assertEqual(preds, {"stance": "Support"})
 
 
 class LoaderIntegrityTests(unittest.TestCase):
@@ -614,6 +658,49 @@ class MergeIntoTests(unittest.TestCase):
 
 
 class CoverageMatrixTests(unittest.TestCase):
+    def test_refresh_accepts_custom_task_dir_and_outputs(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            tasks_next = root / "tasks_next"
+            models = root / "models"
+            sidecar = root / "sidecar"
+            archive = root / "archive"
+            out_csv = root / "coverage_next.csv"
+            out_md = root / "coverage_next.md"
+            tasks_next.mkdir()
+            models.mkdir()
+            sidecar.mkdir()
+            archive.mkdir()
+
+            (tasks_next / "task_a.yaml").write_text("name: task_a\n")
+            (tasks_next / "task_b.yaml").write_text("name: task_b\n")
+            (models / "model_a.yaml").write_text("name: model_a\nbackend: openai\n")
+            (sidecar / "next_predictions.csv").write_text(
+                "task,model,item_id\n"
+                "task_a,model_a,1\n"
+                "task_b,model_b,2\n"
+            )
+
+            build_coverage_matrix.refresh(
+                verbose=False,
+                tasks_dirs=[tasks_next],
+                models_dir=models,
+                canonical_path=root / "missing.csv",
+                archive_root=archive,
+                sidecar_root=sidecar,
+                output_csv=out_csv,
+                output_md=out_md,
+                title="Next-wave coverage matrix",
+            )
+
+            matrix = pd.read_csv(out_csv).fillna("")
+            self.assertEqual(matrix.columns.tolist(), ["model", "task_a", "task_b"])
+            self.assertEqual(matrix.loc[matrix["model"] == "model_a", "task_a"].item(), "live_sidecar_next")
+            self.assertEqual(matrix.loc[matrix["model"] == "model_b", "task_b"].item(), "live_sidecar_next")
+            md = out_md.read_text()
+            self.assertIn("# Next-wave coverage matrix", md)
+            self.assertIn("Tasks: 2", md)
+
     def test_find_predictions_files_includes_live_sidecar_and_archive(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -648,6 +735,179 @@ class CoverageMatrixTests(unittest.TestCase):
                 paths,
                 ["predictions.csv", "api_v2pt2_predictions.csv", "archived_predictions.csv"],
             )
+
+
+class RunRegistryTests(unittest.TestCase):
+    def test_append_latest_and_render_status(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            ledger = root / "run_registry.jsonl"
+            status = root / "run_status.md"
+
+            run_registry.append_event(
+                ledger,
+                event="start",
+                run_id="api-batched-1",
+                status="running",
+                runner="batch_benchmark.py",
+                output="output/api.csv",
+                tmux_session="pob-api",
+            )
+            run_registry.append_event(
+                ledger,
+                event="update",
+                run_id="api-batched-1",
+                status="running",
+                completed_cells=2,
+                total_cells=5,
+            )
+            run_registry.append_event(
+                ledger,
+                event="finish",
+                run_id="api-batched-1",
+                status="completed",
+                rows_written=1000,
+            )
+
+            events = run_registry.read_events(ledger)
+            self.assertEqual(len(events), 3)
+            latest = run_registry.latest_runs(events)["api-batched-1"]
+            self.assertEqual(latest["status"], "completed")
+            self.assertEqual(latest["completed_cells"], 2)
+            self.assertEqual(latest["rows_written"], 1000)
+            self.assertIn("started_at", latest)
+            self.assertIn("finished_at", latest)
+
+            md = run_registry.render_markdown(ledger, status)
+            self.assertIn("# Run status", md)
+            self.assertIn("api-batched-1", md)
+            self.assertIn("Recent Completed Runs", md)
+            self.assertTrue(status.exists())
+
+    def test_cli_start_records_metadata(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ledger = Path(tmpdir) / "runs.jsonl"
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(REPO / "code" / "run_registry.py"),
+                    "start",
+                    "--run-id",
+                    "mac2-local-1",
+                    "--ledger",
+                    str(ledger),
+                    "--runner",
+                    "benchmark.py",
+                    "--host",
+                    "mac2",
+                    "--task-scope",
+                    "tasks_next",
+                    "--model-scope",
+                    "models_local",
+                    "--tmux-session",
+                    "pob-local",
+                    "--meta",
+                    "current-task=toxicity_protests_es",
+                ],
+                check=True,
+                cwd=REPO,
+            )
+
+            rows = [json.loads(line) for line in ledger.read_text().splitlines()]
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0]["run_id"], "mac2-local-1")
+            self.assertEqual(rows[0]["status"], "running")
+            self.assertEqual(rows[0]["current_task"], "toxicity_protests_es")
+
+    def test_benchmark_records_unavailable_model_failure(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            model_manifest = root / "missing_key_model.yaml"
+            ledger = root / "runs.jsonl"
+            model_manifest.write_text(
+                "\n".join(
+                    [
+                        "name: missing-key-model",
+                        "backend: openai",
+                        "api_key_env: MISSING_RUN_REGISTRY_TEST_KEY",
+                        "",
+                    ]
+                )
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(REPO / "code" / "benchmark.py"),
+                    "--task-dir",
+                    str(REPO / "examples" / "minimal_custom_task"),
+                    "--model-manifest",
+                    str(model_manifest),
+                    "--run-id",
+                    "missing-key-run",
+                    "--run-ledger",
+                    str(ledger),
+                    "--output",
+                    str(root / "predictions.csv"),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                cwd=REPO,
+                env={**os.environ, "MISSING_RUN_REGISTRY_TEST_KEY": ""},
+            )
+
+            self.assertIn("No runnable models", result.stdout)
+            rows = [json.loads(line) for line in ledger.read_text().splitlines()]
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0]["event"], "fail")
+            self.assertEqual(rows[0]["status"], "failed")
+            self.assertEqual(rows[0]["run_id"], "missing-key-run")
+
+    def test_batch_benchmark_records_unavailable_model_failure(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            model_manifest = root / "missing_key_model.yaml"
+            ledger = root / "runs.jsonl"
+            model_manifest.write_text(
+                "\n".join(
+                    [
+                        "name: missing-key-model",
+                        "backend: openai",
+                        "api_key_env: MISSING_BATCH_REGISTRY_TEST_KEY",
+                        "",
+                    ]
+                )
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(REPO / "code" / "batch_benchmark.py"),
+                    "--task-dir",
+                    str(REPO / "examples" / "minimal_custom_task"),
+                    "--model-manifest",
+                    str(model_manifest),
+                    "--run-id",
+                    "missing-key-batch-run",
+                    "--run-ledger",
+                    str(ledger),
+                    "--output",
+                    str(root / "predictions_batched.csv"),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                cwd=REPO,
+                env={**os.environ, "MISSING_BATCH_REGISTRY_TEST_KEY": ""},
+            )
+
+            self.assertIn("No runnable models", result.stdout)
+            rows = [json.loads(line) for line in ledger.read_text().splitlines()]
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0]["event"], "fail")
+            self.assertEqual(rows[0]["status"], "failed")
+            self.assertEqual(rows[0]["run_id"], "missing-key-batch-run")
 
 
 class ArtifactIntegrityTests(unittest.TestCase):

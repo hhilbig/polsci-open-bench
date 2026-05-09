@@ -1,6 +1,6 @@
 # Post-release changes
 
-Last updated: 2026-05-02
+Last updated: 2026-05-09
 
 This note inventories the current working-tree changes relative to
 `HEAD` commit `1d20dce` (2026-04-29), which appears to be the last
@@ -31,6 +31,15 @@ pre-release repo state.
   - `provider`
   - `response_format_type`
   - `thinking_mode`
+- Added run-status scaffolding for long-running local, sidecar, `mac2`,
+  droplet, and API jobs:
+  - [`code/run_registry.py`](../code/run_registry.py)
+  - [`output/run_registry.jsonl`](../output/run_registry.jsonl)
+  - [`docs/run_status.md`](run_status.md)
+- Updated the future local-model watchlist in [`TODO.md`](../TODO.md) after a
+  May 2026 open-weight model scan, promoting `granite4.1:8b` as the next clean
+  local candidate and retaining Baidu ERNIE 4.5, DeepSeek V4 Flash, Nemotron
+  Elastic, Granite Switch, and Ling as conditional watchlist items.
 - Updated the main runners and summary builders to use the registries:
   - [`code/benchmark.py`](../code/benchmark.py)
   - [`code/batch_benchmark.py`](../code/batch_benchmark.py)
@@ -340,3 +349,21 @@ prediction artifacts.
   - provide one compact comparison table across the currently completed local
     and OpenAI reruns
   - remain non-canonical until the same task set is completed for Claude
+
+## 12. Phi-4 Mini sidecar decision
+
+- A `phi4-mini` sidecar over the live 18-task benchmark completed on `mac2` on
+  2026-05-09.
+- Sidecar output:
+  - `/Users/hannohilbig/sidecar-runs/phi4-mini-2026-05-09/output/sidecar/phi4_mini_predictions.csv`
+- Quick metrics:
+  - 18 tasks
+  - 8,820 scored rows
+  - 29 parse errors (0.33%)
+  - mean headline F1: 0.488
+  - median latency: about 0.45 s/item
+- Decision:
+  - keep Phi-4 Mini as an archived speed-baseline artifact
+  - do not promote it into the main `models/` lineup
+  - reason: the speed gain over `qwen3:30b-a3b-q4_K_M` is only about 1.35x on
+    median latency, while accuracy is materially weaker

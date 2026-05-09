@@ -41,11 +41,19 @@
   1. `The Silenced Text`, only if a derived rating threshold is acceptable
   2. PLOVER gold-standard records
 - Add a new long-document task family. The current benchmark is dominated by short inputs, so it does not say much about performance on longer passages, full documents, or more complex structured-input problems. Candidate additions include longer political texts, research-paper passages, OCR-heavy material, or table-structure tasks.
-- Maybe add `ling-2.6-1T` to the benchmark model set in a future model-expansion pass.
 - Keep a concrete local-model shortlist for the `v2` benchmark expansion rather than adding popular releases ad hoc.
-  Add next: run the prepared `gemma4:26b` / `Gemma 4 26B A4B` manifest as a distinct Gemma efficiency point relative to the current `gemma4:31b`.
+  Immediate local candidate: `ibm/granite4.1:8b`, a recent IBM Granite 4.1 dense 8B Ollama model, Apache 2.0, 128K context, and explicitly positioned for text classification, extraction, and structured JSON. This is the strongest near-term addition because it is fast, cleanly runnable, and adds a non-Qwen/non-Gemma/non-DeepSeek open-weight family.
+  Optional low-end speed point: `granite4.1:3b`, only if we want a very fast small-model baseline from the same new family.
+  Already prepared: run the prepared `gemma4:26b` / `Gemma 4 26B A4B` manifest as a distinct Gemma efficiency point relative to the current `gemma4:31b`.
+  Tested but not retained: `phi4-mini`. A mac2 sidecar over the live 18-task grid finished on 2026-05-09 with 8,820 rows, 29 parse errors (0.33%), mean headline F1 0.488, and median latency about 0.45 s/item. It is only about 1.35x faster than `qwen3:30b-a3b-q4_K_M` on median latency while being materially weaker on accuracy, so keep it as an archived speed-baseline artifact rather than promoting it into the main `models/` lineup.
+  Watchlist but not immediate:
+  1. `baidu/ERNIE-4.5-21B-A3B-PT`: Apache 2.0 Baidu MoE, 21B total / 3B active, 128K context. Interesting as a Chinese open-weight MoE comparison, but not a new-this-week text model and the local Ollama path appears unofficial, so only run after a clean vLLM/SGLang or verified Ollama deployment test.
+  2. `deepseek-ai/DeepSeek-V4-Flash`: recent MIT DeepSeek model and potentially useful as a hosted/API comparison, but likely not practical as a cheap local mac2/droplet run.
+  3. `nvidia/Nemotron-Elastic-12B`: recent elastic 6B/9B/12B-style deployment idea with vLLM/SGLang support, but custom-code and license/tooling questions make it a sidecar-only candidate unless deployment is clean.
+  4. `ibm-granite/granite-switch-4.1-8b-preview`: useful to track for adapter-composed classification workflows, but keep it out of the main leaderboard for now because it is not a plain general LLM baseline.
+  5. `ling-2.6-1T`: keep as a speculative future model-expansion candidate, pending a practical deployment path and evidence that it adds a non-overlapping comparison.
   Sidecar only or conditional: `LFM2-24B-A2B`, `gpt-oss:20b`, and `glm-4.7-flash` if the local deployment path is stable and clean.
-  Skip for now: `DeepSeek-R1-Distill-Qwen-32B`, `Kimi K2.5` / `K2.6`, `GLM-5` / `GLM-5.1`, `gpt-oss:120b`, `Qwen 2.5-72B` / `Qwen 3.5`, `MiMo-V2-Flash`, `DeepSeek-V3`, `Gemma 3 27B`, and `Mistral Small 3.1`.
+  Skip for now: `DeepSeek-R1-Distill-Qwen-32B`, `Kimi K2.5` / `K2.6`, `GLM-5` / `GLM-5.1`, `gpt-oss:120b`, `Qwen 2.5-72B` / `Qwen 3.5`, `MiMo-V2-Flash`, `DeepSeek-V3`, `Gemma 3 27B`, `Mistral Small 3.1`, and unofficial or uncensored ERNIE derivatives.
   Rule: prefer additions that are both currently popular and not too overlapping with the existing `Gemma 4 31B`, `Qwen 3 14B`, `Qwen 3 30B-A3B`, and `Mistral Small 24B` lineup. Favor new architecture or deployment-tier coverage over near-duplicates from the same family.
 - Modularize the repo so other researchers can run their own evaluations against the same framework. The longer-run goal is a reusable political-science benchmark suite with pluggable task definitions, model adapters, and reporting, so labs can add models or benchmarks without rewriting the pipeline.
 - Defer a backend-adapter refactor that would make unsupported providers pluggable without core-code edits. Current state: outside users can already supply custom tasks and custom models within the supported `ollama`, `openai`, and `anthropic` backends. Deferred next module:

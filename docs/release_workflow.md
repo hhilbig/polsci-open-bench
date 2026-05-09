@@ -65,6 +65,66 @@ Each sidecar folder should contain:
 - summary outputs
 - a short `README.md` describing scope, model/task coverage, and merge status
 
+## Run ledger
+
+Every non-trivial run should be registered before launch so the next session can
+recover the current state without reading shell history or reconstructing logs.
+
+The append-only ledger lives at [`output/run_registry.jsonl`](../output/run_registry.jsonl),
+and the human-readable snapshot lives at [`docs/run_status.md`](run_status.md).
+Use [`code/run_registry.py`](../code/run_registry.py) to maintain both files.
+
+Minimum required fields for sidecar, API, local, droplet, and `mac2` runs:
+
+- `run_id`
+- host or machine (`local`, `mac2`, `droplet`)
+- runner script
+- task scope
+- model scope
+- output path
+- log path, if the run writes one
+- tmux session, if launched under tmux
+- cost cap, for paid API runs
+- current status: `queued`, `running`, `completed`, `failed`, `blocked`, or `needs_attention`
+
+Typical manual registration:
+
+```bash
+python3 code/run_registry.py start \
+  --run-id droplet-batched-deepseek-20260508 \
+  --runner batch_benchmark.py \
+  --host droplet \
+  --task-scope tasks \
+  --model-scope deepseek-v4-pro \
+  --batch-sizes 10,20 \
+  --output output/predictions_batched_deepseek_run.csv \
+  --log logs/batched_deepseek_20260508.log \
+  --tmux-session pob-deepseek \
+  --cost-cap-usd 15
+
+python3 code/run_registry.py render-status
+```
+
+Use `finish` for terminal states (`completed`, `failed`, `cancelled`) and
+`update --run-status needs_attention` for a run whose files exist but still need
+archive, merge, or manual review.
+
+The benchmark runners also accept optional ledger flags:
+
+```bash
+python3 code/batch_benchmark.py \
+  --run-id droplet-batched-deepseek-20260508 \
+  --run-log logs/batched_deepseek_20260508.log \
+  --run-tmux-session pob-deepseek \
+  --render-run-status
+```
+
+Before ending a work session, render the snapshot:
+
+```bash
+python3 code/run_registry.py render-status
+```
+
 ## Coverage matrix
 
 The model x task coverage matrix lives at [`docs/coverage_matrix.md`](coverage_matrix.md)

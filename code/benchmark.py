@@ -29,7 +29,8 @@ Basic usage:
 
 Parse strategy:
   Primary  - JSON via raw_decode (trailing content ignored).
-  Fallback - case-insensitive bare-label match against the task's enum.
+  Fallback - bare 0/1 for binary tasks, or case-insensitive bare-label match
+             against categorical task enums.
   Both API and local models are supported. API models use structured outputs
   (JSON schema enforced server-side).
 
@@ -51,6 +52,7 @@ import pandas as pd
 from openai import OpenAI
 from model_registry import (add_model_loading_args, load_model_definitions,
                             load_model_definitions_from_args)
+from run_registry import DEFAULT_LEDGER, DEFAULT_STATUS_MD, append_event, render_markdown
 from task_registry import (DEFAULT_SAMPLE_N_V1 as N_V1, add_task_loading_args,
                            load_task_definitions,
                            load_task_definitions_from_args)
@@ -89,17 +91,42 @@ def extract_json(content: str) -> str:
     return c
 
 
+def _coerce_binary_label(value):
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int) and value in {0, 1}:
+        return value
+    if isinstance(value, float) and value in {0.0, 1.0}:
+        return int(value)
+    if isinstance(value, str):
+        normalized = value.strip().strip(" \"'.,!").lower()
+        if normalized in {"0", "false", "no"}:
+            return 0
+        if normalized in {"1", "true", "yes"}:
+            return 1
+    raise ValueError(f"not a binary label: {value!r}")
+
+
+def _normalize_json_prediction(obj):
+    if isinstance(obj, list) and len(obj) == 1 and isinstance(obj[0], dict):
+        return obj[0]
+    return obj
+
+
 def parse_content(content: str, task: dict):
-    """Parse model output. JSON first, case-insensitive bare-label match as fallback."""
+    """Parse model output. JSON first, then compact task-specific fallbacks."""
     kind = task["label_kind"]
     # JSON attempt
     try:
         obj, _ = json.JSONDecoder().raw_decode(extract_json(content))
+        obj = _normalize_json_prediction(obj)
         if kind == "multi_binary":
-            return {k: int(bool(obj.get(k, 0))) for k in task["labels"]}, None
+            return {k: _coerce_binary_label(obj.get(k, 0)) for k in task["labels"]}, None
         elif kind == "binary":
             k = task["label_key"]
-            return {k: int(bool(obj.get(k, 0)))}, None
+            if isinstance(obj, dict):
+                return {k: _coerce_binary_label(obj.get(k, 0))}, None
+            return {k: _coerce_binary_label(obj)}, None
         else:
             k = task["label_key"]
             v = obj.get(k, "")
@@ -109,10 +136,17 @@ def parse_content(content: str, task: dict):
     except Exception:
         pass
 
+    if kind == "binary":
+        k = task["label_key"]
+        try:
+            return {k: _coerce_binary_label(extract_json(content))}, None
+        except ValueError:
+            return {k: None}, f"parse_fail: {content[:80]!r}"
+
     # Bare-label fallback (categorical only; multi-binary has no single-label equivalent)
     if kind == "categorical":
         k = task["label_key"]
-        upper = content.strip().upper()
+        upper = extract_json(content).strip().upper()
         for lbl in task["labels"]:
             if upper == lbl.upper() or upper.strip(' "\'.,!') == lbl.upper():
                 return {k: lbl}, None
@@ -460,6 +494,20 @@ def main():
                     help="Only run the v2-new 250 items (skip the v1 250). Used for "
                          "Ollama carry-over: existing v1 predictions are kept; only the "
                          "new items 250..499 get model calls.")
+    ap.add_argument("--run-id", default=None,
+                    help="Optional run id for output/run_registry.jsonl bookkeeping.")
+    ap.add_argument("--run-ledger", default=str(DEFAULT_LEDGER),
+                    help="Run ledger path used when --run-id is supplied.")
+    ap.add_argument("--run-note", default=None,
+                    help="Human note stored in the run ledger.")
+    ap.add_argument("--run-log", default=None,
+                    help="Log path stored in the run ledger, useful for tmux/remote runs.")
+    ap.add_argument("--run-tmux-session", default=None,
+                    help="tmux session name stored in the run ledger.")
+    ap.add_argument("--run-cost-cap-usd", default=None,
+                    help="Cost ceiling stored in the run ledger for paid API runs.")
+    ap.add_argument("--render-run-status", action="store_true",
+                    help=f"Render {DEFAULT_STATUS_MD.relative_to(REPO)} after ledger updates.")
     args = ap.parse_args()
 
     OUT.mkdir(parents=True, exist_ok=True)
@@ -505,23 +553,101 @@ def main():
             print(f"[skip unavailable model] {model_name}: {reason}", flush=True)
         models = [m for m in models if m["name"] not in unavailable]
         if not models:
+            if args.run_id:
+                append_event(
+                    args.run_ledger,
+                    event="fail",
+                    run_id=args.run_id,
+                    status="failed",
+                    runner="benchmark.py",
+                    output=args.output,
+                    note="No runnable models after filtering unavailable API models.",
+                )
+                if args.render_run_status:
+                    render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
             print("No runnable models after filtering unavailable API models.", flush=True)
             return
 
+    if args.run_id:
+        append_event(
+            args.run_ledger,
+            event="start",
+            run_id=args.run_id,
+            status="running",
+            runner="benchmark.py",
+            task_scope=[t["name"] for t in tasks],
+            model_scope=[m["name"] for m in models],
+            output=args.output,
+            merge_into=args.merge_into,
+            log=args.run_log,
+            tmux_session=args.run_tmux_session,
+            cost_cap_usd=args.run_cost_cap_usd,
+            note=args.run_note,
+        )
+        if args.render_run_status:
+            render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
+
     all_rows = []
-    for task in tasks:
-        task_rows = run_task(task, models, model_clients, args.output,
-                             only_new_items=args.only_new_items)
-        all_rows.extend(task_rows)
-        pd.DataFrame(all_rows).to_csv(args.output, index=False)
-        # Per-task merge so a mid-run kill preserves completed tasks.
-        if args.merge_into:
-            merge_into(Path(args.merge_into), task_rows)
+    try:
+        for task_idx, task in enumerate(tasks, start=1):
+            task_rows = run_task(task, models, model_clients, args.output,
+                                 only_new_items=args.only_new_items)
+            all_rows.extend(task_rows)
+            pd.DataFrame(all_rows).to_csv(args.output, index=False)
+            # Per-task merge so a mid-run kill preserves completed tasks.
+            if args.merge_into:
+                merge_into(Path(args.merge_into), task_rows)
+            if args.run_id:
+                append_event(
+                    args.run_ledger,
+                    event="update",
+                    run_id=args.run_id,
+                    status="running",
+                    runner="benchmark.py",
+                    current_task=task["name"],
+                    completed_tasks=task_idx,
+                    total_tasks=len(tasks),
+                    rows_written=len(all_rows),
+                    output=args.output,
+                    merge_into=args.merge_into,
+                )
+                if args.render_run_status:
+                    render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
+    except Exception as exc:
+        if args.run_id:
+            append_event(
+                args.run_ledger,
+                event="fail",
+                run_id=args.run_id,
+                status="failed",
+                runner="benchmark.py",
+                output=args.output,
+                merge_into=args.merge_into,
+                error=repr(exc),
+            )
+            if args.render_run_status:
+                render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
+        raise
 
     print("\n=== ALL DONE ===", flush=True)
     print(f"  predictions: {args.output}", flush=True)
     if args.merge_into:
         print(f"  merged into: {args.merge_into}", flush=True)
+    if args.run_id:
+        append_event(
+            args.run_ledger,
+            event="finish",
+            run_id=args.run_id,
+            status="completed",
+            runner="benchmark.py",
+            output=args.output,
+            merge_into=args.merge_into,
+            rows_written=len(all_rows),
+            completed_tasks=len(tasks),
+            total_tasks=len(tasks),
+        )
+        if args.render_run_status:
+            render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
 
     try:
         from build_coverage_matrix import refresh as refresh_coverage

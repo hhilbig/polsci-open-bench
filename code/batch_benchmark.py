@@ -38,6 +38,7 @@ from pathlib import Path
 import httpx
 import pandas as pd
 from model_registry import add_model_loading_args, load_model_definitions_from_args
+from run_registry import DEFAULT_LEDGER, DEFAULT_STATUS_MD, append_event, render_markdown
 from task_registry import (DEFAULT_SAMPLE_N_V1, add_task_loading_args,
                            load_task_definitions_from_args)
 
@@ -370,6 +371,20 @@ def main():
     ap.add_argument("--merge-into", dest="merge_into", default=None,
                     help="After the run, merge new rows into an existing CSV by "
                          "(task, model, batch_size, item_id), replacing matches.")
+    ap.add_argument("--run-id", default=None,
+                    help="Optional run id for output/run_registry.jsonl bookkeeping.")
+    ap.add_argument("--run-ledger", default=str(DEFAULT_LEDGER),
+                    help="Run ledger path used when --run-id is supplied.")
+    ap.add_argument("--run-note", default=None,
+                    help="Human note stored in the run ledger.")
+    ap.add_argument("--run-log", default=None,
+                    help="Log path stored in the run ledger, useful for tmux/remote runs.")
+    ap.add_argument("--run-tmux-session", default=None,
+                    help="tmux session name stored in the run ledger.")
+    ap.add_argument("--run-cost-cap-usd", default=None,
+                    help="Cost ceiling stored in the run ledger for paid API runs.")
+    ap.add_argument("--render-run-status", action="store_true",
+                    help=f"Render {DEFAULT_STATUS_MD.relative_to(OUT.parent)} after ledger updates.")
     args = ap.parse_args()
 
     batch_sizes = [int(x) for x in args.batch_sizes.split(",")]
@@ -413,6 +428,18 @@ def main():
             print(f"[skip unavailable model] {model_name}: {reason}", flush=True)
         models = [m for m in models if m["name"] not in unavailable]
         if not models:
+            if args.run_id:
+                append_event(
+                    args.run_ledger,
+                    event="fail",
+                    run_id=args.run_id,
+                    status="failed",
+                    runner="batch_benchmark.py",
+                    output=args.output,
+                    note="No runnable models after filtering unavailable API models.",
+                )
+                if args.render_run_status:
+                    render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
             print("No runnable models after filtering unavailable API models.", flush=True)
             return
 
@@ -427,6 +454,36 @@ def main():
         all_rows = prev.to_dict("records")
         print(f"[resume] {len(existing)} cells already present; skipping those.", flush=True)
 
+    total_cells = sum(
+        1
+        for task in tasks
+        for model in models
+        for batch_size in batch_sizes
+        if not (args.resume and (task["name"], model["name"], batch_size) in existing)
+    )
+    completed_cells = 0
+    if args.run_id:
+        append_event(
+            args.run_ledger,
+            event="start",
+            run_id=args.run_id,
+            status="running",
+            runner="batch_benchmark.py",
+            task_scope=[t["name"] for t in tasks],
+            model_scope=[m["name"] for m in models],
+            batch_sizes=batch_sizes,
+            output=str(out_path),
+            merge_into=args.merge_into,
+            log=args.run_log,
+            tmux_session=args.run_tmux_session,
+            cost_cap_usd=args.run_cost_cap_usd,
+            total_cells=total_cells,
+            skipped_cells=len(existing) if args.resume else 0,
+            note=args.run_note,
+        )
+        if args.render_run_status:
+            render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
+
     print(f"Batch benchmark starting")
     print(f"  tasks      : {[t['name'] for t in tasks]}")
     print(f"  models     : {[m['name'] for m in models]}")
@@ -436,42 +493,80 @@ def main():
         print(f"  N cap      : {args.N}")
     print()
 
-    for task in tasks:
-        items = task["loader"]()
-        if args.only_new_items:
-            n_skipped = min(DEFAULT_SAMPLE_N_V1, len(items))
-            items = items[n_skipped:]
-            print(f"[only-new-items] task {task['name']}: skipping first {n_skipped} v1 items, running {len(items)} new items", flush=True)
-        if args.N is not None and len(items) > args.N:
-            items = items[:args.N]
+    try:
+        for task in tasks:
+            items = task["loader"]()
+            if args.only_new_items:
+                n_skipped = min(DEFAULT_SAMPLE_N_V1, len(items))
+                items = items[n_skipped:]
+                print(f"[only-new-items] task {task['name']}: skipping first {n_skipped} v1 items, running {len(items)} new items", flush=True)
+            if args.N is not None and len(items) > args.N:
+                items = items[:args.N]
 
-        print(f"\n########## TASK: {task['name']} ({len(items)} items) ##########", flush=True)
+            print(f"\n########## TASK: {task['name']} ({len(items)} items) ##########", flush=True)
 
-        for m in models:
-            if m["backend"] == "ollama":
-                print(f"\n  Warming up {m['name']}...", flush=True)
-                warmup_ollama(m)
+            for m in models:
+                if m["backend"] == "ollama":
+                    print(f"\n  Warming up {m['name']}...", flush=True)
+                    warmup_ollama(m)
 
-            for b in batch_sizes:
-                cell_key = (task["name"], m["name"], b)
-                if (m["name"], task["name"], b) in BATCH_SKIP_COMBOS:
-                    print(f"\n  --- SKIPPING {m['name']} × {task['name']} × b={b} "
-                          f"(BATCH_SKIP_COMBOS) ---", flush=True)
-                    continue
-                if args.resume and cell_key in existing:
-                    print(f"  [RESUME] {task['name']} × {m['name']} × b={b} already done",
-                          flush=True)
-                    continue
+                for b in batch_sizes:
+                    cell_key = (task["name"], m["name"], b)
+                    if (m["name"], task["name"], b) in BATCH_SKIP_COMBOS:
+                        print(f"\n  --- SKIPPING {m['name']} × {task['name']} × b={b} "
+                              f"(BATCH_SKIP_COMBOS) ---", flush=True)
+                        continue
+                    if args.resume and cell_key in existing:
+                        print(f"  [RESUME] {task['name']} × {m['name']} × b={b} already done",
+                              flush=True)
+                        continue
 
-                print(f"\n  --- {m['name']} × {task['name']} × b={b} ---", flush=True)
-                t0 = time.perf_counter()
-                rows = run_cell(task, m, model_clients, b, items)
-                cell_time = time.perf_counter() - t0
-                n_parse_err = sum(1 for r in rows if r.get("parse_error"))
-                print(f"    CELL DONE: {len(rows)} rows in {cell_time:.1f}s, "
-                      f"{n_parse_err} parse errors", flush=True)
-                all_rows.extend(rows)
-                pd.DataFrame(all_rows).to_csv(out_path, index=False)
+                    print(f"\n  --- {m['name']} × {task['name']} × b={b} ---", flush=True)
+                    t0 = time.perf_counter()
+                    rows = run_cell(task, m, model_clients, b, items)
+                    cell_time = time.perf_counter() - t0
+                    n_parse_err = sum(1 for r in rows if r.get("parse_error"))
+                    print(f"    CELL DONE: {len(rows)} rows in {cell_time:.1f}s, "
+                          f"{n_parse_err} parse errors", flush=True)
+                    all_rows.extend(rows)
+                    pd.DataFrame(all_rows).to_csv(out_path, index=False)
+                    completed_cells += 1
+                    if args.run_id:
+                        append_event(
+                            args.run_ledger,
+                            event="update",
+                            run_id=args.run_id,
+                            status="running",
+                            runner="batch_benchmark.py",
+                            current_task=task["name"],
+                            current_model=m["name"],
+                            current_batch_size=b,
+                            completed_cells=completed_cells,
+                            total_cells=total_cells,
+                            rows_written=len(all_rows),
+                            output=str(out_path),
+                            merge_into=args.merge_into,
+                        )
+                        if args.render_run_status:
+                            render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
+    except Exception as exc:
+        if args.run_id:
+            append_event(
+                args.run_ledger,
+                event="fail",
+                run_id=args.run_id,
+                status="failed",
+                runner="batch_benchmark.py",
+                output=str(out_path),
+                merge_into=args.merge_into,
+                error=repr(exc),
+                completed_cells=completed_cells,
+                total_cells=total_cells,
+                rows_written=len(all_rows),
+            )
+            if args.render_run_status:
+                render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
+        raise
 
     if args.merge_into:
         from benchmark import merge_into  # reuse the union-merge from the serial pipeline
@@ -483,6 +578,21 @@ def main():
     print(f"  predictions: {out_path}", flush=True)
     if args.merge_into:
         print(f"  merged into: {args.merge_into}", flush=True)
+    if args.run_id:
+        append_event(
+            args.run_ledger,
+            event="finish",
+            run_id=args.run_id,
+            status="completed",
+            runner="batch_benchmark.py",
+            output=str(out_path),
+            merge_into=args.merge_into,
+            completed_cells=completed_cells,
+            total_cells=total_cells,
+            rows_written=len(all_rows),
+        )
+        if args.render_run_status:
+            render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
 
 
 if __name__ == "__main__":
