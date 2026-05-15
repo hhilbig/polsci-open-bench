@@ -30,7 +30,10 @@ The serial and batched benchmark runners depend on the packages in
 
 ## Task manifests
 
-Built-in benchmark tasks now live in YAML manifests under [`tasks/`](../tasks).
+Built-in benchmark tasks live in YAML manifests under [`tasks/`](../tasks).
+The generated task-count inventory is [`docs/task_inventory.md`](task_inventory.md):
+it records the canonical 34-task set and output coverage.
+
 You can also run a custom task without editing core code by supplying either:
 
 - `--task-manifest path/to/task.yaml`
@@ -40,6 +43,13 @@ You can also run a custom task without editing core code by supplying either:
 See [`docs/custom_tasks.md`](custom_tasks.md) for the manifest schema and
 [`examples/minimal_custom_task`](../examples/minimal_custom_task) for a minimal
 working example.
+
+After adding, removing, or changing task manifests, refresh the inventory:
+
+```bash
+python3 code/task_inventory.py --write
+python3 code/task_inventory.py --check
+```
 
 ## Model manifests
 
@@ -72,9 +82,11 @@ Install them with:
 Rscript -e "install.packages(c('tidyverse','knitr','ggrepel','scales','haschaR','kableExtra'), repos='https://cloud.r-project.org')"
 ```
 
-Then render with:
+The report QMD is intentionally prose-only: figures and tables are generated
+first, then loaded by the QMD. Rebuild the report assets and render with:
 
 ```bash
+Rscript code/build_report_assets.R
 quarto render output/report_pdf.qmd
 ```
 
@@ -85,20 +97,14 @@ quarto render output/report_pdf.qmd
 The benchmark was run with Ollama 0.19.0 on Apple Silicon (M2 Pro, 32 GB
 unified memory). Quantization is `Q4_K_M` for all four local models.
 
-Pull the four local models used in the checked-in release benchmark:
+Pull the five local models used in the checked-in release benchmark:
 
 ```bash
+ollama pull gemma4:26b
 ollama pull gemma4:31b-it-q4_K_M
 ollama pull qwen3:14b-q4_K_M
 ollama pull qwen3:30b-a3b-q4_K_M
 ollama pull mistral-small:24b-instruct-2501-q4_K_M
-```
-
-The `v2-benchmark-expansion` branch also has a prepared built-in manifest for
-`gemma4:26b` if you want to extend the local model set:
-
-```bash
-ollama pull gemma4:26b
 ```
 
 The runner reads `OLLAMA_URL` if you need to point it at a non-default host:

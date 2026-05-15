@@ -24,11 +24,7 @@ For each live task in the benchmark, this file records where the prompt in
 | `wesleyan_creative_ads_2022` | `prompts/wesleyan_creative_ads_2022.txt` | Derived from the Wesleyan Media Project tone-coding construct used in Zhang et al. (2025). | Custom three-class tone prompt plus JSON-output instruction. Ad text is truncated at 4000 chars when necessary in the loader. |
 | `burnham_polnli_entailment` | `prompts/burnham_polnli_entailment.txt` | Derived from Burnham, Kahn, Wang, and Peng (2025) and the public PolNLI test split, which exposes premise-hypothesis pairs and entailment labels directly. | Converted the source NLI coding into a binary JSON task where `entails = 1` means the hypothesis is supported by the premise. |
 
-## Staged next-task prompts
-
-These prompts are prepared in `tasks_next/` but are not live benchmark tasks yet.
-They should not be counted in the 18-task scored report until model runs have
-been started for them.
+## Additional benchmark prompts
 
 | Task | Prompt file | Source | Modifications |
 |---|---|---|---|
@@ -40,6 +36,14 @@ been started for them.
 | `erlich_ati_topics` | `prompts/erlich_ati_topics.txt` | Derived from Erlich et al. (2022) and the public `hc_new.tab` file, which exposes Mexican access-to-information request text plus multiple binary topic indicators. | Keeps the seven S8 request-subject labels as a multi-binary JSON task. |
 | `plover_cameo_event` | `prompts/plover_cameo_event.txt` | Derived from PLOVER gold-standard CAMEO records, which expose sentence text plus high-level event labels. | Removes the documentation record, keeps the 18 observed event types, and appends a strict JSON-output instruction. |
 | `burnham_polnli_event_entailment` | `prompts/burnham_polnli_event_entailment.txt` | Derived from the event-extraction rows in the public Political DEBATE / PolNLI test split. | Restricts the existing PolNLI entailment formulation to event-extraction rows only. |
+| `burnham_trump_stance` | `prompts/burnham_trump_stance.txt` | Derived from Burnham et al. (2025) and the public Trump-stance data. | Converts the source stance labels into a three-class JSON-output prompt. |
+| `burnham_covid_threat_minimization` | `prompts/burnham_covid_threat_minimization.txt` | Derived from Burnham et al. (2025) and the public COVID threat-minimization labeled sample. | Converts the source binary label into a strict JSON-output task. |
+| `dicocco_manifesto_populism` | `prompts/dicocco_manifesto_populism.txt` | Derived from Di Cocco and Monechi's public Italian manifesto-sentence annotations. | Converts the source populism label into a binary JSON-output prompt. |
+| `bestvater_kavanaugh_stance` | `prompts/bestvater_kavanaugh_stance.txt` | Derived from Bestvater and Monroe's public Brett Kavanaugh stance tweets. | Uses the direct stance label as a binary target-aware stance task. |
+| `politicause_causal_relation` | `prompts/politicause_causal_relation.txt` | Derived from the public PolitiCAUSE train, validation, and test splits. | Converts the source causal-relation label into a binary JSON-output task. |
+| `cap_party_platform_policy_topic` | `prompts/cap_party_platform_policy_topic.txt` | Derived from public Democratic and Republican party-platform quasi-statements coded with CAP major topics. | Restricts the label space to the observed CAP major-topic labels and appends a strict JSON-output instruction. |
+| `cap_crs_policy_topic` | `prompts/cap_crs_policy_topic.txt` | Derived from public Congressional Research Service report titles and summaries coded with CAP major topics. | Uses report title and summary text, restricts labels to observed CAP major topics, and appends a strict JSON-output instruction. |
+| `agoraspeech_criticism_agenda` | `prompts/agoraspeech_criticism_agenda.txt` | Derived from AgoraSpeech campaign-speech paragraphs with human-validated criticism-or-agenda labels and English translations. | Converts the source label into a two-class JSON-output task. |
 
 ## Rating summary
 
@@ -66,6 +70,22 @@ Derived rather than verbatim:
 - `mellon_bes_mii_2024`
 - `wesleyan_creative_ads_2022`
 - `burnham_polnli_entailment`
+- `toxicity_protests_es`
+- `brandt_gtd_attack_type`
+- `haunss_papea_claims`
+- `twitcivility_impoliteness`
+- `bestvater_wm_stance`
+- `erlich_ati_topics`
+- `plover_cameo_event`
+- `burnham_polnli_event_entailment`
+- `burnham_trump_stance`
+- `burnham_covid_threat_minimization`
+- `dicocco_manifesto_populism`
+- `bestvater_kavanaugh_stance`
+- `politicause_causal_relation`
+- `cap_party_platform_policy_topic`
+- `cap_crs_policy_topic`
+- `agoraspeech_criticism_agenda`
 
 ## Policy for future additions
 

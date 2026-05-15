@@ -44,12 +44,25 @@ launch/
 output/run.log
 output/rerun.log
 
+# Mid-flight benchmark working dir (overwritten by run scripts)
+output/tmp/
+.tmp_runtime/
+
+# Non-canonical run/import scratch. Canonical release files live directly under
+# output/ and are the only benchmark outputs used by the report.
+output/sidecar/
+output/openai_batch/
+output/anthropic_batch/
+
+# Local run wrappers copied to mac2 during one-off runs
+scripts/
+
+# Deprecated compatibility manifests
+tasks_v2pt2_local/
+
 # Backup files
 *.backup
 *~
-
-# Mid-flight benchmark working dir (overwritten by run scripts)
-output/tmp/
 
 # Personal calendar / iCal files
 *.ics

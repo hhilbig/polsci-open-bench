@@ -1,10 +1,10 @@
-"""Scan canonical and sidecar predictions and emit a model x task coverage matrix.
+"""Scan canonical predictions and emit a model x task coverage matrix.
 
 Outputs:
   output/coverage_matrix.csv  (wide: rows=models, cols=tasks, cells=sources or empty)
   docs/coverage_matrix.md     (human-readable, with per-model missing lists)
 
-Run after any benchmark rerun or sidecar archive update:
+Run after any benchmark rerun:
     python3 code/build_coverage_matrix.py
 """
 import csv
@@ -47,7 +47,8 @@ def list_models(models_dir: Path | None = None) -> list[tuple[str, str]]:
 
 def find_predictions_files(canonical_path: Path | None = None,
                            archive_root: Path | None = None,
-                           sidecar_root: Path | None = None
+                           sidecar_root: Path | None = None,
+                           include_sidecars: bool = False,
                            ) -> list[tuple[str, Path]]:
     canonical_path = canonical_path or REPO_ROOT / "output" / "predictions.csv"
     archive_root = archive_root or REPO_ROOT / "output" / "archive"
@@ -55,7 +56,7 @@ def find_predictions_files(canonical_path: Path | None = None,
     files: list[tuple[str, Path]] = []
     if canonical_path.exists():
         files.append(("canonical", canonical_path))
-    if sidecar_root.exists():
+    if include_sidecars and sidecar_root.exists():
         for fn in sorted(sidecar_root.iterdir()):
             if fn.suffix.lower() != ".csv":
                 continue
@@ -63,7 +64,7 @@ def find_predictions_files(canonical_path: Path | None = None,
                 continue
             label = f"live_sidecar_{fn.stem.removesuffix('_predictions')}"
             files.append((label, fn))
-    if archive_root.exists():
+    if include_sidecars and archive_root.exists():
         for sidecar_dir in sorted(archive_root.iterdir()):
             if not sidecar_dir.is_dir():
                 continue
@@ -198,6 +199,7 @@ def refresh(
     sidecar_root: Path | None = None,
     output_csv: Path | None = None,
     output_md: Path | None = None,
+    include_sidecars: bool = False,
     title: str = "Benchmark coverage matrix",
 ) -> tuple[Path, Path]:
     tasks_dirs = [_repo_path(p) for p in tasks_dirs] if tasks_dirs else None
@@ -214,6 +216,7 @@ def refresh(
         canonical_path=canonical_path,
         archive_root=archive_root,
         sidecar_root=sidecar_root,
+        include_sidecars=include_sidecars,
     )
     cells = scan_predictions(files)
     headers, rows = build_matrix_rows(tasks, models, cells)
@@ -249,6 +252,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--canonical-path", type=Path, help="Canonical predictions CSV.")
     parser.add_argument("--archive-root", type=Path, help="Archive root containing sidecar runs.")
     parser.add_argument("--sidecar-root", type=Path, help="Live sidecar output directory.")
+    parser.add_argument(
+        "--include-sidecars",
+        action="store_true",
+        help="Also scan live sidecar and archive prediction files.",
+    )
     parser.add_argument("--output-csv", type=Path, help="Coverage matrix CSV output path.")
     parser.add_argument("--output-md", type=Path, help="Coverage matrix Markdown output path.")
     parser.add_argument("--title", default="Benchmark coverage matrix", help="Markdown title.")
@@ -265,5 +273,6 @@ if __name__ == "__main__":
         sidecar_root=args.sidecar_root,
         output_csv=args.output_csv,
         output_md=args.output_md,
+        include_sidecars=args.include_sidecars,
         title=args.title,
     )

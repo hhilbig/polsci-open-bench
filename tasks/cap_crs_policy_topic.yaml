@@ -1,0 +1,46 @@
+order: 33
+name: cap_crs_policy_topic
+family: Policy-topic coding
+source: Policy Agendas Project 2025
+data_file: ../data/cap_crs_policy_topic.csv
+prompt_file: ../prompts/cap_crs_policy_topic.txt
+label_kind: categorical
+label_key: policy_topic
+labels:
+  - Macroeconomics
+  - Civil Rights
+  - Health
+  - Agriculture
+  - Labor and Immigration
+  - Education
+  - Environment
+  - Energy
+  - Immigration
+  - Transportation
+  - Law and Crime
+  - Social Welfare
+  - Housing
+  - Domestic Commerce
+  - Defense
+  - Technology
+  - Foreign Trade
+  - International Affairs
+  - Government Operations
+  - Public Lands
+  - Culture
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    CRS report title:
+    {title}
+
+    Summary:
+    {summary}
+  truncations:
+    summary:
+      max_chars: 5000
+      suffix: "... [truncated at {max_chars} chars]"
+ground_truth:
+  column: gt_policy_topic

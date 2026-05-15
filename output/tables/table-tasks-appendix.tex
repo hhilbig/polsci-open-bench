@@ -1,0 +1,59 @@
+\begingroup\fontsize{8}{10}\selectfont
+
+\begin{longtable}[t]{l>{\raggedright\arraybackslash}p{18em}>{\raggedright\arraybackslash}p{7em}>{\raggedright\arraybackslash}p{8em}lll}
+\caption{Thirty-four tasks in the benchmark. 'Type' is the report grouping used in Figure \ref{fig-family}; it is a broad annotation type rather than a source-provided task family. 'Provenance': Verbatim = prompt unchanged from source paper, Verbatim-adapted = source content with format-only changes, Derived = our prompt reasoned from the published codebook. 'Prompt': short (~15-35 lines) or long codebook (~47-126 lines). This is the trait that determines local batching feasibility. The CMP task uses the Halterman \& Keith (2025) domain-collapsed 7-class version of the CMP/MARPOR coding scheme, not the full CMP category set. \label{tab:tasks}}\\
+\toprule
+Task & Description & Source & Type & Labels & Provenance & Prompt\\
+\midrule
+\endfirsthead
+\caption[]{Thirty-four tasks in the benchmark. 'Type' is the report grouping used in Figure \ref{fig-family}; it is a broad annotation type rather than a source-provided task family. 'Provenance': Verbatim = prompt unchanged from source paper, Verbatim-adapted = source content with format-only changes, Derived = our prompt reasoned from the published codebook. 'Prompt': short (~15-35 lines) or long codebook (~47-126 lines). This is the trait that determines local batching feasibility. The CMP task uses the Halterman \& Keith (2025) domain-collapsed 7-class version of the CMP/MARPOR coding scheme, not the full CMP category set.  }\\
+\toprule
+Task & Description & Source & Type & Labels & Provenance & Prompt\\
+\midrule
+\endhead
+
+\endfoot
+\bottomrule
+\endlastfoot
+Gilardi relevance & Tweets, classified as about content moderation or not. & Gilardi 2023 & Relevance \& Harm & binary & Verbatim & short\\
+Brandt relevance & News articles, classified as politics-relevant or not. & Brandt et al. 2025 & Relevance \& Harm & binary & Derived & short\\
+Burnham PolNLI & Premise-hypothesis pairs, classified for entailment. & Burnham et al. 2025 & Claims \& Relations & binary & Derived & short\\
+Ballard incivility & Tweets by U.S. members of Congress, classified for incivility. & Ballard 2022 & Relevance \& Harm & binary & Derived & short\\
+Line of Fire incivility & Political tweets, classified for incivility. & Rheault et al. 2019 & Relevance \& Harm & binary & Derived & short\\
+\addlinespace
+Theocharis incivility & Political tweets, classified for incivility. & Theocharis et al. 2020 & Relevance \& Harm & binary & Derived & short\\
+Gilardi stance & Tweets about content moderation, classified by stance toward moderation. & Gilardi 2023 & Position \& Tone & 3-class & Verbatim & short\\
+SemEval stance & Tweets toward five named political targets, classified by stance. & Chae \& Davidson 2025 & Position \& Tone & 3-class & Derived & short\\
+SCOTUS sentiment & Tweets about U.S. Supreme Court rulings, classified by sentiment. & Ornstein et al. 2025 & Position \& Tone & 3-class & Derived & short\\
+Wesleyan ad tone & U.S. Meta political ads, classified by tone toward a candidate. & Zhang et al. 2025 & Position \& Tone & 3-class & Derived & short\\
+\addlinespace
+CCC protest type & News stories about U.S. protest events, classified by event type. & Halterman \& Keith 2025 & Events \& Actions & 4-class & Verbatim-adapted & long codebook\\
+BFRS violence & News stories about Pakistani political violence, classified by event type. & Halterman \& Keith 2025 & Events \& Actions & 12-class & Verbatim-adapted & long codebook\\
+PAPEA protest forms & Protest snippets, classified by protest form. & Haunss et al. 2025 & Events \& Actions & 7-class & Derived & long codebook\\
+ICBe event type & Crisis-event sentences, classified by sentence event type. & Douglass et al. 2024 & Events \& Actions & 5-class & Derived & short\\
+CMP manifestos & Quasi-sentences from political party manifestos, classified by policy domain. & Halterman \& Keith 2025 & Issues \& Topics & 7-class & Derived & long codebook\\
+\addlinespace
+Cross-domain topics & Political text, classified by broad policy domain. & Osnabruegge et al. 2023 & Issues \& Topics & 8-class & Derived & long codebook\\
+Campaign policy area & Campaign statements, classified by policy area. & Muller \& Fujimura 2024 & Issues \& Topics & 12-class & Derived & long codebook\\
+BES MII & Open-ended British Election Study responses, classified by issue topic. & Mellon et al. 2024 & Issues \& Topics & 50-class & Verbatim-adapted & long codebook\\
+Spanish protest toxicity & Spanish protest tweets, classified for toxic content. & toxicity-protests-ES & Relevance \& Harm & binary & Derived & short\\
+TwitCivility impoliteness & Political tweets, classified for impoliteness. & TwitCivility & Relevance \& Harm & binary & Derived & short\\
+\addlinespace
+GTD attack type & Global Terrorism Database events, classified by primary attack type. & Brandt et al. 2025 & Events \& Actions & 9-class & Derived & long codebook\\
+PAPEA protest claims & Protest snippets, classified by protest claim. & Haunss et al. 2025 & Issues \& Topics & 28-class & Derived & long codebook\\
+PLOVER CAMEO event & Gold-standard event records, classified by CAMEO event type. & PLOVER & Events \& Actions & 18-class & Derived & long codebook\\
+PolNLI event entailment & Event-extraction PolNLI pairs, classified for entailment. & Burnham et al. 2025 & Claims \& Relations & binary & Derived & short\\
+Women's March stance & Tweets about the Women's March, classified by stance. & Bestvater \& Monroe & Position \& Tone & binary & Derived & short\\
+\addlinespace
+Trump stance & Political statements, classified by stance toward Trump. & Burnham et al. 2025 & Position \& Tone & 3-class & Derived & short\\
+COVID threat minimization & Political text, classified for COVID threat minimization. & Burnham et al. 2025 & Claims \& Relations & binary & Derived & short\\
+Kavanaugh stance & Tweets about Brett Kavanaugh, classified by stance. & Bestvater \& Monroe & Position \& Tone & binary & Derived & short\\
+ATI topics & Mexican access-to-information requests, classified by request topic. & Erlich et al. & Issues \& Topics & 7-label & Derived & long codebook\\
+CAP party platforms & Party-platform quasi-statements, classified by CAP major topic. & CAP & Issues \& Topics & 21-class & Derived & long codebook\\
+\addlinespace
+CAP CRS reports & Congressional Research Service titles and summaries, classified by CAP major topic. & CAP / CRS & Issues \& Topics & 21-class & Derived & long codebook\\
+PolitiCAUSE causal relation & Political sentences, classified for whether they express a causal relation. & PolitiCAUSE & Claims \& Relations & binary & Derived & short\\
+Manifesto populism & Italian manifesto sentences, classified for populist rhetoric. & Di Cocco \& Monechi & Claims \& Relations & binary & Derived & short\\
+AgoraSpeech criticism/agenda & Greek campaign-speech paragraphs, classified as criticism or agenda setting. & AgoraSpeech & Claims \& Relations & 2-class & Derived & short\\*
+\end{longtable}
+\endgroup{}

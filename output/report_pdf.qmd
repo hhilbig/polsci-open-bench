@@ -2,6 +2,10 @@
 title: "Benchmarking local and commercial LLMs for political science text classification"
 author: "Hanno Hilbig\\thanks{hhilbig@ucdavis.edu. Code and data: \\url{https://github.com/hhilbig/polsci-open-bench}.}"
 date: "2026-05-06"
+bibliography: references.bib
+link-citations: true
+nocite: |
+  @*
 format:
   pdf:
     documentclass: article
@@ -17,394 +21,138 @@ format:
     include-in-header:
       text: |
         \usepackage{pdflscape}
+        \usepackage{booktabs}
+        \usepackage{longtable}
+        \usepackage{array}
+        \usepackage{multirow}
+        \usepackage{float}
 ---
 
 ```{r setup, include=FALSE}
-# Resolve paths from repo root whether the qmd is rendered from the repo root
-# or from the output/ directory.
-if (!file.exists("output/summary.csv") && file.exists("../output/summary.csv")) {
-  setwd("..")
-}
 knitr::opts_knit$set(root.dir = getwd())
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
                       fig.align = "center", dpi = 200)
-library(tidyverse)
 library(knitr)
-library(ggrepel)
-library(scales)
-library(haschaR)
-library(kableExtra)
 
-summary_path <- if (file.exists("output/summary_complete.csv")) {
-  "output/summary_complete.csv"
-} else {
-  "output/summary.csv"
+include_table <- function(path) {
+  cat(readLines(path, warn = FALSE), sep = "\n")
 }
-summary_raw <- read_csv(summary_path, show_col_types = FALSE)
-sb_raw      <- read_csv("output/summary_batched.csv", show_col_types = FALSE)
-
-family_map <- tibble::tribble(
-  ~task,                          ~family,
-  "gilardi_relevance",            "Relevance / Entailment",
-  "brandt_political_relevance",   "Relevance / Entailment",
-  "burnham_polnli_entailment",    "Relevance / Entailment",
-  "ballard_incivility",           "Incivility",
-  "rheault_line_of_fire_incivility","Incivility",
-  "theocharis_dynamics_incivility","Incivility",
-  "gilardi_stance",               "Sentiment / Stance / Tone",
-  "chae_semeval_stance",          "Sentiment / Stance / Tone",
-  "ornstein_scotus_sentiment",    "Sentiment / Stance / Tone",
-  "wesleyan_creative_ads_2022",   "Sentiment / Stance / Tone",
-  "halterman_ccc_protest",        "Event coding",
-  "halterman_keith_bfrs",         "Event coding",
-  "haunss_papea_fgz_forms",       "Event coding",
-  "douglass_icbe_sentence_event_type","Event coding",
-  "halterman_keith_cmp",          "Policy-topic coding",
-  "mellon_bes_mii_2024",          "Policy-topic coding",
-  "osnabruegge_cross_domain_topic","Policy-topic coding",
-  "muller_fujimura_campaign_policy_area","Policy-topic coding"
-)
-
-df <- summary_raw |>
-  left_join(family_map, by = "task") |>
-  mutate(
-    model_short = recode(model,
-      "gemma4:31b-it-q4_K_M"                    = "Gemma 4 31B",
-      "gemma4:26b"                               = "Gemma 4 26B",
-      "qwen3:14b-q4_K_M"                         = "Qwen3 14B",
-      "qwen3:30b-a3b-q4_K_M"                     = "Qwen3 30B-A3B",
-      "mistral-small:24b-instruct-2501-q4_K_M"   = "Mistral Sm 24B",
-      "gpt-5.5"                                  = "gpt-5.5",
-      "gpt-5.4-nano"                             = "gpt-5.4-nano",
-      "deepseek-v4-pro"                          = "DeepSeek V4 Pro",
-      "claude-sonnet-4-6"                        = "Claude Sonnet 4.6"
-    ),
-    task_short = recode(task,
-      "gilardi_relevance"          = "Gilardi relevance",
-      "brandt_political_relevance" = "Brandt relevance",
-      "burnham_polnli_entailment"  = "Burnham PolNLI",
-      "ballard_incivility"         = "Ballard incivility",
-      "rheault_line_of_fire_incivility" = "Line of Fire incivility",
-      "theocharis_dynamics_incivility" = "Theocharis incivility",
-      "gilardi_stance"             = "Gilardi stance",
-      "ornstein_scotus_sentiment"  = "SCOTUS sentiment",
-      "halterman_ccc_protest"      = "CCC protest type",
-      "haunss_papea_fgz_forms"     = "PAPEA protest forms (7-cl)",
-      "douglass_icbe_sentence_event_type" = "ICBe event type (5-cl)",
-      "chae_semeval_stance"        = "SemEval 2016 stance",
-      "halterman_keith_bfrs"       = "BFRS violence (12-cl)",
-      "halterman_keith_cmp"        = "CMP manifestos (7-cl)",
-      "mellon_bes_mii_2024"        = "BES MII (50-cl)",
-      "muller_fujimura_campaign_policy_area" = "Campaign policy area (12-cl)",
-      "osnabruegge_cross_domain_topic" = "Cross-domain topics (8-cl)",
-      "wesleyan_creative_ads_2022" = "Wesleyan ad tone"
-    ),
-    is_api = model %in% c("gpt-5.5", "gpt-5.4-nano", "claude-sonnet-4-6", "deepseek-v4-pro")
-  )
-
-model_levels <- c("Gemma 4 26B","Gemma 4 31B","Qwen3 14B","Qwen3 30B-A3B","Mistral Sm 24B",
-                  "gpt-5.5","gpt-5.4-nano","DeepSeek V4 Pro","Claude Sonnet 4.6")
-df <- df |> mutate(model_short = factor(model_short, levels = model_levels))
-
-model_palette <- c(
-  "Gemma 4 26B"       = "#009E73",
-  "Gemma 4 31B"       = "#1b9e77",
-  "Qwen3 14B"         = "#d95f02",
-  "Qwen3 30B-A3B"     = "#7570b3",
-  "Mistral Sm 24B"    = "#e7298a",
-  "gpt-5.5"           = "#333333",
-  "gpt-5.4-nano"      = "#999999",
-  "DeepSeek V4 Pro"   = "#0072B2",
-  "Claude Sonnet 4.6" = "#666666"
-)
-
-# Batched setup
-sb <- sb_raw |>
-  mutate(
-    model_short = recode(model,
-      "gemma4:31b-it-q4_K_M"                    = "Gemma 4 31B",
-      "gemma4:26b"                               = "Gemma 4 26B",
-      "qwen3:14b-q4_K_M"                         = "Qwen3 14B",
-      "qwen3:30b-a3b-q4_K_M"                     = "Qwen3 30B-A3B",
-      "mistral-small:24b-instruct-2501-q4_K_M"   = "Mistral Sm 24B",
-      "gpt-5.4-nano"                             = "gpt-5.4-nano",
-      "gpt-5.5"                                  = "gpt-5.5",
-      "deepseek-v4-pro"                          = "DeepSeek V4 Pro",
-      "claude-sonnet-4-6"                        = "Claude Sonnet 4.6"
-    ),
-    task_short = recode(task,
-      "gilardi_relevance"          = "Gilardi relevance",
-      "brandt_political_relevance" = "Brandt relevance",
-      "burnham_polnli_entailment"  = "Burnham PolNLI",
-      "ballard_incivility"         = "Ballard incivility",
-      "rheault_line_of_fire_incivility" = "Line of Fire incivility",
-      "theocharis_dynamics_incivility" = "Theocharis incivility",
-      "gilardi_stance"             = "Gilardi stance",
-      "ornstein_scotus_sentiment"  = "SCOTUS sentiment",
-      "halterman_ccc_protest"      = "CCC protest",
-      "haunss_papea_fgz_forms"     = "PAPEA protest forms",
-      "douglass_icbe_sentence_event_type" = "ICBe event type",
-      "halterman_keith_cmp"        = "CMP manifestos",
-      "halterman_keith_bfrs"       = "BFRS Pakistan",
-      "mellon_bes_mii_2024"        = "BES MII",
-      "muller_fujimura_campaign_policy_area" = "Campaign policy area",
-      "osnabruegge_cross_domain_topic" = "Cross-domain topics",
-      "wesleyan_creative_ads_2022" = "Wesleyan ads",
-      "chae_semeval_stance"        = "SemEval stance"
-    ),
-    is_api = model %in% c("gpt-5.4-nano", "gpt-5.5", "claude-sonnet-4-6", "deepseek-v4-pro")
-  )
-
-b1_latency <- sb |> filter(batch_size == 1) |>
-  select(task, model, b1_latency = median_latency_s)
-b1_f1 <- sb |> filter(batch_size == 1) |>
-  select(task, model, b1_headline_f1 = headline_f1)
-sb <- sb |>
-  left_join(b1_latency, by = c("task", "model")) |>
-  left_join(b1_f1,      by = c("task", "model")) |>
-  mutate(
-    speedup  = b1_latency / median_latency_s,
-    delta_f1 = headline_f1 - b1_headline_f1
-  )
 ```
 
 ## Abstract {.unnumbered}
 
-I benchmark five local open-weight models against four commercial API models, two from OpenAI plus Anthropic and DeepSeek, on eighteen political science classification tasks. Seventeen tasks use 500 sampled items; the Brandt political-relevance task uses all 320 available cleaned items. On the cross-task average, the strongest API model is Claude Sonnet 4.6 at 0.644 macro F1, while the best local model is Gemma 4 26B at 0.638. Top point estimates are split across six of the nine models, and task-level uncertainty remains substantial. Local inference is slowest on the largest dense architecture, but one local mixture-of-experts model is also the fastest model in the comparison. Batching helps on short prompt tasks with limited accuracy loss at moderate batch sizes, but increases the rate of malformed output on tasks with long, multi-class codebooks. Overall, local open-weight models are competitive on many applied political science classification tasks. However, my results do not support a simple local versus API ranking.
+Local open-weight models are useful tools for social-science text classification: they avoid per-item API fees, keep data on the researcher's machine, and make exact model versions easier to preserve. I benchmark five local models against four commercial API models on 34 political science classification tasks. Local models are competitive, but task choice matters. The best local model matches or exceeds the best API model on 9 tasks, and the average best-local-minus-best-API gap is -0.015 headline F1. The four strongest models, Claude Sonnet 4.6, gpt-5.5, Gemma 4 31B, and DeepSeek V4 Pro, fall within 0.021 mean headline F1. API models have their clearest edge on complex tasks with many labels or multiple outputs. Batching several texts in one prompt improves local throughput, but some task-model combinations return invalid labels or invalid response formats. The practical recommendation is simple: benchmark candidate models on ground-truth labels for the target task, report both performance and reliability, and test batching before using it at scale.
 
 # Motivation
 
-Political scientists and researchers in adjacent fields who use LLMs for text classification face a practical choice. Commercial API models are reliable, well-documented, and easy to call from R or Python. However, they also cost money per item, send the data off-machine, and create reproducibility risk when the underlying model changes between versions. Local open-weight models running through Ollama or vLLM avoid per-item API charges, keep the data on the researcher's machine, and make exact model versions easier to preserve.
+When using LLMs to classify text data, researchers can use commercial API models or local open-weight models. Commercial API models are typically reliable and easy to call from R or Python. However, they cost money per item, send data off-machine, and create reproducibility risk when model behavior changes over time. Local open-weight models are free to run, keep the data on the researcher's machine, and make exact model versions easier to preserve and track. This matters, for example, when data is restricted or cannot be sent to third-party APIs for other reasons. 
 
-When it comes to evaluating local model performance, the main question is not "are local models as good as API models in general?" but "is the local model good enough on the specific task I want to run?" In this report, I address four practical sub-questions: are local models competitive with commercial ones on common political science classification tasks? How long do they take, and can they run on a single laptop? Does batching speed them up? And how much does the answer vary across tasks?
-
-Across the eighteen tasks, the top four models (Claude Sonnet 4.6, Gemma 4 26B, Gemma 4 31B, and gpt-5.5) sit within 0.008 macro F1 of each other on the cross-task average, with per-task winners split across six of the nine models. Local inference can match or beat the commercial API tier on speed, and batching helps on short prompt tasks but raises the rate of malformed output on tasks with long, multi-class codebooks.
+I run a benchmark of 34 classification tasks to assess the performance of local models across a range of applications. I am particularly interested in three questions: (i) when local models approach or exceed commercial API performance, (ii) how much local inference time researchers should expect, and (iii) when task complexity widens the local/API gap.
 
 # Design
 
-The benchmark covers eighteen classification tasks drawn from published political science replication archives, nine models (five local, four commercial API: two OpenAI, one Anthropic, one DeepSeek), and 320 to 500 items per task sampled with a fixed random seed where sampling is needed. The same items are evaluated by each model. I report macro F1, accuracy, Matthews correlation coefficient (MCC), latency, and the rate of malformed output (the share of model responses that could not be parsed into a valid label). The CSV column for the latter is `parse_err_rate`. Macro F1 is the main cross-task summary because it is defined for all tasks and gives each class equal weight, but it is not sufficient on its own for imbalanced label sets, where accuracy and MCC are more informative. All comparisons use 95% paired-by-item bootstrap confidence intervals (1000 iterations).
+The benchmark has two parts. First, I run a single-item prompt benchmark covering thirty-four classification tasks drawn from published political science replication archives and nine models: five local open-weight models and four commercial API models from OpenAI, Anthropic, and DeepSeek. Each model sees the same items within a task. Thirty-one tasks use 500 sampled items. Three tasks have fewer cleaned items available, so I use all available observations: 320 for Brandt political relevance, 312 for PLOVER CAMEO event coding, and 293 for COVID threat minimization. This is why task sizes range from 293 to 500 observations.
 
-I ran each model on each item once. Local Ollama calls used temperature 0.1. The commercial API models used provider-default decoding, with `reasoning_effort=medium` for the OpenAI tiers. I sampled items with a fixed random seed (20260422), and the sampling is reproducible. Local inference ran on a single Apple Silicon MacBook (32 GB) through Ollama, without the optional internal-reasoning ("thinking") mode. All five local models were 4-bit quantized variants, so the local results should be read as commodity-hardware inference rather than full-precision performance. OpenAI and DeepSeek calls used JSON-constrained API outputs. Anthropic calls used tool-use to constrain outputs to the task label schema. I use prompts that are verbatim from the source paper's coding instructions where possible. Where the source paper did not use an LLM, I derive the prompt from the published codebook (per-task provenance is in Table \ref{tab:tasks}).
+I report performance and reliability for each task and model. The headline performance measure is F1, defined to match the task: positive-class F1 for binary tasks, mean per-label F1 for multi-binary tasks, and macro F1 for categorical tasks. Accuracy and Matthews correlation coefficient (MCC) provide additional measures of overall agreement. I also record wall-clock latency per item and the share of unusable responses. A response is unusable if it fails to parse, returns the wrong object shape, or uses a label outside the task schema. Performance metrics are computed over usable outputs only, so failure rates should be read alongside F1, accuracy, and MCC.
 
-The serial benchmark includes all nine models. The batched inference comparison remains narrower: batch sizes 10 and 20 are available for six of the original models on the original ten-task grid. Claude Sonnet 4.6 appears only as a serial baseline in that batched summary, and DeepSeek V4 Pro plus Gemma 4 26B are serial-only in the current report. Full-grid batched inference for the expanded 18-task x 9-model benchmark is still outstanding.
+I ran each model on each item once in the single-item benchmark. The local setup was a single Apple Silicon MacBook with 32 GB of unified memory running Ollama at temperature 0.1. Commercial API calls used provider-specific constrained-output settings. OpenAI tiers used `reasoning_effort=medium`; DeepSeek ran with internal thinking disabled; OpenAI and DeepSeek returned JSON-constrained outputs; and Anthropic used tool use to constrain labels. Prompts are verbatim from the source paper's coding instructions where possible; otherwise, I derive them from the published codebook (see Table \ref{tab:tasks}).
+
+Second, I test whether prompt batching speeds up local inference. In the b=10 batching experiment, the model receives ten texts in one prompt and returns ten labels in a single response. The point is to reduce per-item latency without changing the classification task. The local b=10 grid covers all thirty-four tasks and all five local models.
+
+Within-task comparisons use 95% paired-by-item bootstrap confidence intervals (1000 iterations). I treat the thirty-four tasks as a fixed benchmark population, but also report paired task-level bootstrap intervals that resample tasks with replacement.
 
 # Results
 
-## Local models are competitive on average
+## Average performance 
 
-The top four models are close on average. Claude Sonnet 4.6 has the highest mean macro F1 (0.644), followed by Gemma 4 26B (0.638), Gemma 4 31B (0.637), and gpt-5.5 (0.636). The spread across these four is 0.008 points. All nine models fall within roughly 0.06 macro F1 of each other (Figure \ref{fig-mean-f1}), while per-task spread within any single model exceeds that range. Most task-level model differences fall inside bootstrap CI overlap. The conclusion is robust to the metric choice: the same top group sits at the top under mean accuracy and mean MCC, although the exact order changes slightly. Among the OpenAI tiers, gpt-5.4-nano remains the cost-efficient option, now at 0.620 mean macro F1 compared with 0.636 for gpt-5.5.
+Figure \ref{fig-mean-f1} shows the 34-task model averages and the spread of task-level performance within each model. Claude Sonnet 4.6 has the highest observed mean headline F1 (0.668), followed by gpt-5.5 (0.660), Gemma 4 31B (0.648), and DeepSeek V4 Pro (0.647). The spread across these four models is 0.021 points. The same broad top group appears under mean accuracy and mean MCC (Table \ref{tab:altmetrics}), although the exact order changes slightly. Among the OpenAI tiers, gpt-5.4-nano remains the cost-efficient option, at 0.632 mean headline F1 compared with 0.660 for gpt-5.5.
 
-```{r fig-mean-f1, fig.width=6.5, fig.height=3.8, out.width="0.9\\linewidth", fig.cap="Mean macro F1 across eighteen tasks per model. Large filled circles show cross-task means (numeric labels); small dots show per-task macro F1 values, coloured by task. \\label{fig-mean-f1}"}
-agg_f1 <- df |>
-  group_by(model_short) |>
-  summarise(mean_f1 = mean(headline_f1, na.rm = TRUE), .groups = "drop") |>
-  arrange(desc(mean_f1)) |>
-  mutate(model_short = factor(model_short, levels = model_short))
+The task-level bootstrap corroborates this interpretation (Table \ref{tab:task-bootstrap}). The Claude Sonnet 4.6 versus gpt-5.5 interval includes zero, Gemma 4 31B and DeepSeek V4 Pro are effectively tied, and the estimated Claude advantage over Gemma 4 31B and DeepSeek V4 Pro is about two headline F1 points. Many within-task leader differences are also too uncertain to treat as firm rankings. The practical point is that small average gaps do not justify a stable leaderboard.
 
-per_task <- df |>
-  select(model_short, task_short, headline_f1) |>
-  mutate(model_short = factor(model_short, levels = levels(agg_f1$model_short)))
-
-p_mean_f1 <- ggplot() +
-  # per-task dots
-  geom_jitter(data = per_task,
-              aes(x = model_short, y = headline_f1, color = task_short),
-              width = 0.22, height = 0, size = 2.6, alpha = 0.9) +
-  # mean per model as a large filled circle, coloured by model palette
-  geom_point(data = agg_f1,
-             aes(x = model_short, y = mean_f1, fill = model_short),
-             shape = 21, size = 5, stroke = 0.6, color = "grey20") +
-  geom_text(data = agg_f1,
-            aes(x = model_short, y = mean_f1,
-                label = sprintf("%.3f", mean_f1)),
-            vjust = -1.5, size = 2.8, fontface = "bold") +
-  scale_y_continuous(limits = c(0.20, 1.02), breaks = seq(0.2, 1, 0.2)) +
-  scale_color_brewer(palette = "Set3", name = "Task") +
-  scale_fill_manual(values = model_palette, guide = "none") +
-  labs(x = NULL, y = "Mean macro F1 across tasks") +
-  theme_hanno(fontsize = 10) +
-  theme(panel.grid.major.x = element_blank(),
-        axis.text.x = element_text(angle = 25, hjust = 1),
-        legend.position = "right",
-        legend.text = element_text(size = 7),
-        legend.key.size = unit(0.35, "cm"))
-
-dir.create("output/figures", showWarnings = FALSE, recursive = TRUE)
-ggsave("output/figures/fig-mean-f1.png", plot = p_mean_f1,
-       width = 6.5, height = 3.8, dpi = 300, bg = "white")
-
-p_mean_f1
+```{r fig-mean-f1, out.width="0.9\\linewidth", fig.cap="Mean headline F1 across thirty-four tasks per model. Large filled circles show 34-task means. Small gray dots show observed per-task headline F1 values. \\label{fig-mean-f1}"}
+include_graphics("figures/fig-mean-f1.png")
 ```
 
-The larger differences are across tasks. At 320 to 500 items per task, the bootstrap intervals are wide enough that many task-level leader differences remain uncertain. Task-specific validation matters more than small differences between highly ranked models.
+The local/API comparison in Figure \ref{fig-best-local-api-gap} is the most direct test of my question. After selecting the best model within each class for each task, the best local model matches or exceeds the best API model on 9 of the 34 tasks. The mean best-local-minus-best-API gap is -0.015 headline F1, and the median gap is -0.019. Figure \ref{fig-best-local-api-gap} plots the same comparison as best API minus best local, so values to the left of zero favor local models. This is not evidence that local models dominate API models. It shows that the API advantage is often small enough that local inference is worth validating on the target task.
 
-## No model wins everywhere
+```{r fig-best-local-api-gap, out.width="0.8\\linewidth", fig.pos="H", fig.cap="Density of best API minus best local headline F1 across tasks. Negative values favor the local model class; positive values favor the API model class. The green area shows the local-favoring side of the distribution; the black area shows the API-favoring side. \\label{fig-best-local-api-gap}"}
+include_graphics("figures/fig-best-local-api-gap.png")
+```
 
-Figure \ref{fig-family} aggregates the eighteen tasks into five families. The family-level averages do not show a simple local versus API pattern. gpt-5.5 remains strongest on several high-performing policy and event tasks, Claude Sonnet 4.6 leads the cross-task average, and Gemma 4 26B/31B are close to the API leaders overall. At the task level, the top point estimates are split across six models: gpt-5.5 leads on nine tasks, Claude Sonnet 4.6 on three, Qwen3-14B and DeepSeek V4 Pro on two each, and Gemma 4 26B plus gpt-5.4-nano on one each.
+The model selection upper bounds in Figure \ref{fig-model-selection-value} lead to the same conclusion. These upper bounds choose the best model after observing performance on each task. Allowing the local model to vary by task raises mean headline F1 from 0.648 for the best single local model to 0.673. Across all nine models, task-specific selection reaches 0.696, compared with 0.668 for the best single model. These values show the upside of task-specific validation, but not how large a validation sample is needed for reliable model selection.
 
-```{r fig-family, fig.width=6.7, fig.height=5.1, out.width="0.95\\linewidth", fig.cap="Mean macro F1 within task family, by model. Each family contains three to four tasks; family-level averages are descriptive only. \\label{fig-family}"}
-fam_levels <- c(
-  "Sentiment / Stance / Tone\n\"What's the writer's stance?\"",
-  "Relevance / Entailment\n\"Does this text fit or support the claim?\"",
-  "Incivility\n\"Does this text cross a discourse norm?\"",
-  "Event coding\n\"What kind of event happened?\"",
-  "Policy-topic coding\n\"What issue does this address?\""
-)
-family_label <- function(f) {
-  recode(f,
-    "Sentiment / Stance / Tone"  = fam_levels[1],
-    "Relevance / Entailment"     = fam_levels[2],
-    "Incivility"                 = fam_levels[3],
-    "Event coding"               = fam_levels[4],
-    "Policy-topic coding"        = fam_levels[5]
-  )
-}
-fam_df <- df |>
-  group_by(family, model_short) |>
-  summarise(family_mean_f1 = mean(headline_f1, na.rm = TRUE), .groups = "drop") |>
-  mutate(family = factor(family_label(family), levels = fam_levels))
+The larger differences are across tasks. The paired-by-item intervals are wide enough that many task-level leader differences remain uncertain. The benchmark should therefore not be read primarily as a leaderboard: global rank is a weak decision rule for applied coding.
 
-p_family <- ggplot(fam_df, aes(x = fct_rev(model_short), y = family_mean_f1, fill = model_short)) +
-  geom_col(width = 0.75) +
-  geom_text(aes(label = sprintf("%.2f", family_mean_f1)),
-            hjust = -0.15, size = 2.4) +
-  coord_flip() +
-  facet_wrap(~ family, ncol = 2) +
-  scale_y_continuous(limits = c(0, 1.05), breaks = seq(0, 1, 0.25),
-                     expand = expansion(mult = c(0, 0.05))) +
-  scale_fill_manual(values = model_palette) +
-  labs(x = NULL, y = "Mean macro F1 within family") +
-  theme_hanno(fontsize = 10) +
-  theme(legend.position = "none",
-        panel.grid.major.y = element_blank(),
-        strip.text = element_text(face = "bold", size = 8))
+## Models are complementary across tasks
 
-ggsave("output/figures/fig-family.png", plot = p_family,
-       width = 6.7, height = 5.1, dpi = 300, bg = "white")
+Figure \ref{fig-family} groups the thirty-four tasks into five broad annotation types: relevance and harm, position and tone, events and actions, claims and relations, and issues and topics. These are report groupings, not source-provided task families, and borderline cases are assigned by prediction target. The type-level averages do not show a simple local versus API pattern.
 
-p_family
+At the task level, the top point estimates are split across eight models. gpt-5.5 leads on thirteen tasks, Claude Sonnet 4.6 leads on eight, Mistral Small leads on three, and five other models lead on two tasks each.
+
+The winner split matters because it suggests complementarity across models. Even models with lower average performance sometimes produce the best task-level point estimate. The models are not simply ordered by a single general-capability scale.
+
+```{r fig-family, out.width="0.95\\linewidth", fig.cap="Mean headline F1 within five broad annotation types, by model. Type-level averages are descriptive only. \\label{fig-family}"}
+include_graphics("figures/fig-family.png")
+```
+
+## Performance is lower on more complex coding tasks
+
+Figure \ref{fig-complexity} asks whether coding complexity helps explain the large task-to-task variation. I measure complexity with two features that researchers can observe before running a benchmark: the prompt/codebook and the number of labels used in the gold data. Low-complexity tasks have fewer than three effective labels and short prompts. Medium-complexity tasks have either more labels or longer prompts. High-complexity tasks have at least eight effective labels or require multi-binary outputs.
+
+The pattern is clear, but the gaps are not large enough to erase local competitiveness. Mean headline F1 falls from 0.70 to 0.57 for API model-task cells and from 0.67 to 0.52 for local cells as tasks move from low to high complexity. When I instead compare the best API model with the best local model on each task, the low-complexity gap nearly disappears (0.740 versus 0.735), while the high-complexity gap is about 0.05 headline F1 (0.605 versus 0.555). This is the clearest API edge in the complexity bins. It points to the tasks where validation matters most: long codebooks, many effective labels, and multi-output schemas.
+
+```{r fig-complexity, out.width="0.92\\linewidth", fig.cap="Coding complexity and model performance across the 34-task benchmark. The left panel shows mean headline F1 across all observed task-model combinations, separately for local and API models. The right panel shows the best local model and best API model per task within each complexity group. Points show group means; lines connect complexity groups within model class. \\label{fig-complexity}"}
+include_graphics("figures/fig-complexity.png")
 ```
 
 ## Local inference is not uniformly slower
 
-Local inference speed varies sharply with model size and architecture (Figure \ref{fig-speed}). The fastest model is Qwen3-30B-A3B (a sparse "mixture-of-experts" model that uses about three billion active parameters per call), at about 0.6 s/item. Gemma 4 26B is only slightly slower on median latency and has the strongest local cross-task F1. The slowest local model is Gemma 4 31B, the largest dense local model, at about 4.4 s/item on the median task. For applied use, parameter count alone is a poor guide to speed: the sparse local models are faster than several smaller dense alternatives.
+Local inference speed varies sharply with model size, architecture, and batching (Figure \ref{fig-speed}). On a typical 500-item task, median single-item runtimes range from about 5 minutes for Qwen3-30B-A3B and 7 minutes for Gemma 4 26B to about 29 minutes for Gemma 4 31B. Qwen3-30B-A3B is fastest because it is a sparse model that uses about three billion active parameters per call. Gemma 4 31B has the strongest local 34-task single-item headline F1, while Gemma 4 26B is much faster and remains close on average. The point is practical: local inference is slow enough to plan around, but not slow enough to rule out ordinary validation and production coding.
 
-```{r fig-speed, fig.width=6, fig.height=3.5, out.width="0.85\\linewidth", fig.cap="Mean F1 across tasks vs median per-item latency, for the five local models. API models are excluded because their per-call wall-clock mixes server load, queueing, and network round-trip and is not directly comparable to local inference time. \\label{fig-speed}"}
-speed_df <- df |>
-  filter(!is_api) |>
-  group_by(model_short) |>
-  summarise(mean_f1 = mean(headline_f1, na.rm = TRUE),
-            median_latency = median(median_latency_s, na.rm = TRUE),
-            .groups = "drop")
-
-p_speed <- ggplot(speed_df, aes(x = median_latency, y = mean_f1, color = model_short)) +
-  geom_point(size = 4, stroke = 1.2) +
-  geom_text_repel(aes(label = model_short), size = 2.8, box.padding = 0.6,
-                  point.padding = 0.4, segment.size = 0.3, min.segment.length = 0,
-                  max.overlaps = 20, show.legend = FALSE) +
-  scale_x_log10(breaks = c(0.5, 1, 2, 5, 10),
-                labels = function(x) paste0(x, "s")) +
-  scale_color_manual(values = model_palette, guide = "none") +
-  labs(x = "Median per-item latency (s, log scale)",
-       y = "Mean F1 (18 tasks)") +
-  theme_hanno(fontsize = 11) +
-  theme(legend.position = "none",
-        panel.grid.minor = element_blank())
-
-ggsave("output/figures/fig-speed.png", plot = p_speed,
-       width = 6, height = 3.5, dpi = 300, bg = "white")
-
-p_speed
+```{r fig-speed, out.width="0.85\\linewidth", fig.pos="H", fig.cap="Mean headline F1 vs median per-item latency, for the five local models. Circles show single-item calls over the 34-task benchmark; triangles show b=10 batched calls over the same task set. Lines connect the two call modes for the same model, and labels identify model pairs. API models are excluded because their per-call wall-clock mixes server load, queueing, and network round-trip and is not directly comparable to local inference time. \\label{fig-speed}"}
+include_graphics("figures/fig-speed.png")
 ```
 
-All five local models ran the full benchmark on a single 32 GB Apple Silicon MacBook; the largest, Gemma 4 31B, fit comfortably in unified memory. Latencies will reorder on different hardware, especially among the local models, depending on memory and compute. For reference, the API tiers in this run sat between roughly 0.7 and 1.7 s/item on median latency end-to-end, but those numbers mix model speed with provider serving load, network, and queueing, so they are not directly comparable to local inference time and are not shown in the figure.
+All five local models ran on a single 32 GB Apple Silicon MacBook; the largest, Gemma 4 31B, fit in unified memory. Appendix Figure \ref{fig-local-runtime-per-1000} translates the local latencies into median minutes per 1,000 observations for each model. For reference, the API tiers in this run sat between roughly 0.9 and 1.7 s/item on median latency end-to-end, but those numbers mix model speed with provider serving load, network, and queueing and are not shown in the figure.
 
-## Batching helps on short prompts, hurts on long codebooks
+## Batching improves throughput but exposes reliability failures
 
-Batched prompting sends multiple items in one call and asks the model to return an array of labels, rather than sending one item at a time. It is a common way to reduce per-item latency for API models (Pipal et al. 2026). I tested batch sizes of 10 and 20 against a serial baseline (b=1). Batching helps on short prompt tasks with little or no accuracy loss (Figure \ref{fig-batch}), but creates problems on tasks with long, multi-class codebooks (12 to 50 categories), where the model already has a long instruction prompt to process on every call.
+Prompt batching changes the prompt: the model receives several texts at once and must return one label for each text. Provider Batch API mode is different. It changes how requests are queued and billed, but each text still appears in a separate request. The procedure I test here is prompt batching. @pipal2026 show why this matters for annotation workflows: one-at-a-time classification leaves much of the available throughput unused.
 
-On the short prompt tasks (Gilardi relevance/stance, Ballard incivility, SemEval, SCOTUS), the six models in the batched comparison reach 1.2× to 2.7× per-item speedup at b=10. Wesleyan ad tone is the exception in the short prompt set: most local models slow down slightly under batching there. Mean-F1 changes are mostly within ±0.05, with a handful of cells (e.g., Wesleyan × Qwen3-30B-A3B at b=10) hitting larger swings. b=10 captures most of the speedup, and the move from b=10 to b=20 buys little extra throughput while raising fragility on smaller local models.
+Figure \ref{fig-speed} shows the main local result. Prompt batching reduces median per-item latency for every local model, with model-level median speedups from about 1.23× to 1.86×. Average headline-F1 changes are modest, ranging from -0.023 to +0.010. Gemma 4 26B is the most useful fast batched option in these results: it remains close to Gemma 4 31B on average but classifies a typical 500-item task in about 4 minutes at b=10, compared with about 21 minutes for Gemma 4 31B.
 
-On long codebook tasks (Halterman CCC, BFRS, BES MII, CMP manifestos), two patterns emerge. Local Ollama batching does not help: the instructions are already long, so packing additional items does not save the cost the model pays to read them. A pilot cell (Halterman CCC × Gemma × b=10) ran at 14.9 s/item, slightly slower than the serial 14.1 s/item baseline. OpenAI batching looks fast in latency terms, but the rate of malformed responses climbs sharply. Figure \ref{fig-batch} understates this problem because F1 is computed only on outputs that can be parsed. Failed responses are a separate reliability cost. gpt-5.5 batched on Halterman CCC at b=10 returns malformed output for 68% of items, and gpt-5.5 on Wesleyan at b=20 hits 48%. gpt-5.4-nano tops out at 12% on the same tasks and is more reliable under batching.
-
-```{r fig-batch, fig.width=6.5, fig.height=4, out.width="0.95\\linewidth", fig.cap="Per-cell speedup vs accuracy change for batched inference relative to single item (serial) calls, faceted by batch size (b=10 left, b=20 right). Each point is one (task, model) cell. Upper-right = faster and at-least-as-accurate, lower-right = fast but worse, left of x=1 = batching does not help here. Malformed output rates are not shown in this figure. They are discussed in the text. \\label{fig-batch}"}
-ggplot(sb |> filter(batch_size != 1, !is.na(delta_f1), !is.na(speedup)) |>
-         mutate(batch_label = factor(paste0("b = ", batch_size),
-                                     levels = c("b = 10","b = 20"))),
-       aes(x = speedup, y = delta_f1, color = model_short, shape = factor(batch_size))) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "grey30", linewidth = 0.4) +
-  geom_vline(xintercept = 1, linetype = "dashed", color = "grey30", linewidth = 0.4) +
-  geom_point(size = 2.4, stroke = 1.0, alpha = 0.9) +
-  facet_wrap(~ batch_label, ncol = 2) +
-  scale_x_log10(breaks = c(0.5, 1, 2, 5, 10),
-                labels = function(x) paste0(x, "x")) +
-  scale_y_continuous(breaks = seq(-0.3, 0.2, 0.1),
-                     labels = function(x) sprintf("%+.2f", x)) +
-  scale_color_manual(values = model_palette, name = NULL) +
-  scale_shape_manual(values = c("10" = 16, "20" = 17), guide = "none") +
-  labs(x = "Speedup vs single item calls (log scale)",
-       y = "Change in macro F1 vs single item calls") +
-  theme_hanno(fontsize = 10) +
-  theme(panel.grid.minor = element_blank(),
-        legend.position = "bottom",
-        legend.text = element_text(size = 7),
-        legend.key.size = unit(0.3, "cm"),
-        strip.text = element_text(face = "bold"))
-```
+Prompt length still matters. Short-prompt cells have a median local b=10 speedup of about 1.34×, while long-codebook cells have a median speedup of about 1.20×. Schema and label reliability is the sharper constraint. These failures include outputs that do not parse, outputs with the wrong object or array shape, and outputs that parse but return labels outside the permitted task schema. The largest failures are concentrated in specific model-task pairs. For example, Gemma 4 26B produces unusable responses for 72% of Erlich ATI items at b=10, Qwen3-30B-A3B produces unusable responses for 51% of Halterman CCC items at b=10, and gpt-5.5 returns unusable output for 68% of Halterman CCC items in the limited API prompt-batching run. The appendix table on schema and label failure rates lists the covered cells above 5%.
 
 ## Cost
 
-The OpenAI portion of the expanded serial run remains cheap enough for validation-scale benchmarking but differs sharply by tier. In the original 10-task grid, gpt-5.4-nano cost about $1.20 for 5,000 predictions, compared with $21.66 for gpt-5.5. In the expanded 18-task results, gpt-5.4-nano trails gpt-5.5 by 0.016 mean macro F1 (0.620 vs 0.636). Claude Sonnet 4.6 is the top model in the expanded grid, but its token-priced cost is closer to the flagship tier than to nano. Local models avoid API charges, but the relevant cost becomes wall-clock time, hardware availability, and energy use.
+The OpenAI portion of the 34-task single-item benchmark remains cheap enough for validation-scale benchmarking, but the tiers differ sharply. At publicly listed prices, gpt-5.4-nano costs about $4 for the 16,425 predictions in the 34-task benchmark, while gpt-5.5 would cost about $71 under direct per-request pricing. In return, gpt-5.5 improves mean headline F1 from 0.632 to 0.660. The smaller tier is therefore worth screening before moving to a flagship API model.
+
+Provider Batch API mode changes the cost calculation for flagship models. The gpt-5.5 runs for a 16-task subset used the OpenAI Batch API: 7,605 requests completed with 0 parse/API errors at an estimated batch-discounted cost of $14.13 under a $20 budget cap. Claude Sonnet 4.6 was also run through provider Batch API mode for the same subset, with 7,604 of 7,605 outputs parsing cleanly after retries. Local models avoid API charges, but the relevant cost becomes wall-clock time, hardware availability, and energy use.
 
 # Implications for applied use {.unnumbered}
 
-The results imply a workflow rather than a single best model. For researchers, a small validation sample on the target task should come before production use. At this scale, the benchmark average does not reliably predict which model performs best on any specific task, and task-level reversals are common. All five local models fit on a 32 GB Apple Silicon MacBook (the largest dense model takes about 4.4 seconds on the median task, the fastest about 0.6), so a one-laptop setup is enough hardware for the full benchmark.
+The results imply a workflow rather than a single best model. Start with a small validation sample on the target task: the benchmark average does not reliably predict which model performs best on a specific task. All five local models fit on a 32 GB Apple Silicon MacBook, so one laptop setup is enough hardware for the full benchmark.
 
-For metric reporting on imbalanced label sets, accuracy and MCC should appear alongside macro F1. Mellon BES MII is a clean illustration: for the top model, macro F1 is about 0.55, accuracy is 0.95, and MCC is 0.93.
+```{=latex}
+\noindent\fbox{\begin{minipage}{0.94\linewidth}
+\textbf{Recommended workflow.} Start with 100 to 300 hand-labeled validation cases. Test at least one cheap API model, one flagship API model, and two useful local models. Report headline F1, accuracy, MCC, and schema or label failures. For imbalanced tasks, inspect rare-class recall. Use batching only after checking task-level schema reliability, and freeze the exact model version before production coding.
+\end{minipage}}
+```
 
-For batching, b=10 is a reasonable starting point on short prompt tasks. The accuracy cost is small in this benchmark and the speedup is meaningful. For tasks with long, multi-class codebooks, my results suggest researchers should not batch aggressively unless retries are built in. Malformed output rates on gpt-5.5 reach 26 to 68 percent at b=10/20 on Halterman CCC, BFRS, and Wesleyan, and gpt-5.4-nano is the more reliable batched option for that workload.
+For metric reporting on imbalanced label sets, headline F1, accuracy, and MCC should appear together because each answers a different question. Mellon BES MII, a heavily imbalanced issue-classification task, illustrates the point: for the top model, headline F1 is about 0.55, accuracy is 0.95, and MCC is 0.93. When paid API use is acceptable, cheap tiers should also be screened rather than dismissed: in this run, gpt-5.4-nano lost 0.028 mean headline F1 relative to gpt-5.5 but cost about $4 for the full 34-task benchmark.
+
+For batching, b=10 is a reasonable starting point for local models when throughput matters. The average performance cost is small, but schema and label reliability must be checked at the task-model level. For long, multi-class codebooks, researchers should not batch aggressively unless retries are built in.
 
 # Limitations and scope {.unnumbered}
 
-**Model selection and prompting.** The model set reflects a practical applied setup, not the full set of available models: five local models that fit a 32 GB Apple Silicon setup, plus four commercial API tiers that include cheap and flagship options. I did not optimize prompts separately per model. Some are verbatim from the source paper, others are derived from published codebooks. This makes the benchmark closer to typical applied use, but it is not a maximum-performance comparison.
+**Model selection and prompting.** The model set reflects five specific local models that fit a 32 GB Apple Silicon setup, plus four commercial API tiers that include cheaper and flagship options. I did not optimize prompts separately per model. Some are verbatim from the source paper, others are derived from published codebooks. 
 
-**Task averaging and rare labels.** The mean F1 ranking is descriptive. It is not usually the target quantity for an applied coding project. Tasks differ in label count, class imbalance, construct complexity, and prompt provenance. For imbalanced codebooks, average metrics can hide failures on rare classes.
-
-**Beyond this benchmark.** Local inference keeps text on the researcher's machine, which can simplify workflows with sensitive or restricted data. The benchmark studies prompt based classification only. For large labeled datasets and classification tasks with a fixed label set, fine-tuned local models, supervised classifiers, or embedding-based methods may be cheaper and more reliable. API endpoints can change behavior between releases even when the model name is stable, while local open-weight models are easier to freeze exactly.
+**Beyond this benchmark.** Local inference keeps text on the researcher's machine, which can simplify workflows with sensitive or restricted data. The benchmark studies prompt-based classification only: for large labeled datasets with fixed label sets, fine-tuned local models, supervised classifiers, or embedding-based methods may be cheaper and more reliable. API endpoints can change behavior between releases even when the model name is stable, while local open-weight models are easier to freeze exactly.
 
 # References {.unnumbered}
 
-Ballard, A. O., DeTamble, R., Dorsey, S., Heseltine, M., & Johnson, M. (2022). Incivility in Congressional tweets. *American Politics Research*.
-
-Brandt et al. (2025). Extractive versus generative language models for political conflict text classification. *Political Analysis*.
-
-Burnham, Kahn, Wang, and Peng. (2025). Political DEBATE / PolNLI.
-
-Chae, Y., & Davidson, T. (2025). Large language models for text classification: From zero-shot learning to instruction-tuning. *Sociological Methods & Research*.
-
-Douglass et al. (2024). ICBe sentence-level event annotations.
-
-Gilardi, F., Alizadeh, M., & Kubli, M. (2023). ChatGPT outperforms crowd workers for text-annotation tasks. *Proceedings of the National Academy of Sciences*, 120(30).
-
-Halterman, A., & Keith, K. A. (2025). Codebook LLMs: Evaluating LLMs as measurement tools for political science concepts. *Political Analysis*.
-
-Haunss et al. (2025). PAPEA: A modular pipeline for the automation of protest event analysis. *Political Science Research and Methods*.
-
-Mellon, J., Bailey, J., Scott, R., Breckwoldt, J., Miori, M., & Schmedeman, P. (2024). Do AIs know what the most important issue is? Using language models to code open-text social survey responses at scale. *Research & Politics*.
-
-Muller, and Fujimura. (2024). Campaign communication and policy-area coding.
-
-Ornstein, J. T., Blasingame, E. N., & Truscott, J. (2025). How to train your stochastic parrot: Large language models for political texts. *Political Science Research and Methods*.
-
-Osnabruegge, Ash, and Morelli. (2023). Cross-domain topic classification.
-
-Pipal, M., Vogel, S. J., Wack, M., & Esser, F. (2026). Researchers waste 80% of LLM annotation costs by classifying one text at a time. *arXiv:2604.03684*.
-
-Rheault, Rayment, and Musulan. (2019). Line-of-fire incivility annotations. *Research & Politics*.
-
-Theocharis et al. (2020). Dynamics of political incivility. *Sage Open*.
-
-Zhang, M., Cakmak, F., Neumann, M., Zimmeck, S., Oleinikov, P., Yao, J., Yu, H., Jacewicz, A., Tassone, I., Floyd, B., Baum, L., Franz, M. M., Ridout, T. N., & Fowler, E. F. (2025). Comparable 2022 general election advertising datasets from Meta and Google. *Scientific Data*.
+::: {#refs}
+:::
 
 # Companion materials {.unnumbered}
 
@@ -416,32 +164,8 @@ Prompt provenance, batched inference details, summary CSVs, and reproduction ins
 
 # Tasks {.unnumbered}
 
-```{r table-tasks-appendix}
-tasks_table <- tibble::tribble(
-  ~Task,                ~Description,                                                                              ~Source,                  ~Family,                      ~Labels,    ~Provenance,         ~`Prompt`,
-  "Gilardi relevance",  "Tweets, classified as about content moderation or not.",                                  "Gilardi 2023",           "Relevance / Entailment",     "binary",   "Verbatim",          "short",
-  "Brandt relevance",   "News articles, classified as politics-relevant or not.",                                 "Brandt et al. 2025",     "Relevance / Entailment",     "binary",   "Derived",           "short",
-  "Burnham PolNLI",     "Premise-hypothesis pairs, classified for entailment.",                                    "Burnham et al. 2025",    "Relevance / Entailment",     "binary",   "Derived",           "short",
-  "Ballard incivility", "Tweets by U.S. members of Congress, classified for incivility.",                          "Ballard 2022",           "Incivility",                 "binary",   "Derived",           "short",
-  "Line of Fire incivility", "Political tweets, classified for incivility.",                                      "Rheault et al. 2019",    "Incivility",                 "binary",   "Derived",           "short",
-  "Theocharis incivility", "Political tweets, classified for incivility.",                                        "Theocharis et al. 2020", "Incivility",                 "binary",   "Derived",           "short",
-  "Gilardi stance",     "Tweets about content moderation, classified by stance toward moderation.",                "Gilardi 2023",           "Sentiment / Stance / Tone",  "3-class",  "Verbatim",          "short",
-  "SemEval stance",     "Tweets toward five named political targets, classified by stance.",                       "Chae & Davidson 2025",   "Sentiment / Stance / Tone",  "3-class",  "Derived",           "short",
-  "SCOTUS sentiment",   "Tweets about U.S. Supreme Court rulings, classified by sentiment.",                       "Ornstein et al. 2025",   "Sentiment / Stance / Tone",  "3-class",  "Derived",           "short",
-  "Wesleyan ad tone",   "U.S. Meta political ads, classified by tone toward a candidate.",                         "Zhang et al. 2025",      "Sentiment / Stance / Tone",  "3-class",  "Derived",           "short",
-  "CCC protest type",   "News stories about U.S. protest events, classified by event type.",                       "Halterman & Keith 2025", "Event coding",               "4-class",  "Verbatim-adapted",  "long codebook",
-  "BFRS violence",      "News stories about Pakistani political violence, classified by event type.",              "Halterman & Keith 2025", "Event coding",               "12-class", "Verbatim-adapted",  "long codebook",
-  "PAPEA protest forms","Protest snippets, classified by protest form.",                                           "Haunss et al. 2025",     "Event coding",               "7-class",  "Derived",           "long codebook",
-  "ICBe event type",    "Crisis-event sentences, classified by sentence event type.",                              "Douglass et al. 2024",   "Event coding",               "5-class",  "Derived",           "short",
-  "CMP manifestos",     "Quasi-sentences from political party manifestos, classified by policy domain.",           "Halterman & Keith 2025", "Policy-topic coding",        "7-class",  "Derived",           "long codebook",
-  "Cross-domain topics","Political text, classified by broad policy domain.",                                      "Osnabruegge et al. 2023","Policy-topic coding",        "8-class",  "Derived",           "long codebook",
-  "Campaign policy area","Campaign statements, classified by policy area.",                                        "Muller & Fujimura 2024", "Policy-topic coding",        "12-class", "Derived",           "long codebook",
-  "BES MII",            "Open-ended British Election Study responses, classified by issue topic.",                 "Mellon et al. 2024",     "Policy-topic coding",        "50-class", "Verbatim-adapted",  "long codebook"
-)
-kable(tasks_table, align = "lllllll", booktabs = TRUE,
-      caption = "Tasks in the benchmark. 'Family' is the grouping used in the family analysis. 'Provenance': Verbatim = prompt unchanged from source paper, Verbatim-adapted = source content with format-only changes, Derived = our prompt reasoned from the published codebook. 'Prompt': short (~15-35 lines) or long codebook (~47-126 lines). This is the trait that determines local batching feasibility. The CMP task uses the Halterman \\& Keith (2025) domain-collapsed 7-class version of the CMP/MARPOR coding scheme, not the full CMP category set. \\label{tab:tasks}") |>
-  kable_styling(font_size = 8, latex_options = c("hold_position")) |>
-  column_spec(2, width = "12em")
+```{r table-tasks-appendix, results="asis"}
+include_table("tables/table-tasks-appendix.tex")
 ```
 
 ```{=latex}
@@ -450,63 +174,52 @@ kable(tasks_table, align = "lllllll", booktabs = TRUE,
 
 # Per-task winners {.unnumbered}
 
-```{r table-winners-appendix}
-winners <- df |>
-  group_by(task_short) |>
-  arrange(desc(headline_f1)) |>
-  slice(1) |>
-  ungroup() |>
-  arrange(task_short) |>
-  transmute(
-    Task     = as.character(task_short),
-    `Top model` = as.character(model_short),
-    `Macro F1`  = sprintf("%.3f", headline_f1),
-    Accuracy    = sprintf("%.3f", accuracy),
-    MCC         = sprintf("%.3f", mcc)
-  )
-kable(winners, align = "lllll", booktabs = TRUE,
-      caption = "Top model per task by macro F1, with accuracy and MCC for the same model on the same task. CIs and the full per-(task, model) table are on the GitHub repository.") |>
-  kable_styling(font_size = 9, latex_options = c("hold_position"))
+```{r table-winners-appendix, results="asis"}
+include_table("tables/table-winners-appendix.tex")
 ```
 
-# Batched malformed output rates on long codebook tasks {.unnumbered}
+# Task-level uncertainty for model averages {.unnumbered}
 
-```{r table-malformed-appendix}
-malformed <- sb |>
-  filter(model %in% c("gpt-5.5", "gpt-5.4-nano"),
-         task %in% c("halterman_ccc_protest", "halterman_keith_bfrs",
-                     "halterman_keith_cmp", "mellon_bes_mii_2024",
-                     "wesleyan_creative_ads_2022"),
-         batch_size %in% c(10, 20)) |>
-  transmute(
-    Task = as.character(task_short),
-    Model = as.character(model_short),
-    `Batch size` = batch_size,
-    `Malformed output rate` = scales::percent(parse_err_rate, accuracy = 1)
-  ) |>
-  arrange(Task, Model, `Batch size`)
-kable(malformed, align = "llrr", booktabs = TRUE,
-      caption = "Malformed output rates for the two OpenAI tiers on the long codebook tasks under batched inference. Local Ollama models and short prompt tasks are excluded. Rates there are mostly low and discussed in Section 3.4.") |>
-  kable_styling(font_size = 9, latex_options = c("hold_position"))
+```{r table-task-bootstrap-appendix, results="asis"}
+include_table("tables/table-task-bootstrap-appendix.tex")
+```
+
+# Local runtime per 1,000 observations {.unnumbered}
+
+Figure \ref{fig-local-runtime-per-1000} converts local median per-item latency into minutes per 1,000 observations. The b=10 bars use the full 34-task local batching grid, so they should be read alongside the schema and label reliability checks below.
+
+```{r fig-local-runtime-per-1000, out.width="0.9\\linewidth", fig.cap="Median local runtime per 1,000 observations. Single-item and b=10 bars use the 34-task benchmark. Lower values are faster. Batching should be interpreted alongside schema/label reliability checks. \\label{fig-local-runtime-per-1000}"}
+include_graphics("figures/fig-local-runtime-per-1000.png")
+```
+
+# Additional model-selection and label-structure checks {.unnumbered}
+
+Figure \ref{fig-best-local-api-gap} in the main text compares the best local model with the best API model separately for each task. The largest API advantages appear on tasks that involve policy domains, event codes, causal relations, or protest claims. The largest local advantages appear on more focused tasks such as manifesto populism, COVID threat minimization, and CCC protest type.
+
+Figure \ref{fig-model-selection-value} summarizes the value of task-specific model selection. The three single-model bars use one model for all thirty-four tasks. The three oracle bars select the best model within each task and then average across tasks. These oracle quantities are descriptive upper bounds, not deployable estimates, because they choose the model after observing task performance.
+
+```{r fig-model-selection-value, out.width="0.9\\linewidth", fig.cap="Mean headline F1 under single-model and task-specific selection rules. Oracle task-specific rules are descriptive upper bounds that select the best model after observing task-level performance. \\label{fig-model-selection-value}"}
+include_graphics("figures/fig-model-selection-value.png")
+```
+
+The best single model is Claude Sonnet 4.6, with a 34-task mean headline F1 of 0.668. The best single local model, Gemma 4 31B, reaches 0.648. If the local model is allowed to vary by task, the local oracle rises to 0.673. The API oracle reaches 0.688, and the all-model oracle reaches 0.696. Because the oracle rules choose after observing outcomes, these numbers are upper bounds on what validation can buy, not expected production performance.
+
+Figure \ref{fig-label-structure-gap} relates the local/API task gap to the effective number of labels in the sampled gold data. Effective label count captures how many labels actually matter in the sample, rather than simply counting all possible labels. A balanced four-class task therefore has a higher effective count than a four-class task where almost all observations use the same label. The figure is exploratory, but it ties the complexity result to one observable feature of the task: how many labels are actively used.
+
+```{r fig-label-structure-gap, out.width="0.9\\linewidth", fig.cap="Best local minus best API headline F1 by effective number of labels. The dashed line is a descriptive linear fit across tasks. \\label{fig-label-structure-gap}"}
+include_graphics("figures/fig-label-structure-gap.png")
+```
+
+The relationship is negative: tasks with more effectively used labels tend to show larger API advantages. The simple correlation between effective label count and the best-local-minus-best-API gap is about -0.50. Binary and two-class tasks have a mean gap of -0.004, while many-class or multi-label tasks have a mean gap of -0.025.
+
+# Schema or label failure rates above 5 percent {.unnumbered}
+
+```{r table-malformed-appendix, results="asis"}
+include_table("tables/table-malformed-appendix.tex")
 ```
 
 # Performance under alternative metrics {.unnumbered}
 
-```{r table-altmetrics-appendix}
-altmet <- df |>
-  group_by(model_short) |>
-  summarise(`Mean macro F1` = mean(headline_f1, na.rm = TRUE),
-            `Mean accuracy` = mean(accuracy,    na.rm = TRUE),
-            `Mean MCC`      = mean(mcc,         na.rm = TRUE),
-            .groups = "drop") |>
-  arrange(desc(`Mean macro F1`)) |>
-  transmute(
-    Model           = as.character(model_short),
-    `Mean macro F1` = sprintf("%.3f", `Mean macro F1`),
-    `Mean accuracy` = sprintf("%.3f", `Mean accuracy`),
-    `Mean MCC`      = sprintf("%.3f", `Mean MCC`)
-  )
-kable(altmet, align = "lrrr", booktabs = TRUE,
-      caption = "Cross-task means of macro F1, accuracy, and MCC, by model. The same broad top group appears across all three metrics, while the exact order changes slightly because some imbalanced tasks have high chance accuracy.") |>
-  kable_styling(font_size = 9, latex_options = c("hold_position"))
+```{r table-altmetrics-appendix, results="asis"}
+include_table("tables/table-altmetrics-appendix.tex")
 ```

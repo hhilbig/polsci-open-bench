@@ -37,9 +37,10 @@ pre-release repo state.
   - [`output/run_registry.jsonl`](../output/run_registry.jsonl)
   - [`docs/run_status.md`](run_status.md)
 - Updated the future local-model watchlist in [`TODO.md`](../TODO.md) after a
-  May 2026 open-weight model scan, promoting `granite4.1:8b` as the next clean
-  local candidate and retaining Baidu ERNIE 4.5, DeepSeek V4 Flash, Nemotron
-  Elastic, Granite Switch, and Ling as conditional watchlist items.
+  May 2026 open-weight model scan. `granite4.1:8b` was later tabled after a
+  completed sidecar showed a 5.3% parse-error rate on the 18-task grid; Baidu
+  ERNIE 4.5, DeepSeek V4 Flash, Nemotron Elastic, Granite Switch, and Ling
+  remain conditional watchlist items.
 - Updated the main runners and summary builders to use the registries:
   - [`code/benchmark.py`](../code/benchmark.py)
   - [`code/batch_benchmark.py`](../code/batch_benchmark.py)
@@ -367,3 +368,49 @@ prediction artifacts.
   - do not promote it into the main `models/` lineup
   - reason: the speed gain over `qwen3:30b-a3b-q4_K_M` is only about 1.35x on
     median latency, while accuracy is materially weaker
+
+## 13. GPT-5.5 and Claude Sonnet Batch API merge for extension tasks
+
+- The GPT-5.5 OpenAI Batch API run for the 16 additional manifests completed
+  on 2026-05-11 and was merged with the imported `mac2` sidecar artifacts.
+- The Claude Sonnet 4.6 Anthropic Batch API run for the same 16 manifests
+  completed on 2026-05-14. Retries repaired provider errors and Anthropic
+  schema-key restrictions. One CAP CRS row remains a genuine malformed output:
+  `cap_crs_9818` repeatedly returned `Intelligence Affairs`, which is not a
+  valid CAP major-topic label.
+- These artifacts were folded into the canonical release files on
+  2026-05-15. The public report now reads `output/predictions.csv`,
+  `output/summary.csv`, `output/predictions_batched.csv`, and
+  `output/summary_batched.csv` directly.
+- Coverage:
+  - 16 extension tasks
+  - 9 observed models
+  - 144 `(task, model)` cells
+  - 68,445 prediction rows
+  - 85 parse/API errors after normalization: 84 from the imported open-weight
+    sidecar and 1 from Claude Sonnet 4.6; GPT-5.5 itself has 7,605 rows and
+    0 parse/API errors
+- GPT-5.5 Batch API cost:
+  - estimated batch-discounted cost: $14.13
+  - recorded cost cap: $20
+- Merge decision:
+  - treat the 16 extension tasks as canonical in the report
+  - no model-task cells remain missing in the unified 34-task grid
+
+## 14. Canonical 34-task public-release promotion
+
+- On 2026-05-15, the benchmark artifacts were reorganized around one canonical
+  34-task task set.
+- Task manifests:
+  - all 34 canonical manifests now live in [`tasks/`](../tasks)
+  - generated task counts now come from [`docs/task_inventory.md`](task_inventory.md)
+- Canonical artifacts:
+  - [`output/predictions.csv`](../output/predictions.csv): 147,825 serial
+    prediction rows
+  - [`output/summary.csv`](../output/summary.csv): 306 serial model-task cells
+  - [`output/predictions_batched.csv`](../output/predictions_batched.csv):
+    114,125 prompt-batched prediction rows
+  - [`output/summary_batched_local_b10.csv`](../output/summary_batched_local_b10.csv):
+    all 34 tasks x 5 local models at b=10
+- Public docs, report prose, task inventory, and coverage matrix now describe
+  the benchmark as a single 34-task grid rather than separate waves.

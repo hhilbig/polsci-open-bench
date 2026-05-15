@@ -79,3 +79,18 @@ python3 code/build_summary.py \
   --predictions output/custom_predictions.csv \
   --output output/custom_summary.csv
 ```
+
+## Task inventory contract
+
+The repo tracks task counts in [`docs/task_inventory.md`](task_inventory.md).
+That file is generated from `tasks/`, not hand-maintained.
+
+After adding, removing, or changing a task manifest, run:
+
+```bash
+python3 code/task_inventory.py --write
+python3 code/task_inventory.py --check
+```
+
+The test suite includes a stale-doc check for this file, so adding a new task
+without refreshing the inventory should fail before the change is merged.

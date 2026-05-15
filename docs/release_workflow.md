@@ -85,7 +85,7 @@ Minimum required fields for sidecar, API, local, droplet, and `mac2` runs:
 - log path, if the run writes one
 - tmux session, if launched under tmux
 - cost cap, for paid API runs
-- current status: `queued`, `running`, `completed`, `failed`, `blocked`, or `needs_attention`
+- current status: `queued`, `running`, `completed`, `failed`, `blocked`, `needs_attention`, or `tabled`
 
 Typical manual registration:
 
@@ -108,6 +108,9 @@ python3 code/run_registry.py render-status
 Use `finish` for terminal states (`completed`, `failed`, `cancelled`) and
 `update --run-status needs_attention` for a run whose files exist but still need
 archive, merge, or manual review.
+Use `update --run-status tabled` for a completed sidecar that should not be
+promoted without a new substantive decision, for example because parse-error
+rates exceeded the clean-baseline threshold.
 
 The benchmark runners also accept optional ledger flags:
 

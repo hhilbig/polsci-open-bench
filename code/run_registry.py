@@ -105,7 +105,8 @@ def _fmt_value(value: Any) -> str:
 
 def _run_line(run: dict[str, Any]) -> str:
     fields = []
-    for key, label in [
+    status = run.get("status")
+    base_fields = [
         ("status", "status"),
         ("runner", "runner"),
         ("host", "host"),
@@ -115,15 +116,26 @@ def _run_line(run: dict[str, Any]) -> str:
         ("tmux_session", "tmux"),
         ("output", "output"),
         ("log", "log"),
+        ("batch_id", "batch id"),
+        ("input_file_id", "input file id"),
+        ("output_file_id", "output file id"),
+        ("error_file_id", "error file id"),
+        ("rows_written", "rows"),
+        ("cost_cap_usd", "cost cap"),
+    ]
+    active_fields = [
         ("current_task", "task"),
         ("current_model", "model"),
         ("current_batch_size", "b"),
         ("completed_cells", "cells"),
-        ("rows_written", "rows"),
-        ("cost_cap_usd", "cost cap"),
-    ]:
+    ]
+    for key, label in base_fields:
         if key in run:
             fields.append(f"{label}: `{_fmt_value(run[key])}`")
+    if status in {"queued", "running"}:
+        for key, label in active_fields:
+            if key in run:
+                fields.append(f"{label}: `{_fmt_value(run[key])}`")
     note = run.get("note") or run.get("notes")
     if note:
         fields.append(f"note: {_fmt_value(note)}")
@@ -140,8 +152,9 @@ def render_markdown(
     ordered = sorted(runs.values(), key=lambda r: r.get("timestamp", ""), reverse=True)
     active = [r for r in ordered if r.get("status") in {"queued", "running"}]
     failed = [r for r in ordered if r.get("status") in {"failed", "error", "needs_attention", "blocked"}]
+    tabled = [r for r in ordered if r.get("status") == "tabled"]
     completed = [r for r in ordered if r.get("status") in {"completed", "cancelled"}]
-    other = [r for r in ordered if r not in active and r not in failed and r not in completed]
+    other = [r for r in ordered if r not in active and r not in failed and r not in tabled and r not in completed]
 
     lines: list[str] = []
     lines.append("# Run status")
@@ -162,6 +175,14 @@ def render_markdown(
     lines.append("")
     if failed:
         for run in failed[:max_recent]:
+            lines.append(f"- **{run['run_id']}**: {_run_line(run)}")
+    else:
+        lines.append("- None recorded.")
+    lines.append("")
+    lines.append("## Tabled Runs")
+    lines.append("")
+    if tabled:
+        for run in tabled[:max_recent]:
             lines.append(f"- **{run['run_id']}**: {_run_line(run)}")
     else:
         lines.append("- None recorded.")

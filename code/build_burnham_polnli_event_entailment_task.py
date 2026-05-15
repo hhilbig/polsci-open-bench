@@ -3,7 +3,7 @@
 Build a Political DEBATE / PolNLI event-entailment subset from the cleaned
 PolNLI entailment task file.
 
-This staged task keeps only rows whose source task is event extraction. It
+This task keeps only rows whose source task is event extraction. It
 therefore tests event-specific hypothesis entailment while reusing the public
 PolNLI labels already normalized by the main PolNLI builder.
 """

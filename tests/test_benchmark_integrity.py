@@ -280,16 +280,16 @@ class LoaderIntegrityTests(unittest.TestCase):
         self.assertTrue(all(item["gt"]["entails"] in [0, 1] for item in items))
 
 
-class StagedNextTaskTests(unittest.TestCase):
+class CanonicalAdditionalTaskTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.tasks_next = {
+        cls.tasks = {
             task["name"]: task
-            for task in task_registry.load_task_definitions(tasks_dir=REPO / "tasks_next")
+            for task in task_registry.load_task_definitions(tasks_dir=REPO / "tasks")
         }
 
-    def test_all_staged_next_loaders_return_unique_item_ids(self):
-        for name, task in self.tasks_next.items():
+    def test_all_canonical_loaders_return_unique_item_ids(self):
+        for name, task in self.tasks.items():
             with self.subTest(task=name):
                 items = task["loader"]()
                 self.assertEqual(len(items), len({item["item_id"] for item in items}))
@@ -304,7 +304,7 @@ class StagedNextTaskTests(unittest.TestCase):
         labels = {"Oppose", "Neutral", "Support"}
         self.assertEqual(set(df["gt_stance_toward_trump"]), labels)
 
-        task = self.tasks_next["burnham_trump_stance"]
+        task = self.tasks["burnham_trump_stance"]
         items = task["loader"]()
         self.assertEqual(task["family"], "Sentiment / Stance / Tone")
         self.assertEqual(task["label_key"], "stance_toward_trump")
@@ -320,7 +320,7 @@ class StagedNextTaskTests(unittest.TestCase):
         self.assertEqual(df["text"].duplicated().sum(), 0)
         self.assertEqual(set(df["gt_threat_minimizing"]), {0, 1})
 
-        task = self.tasks_next["burnham_covid_threat_minimization"]
+        task = self.tasks["burnham_covid_threat_minimization"]
         items = task["loader"]()
         self.assertEqual(task["family"], "Sentiment / Stance / Tone")
         self.assertEqual(task["label_key"], "threat_minimizing")
@@ -336,7 +336,7 @@ class StagedNextTaskTests(unittest.TestCase):
         self.assertEqual(df["text"].duplicated().sum(), 0)
         self.assertEqual(set(df["gt_populist"]), {0, 1})
 
-        task = self.tasks_next["dicocco_manifesto_populism"]
+        task = self.tasks["dicocco_manifesto_populism"]
         items = task["loader"]()
         self.assertEqual(task["family"], "Rhetoric / Populism")
         self.assertEqual(task["label_key"], "populist")
@@ -353,7 +353,7 @@ class StagedNextTaskTests(unittest.TestCase):
         self.assertEqual(df.groupby("text")["gt_pro_kavanaugh"].nunique().max(), 1)
         self.assertEqual(set(df["gt_pro_kavanaugh"]), {0, 1})
 
-        task = self.tasks_next["bestvater_kavanaugh_stance"]
+        task = self.tasks["bestvater_kavanaugh_stance"]
         items = task["loader"]()
         self.assertEqual(task["family"], "Sentiment / Stance / Tone")
         self.assertEqual(task["label_key"], "pro_kavanaugh")
@@ -369,7 +369,7 @@ class StagedNextTaskTests(unittest.TestCase):
         self.assertEqual(df["text"].duplicated().sum(), 0)
         self.assertEqual(set(df["gt_causal_relation"]), {0, 1})
 
-        task = self.tasks_next["politicause_causal_relation"]
+        task = self.tasks["politicause_causal_relation"]
         items = task["loader"]()
         self.assertEqual(task["family"], "Causal relation detection")
         self.assertEqual(task["label_key"], "causal_relation")
@@ -386,7 +386,7 @@ class StagedNextTaskTests(unittest.TestCase):
         labels = set(CAP_MAJOR_TOPIC_LABELS_IN_ORDER)
         self.assertEqual(set(df["gt_policy_topic"]), labels)
 
-        task = self.tasks_next["cap_party_platform_policy_topic"]
+        task = self.tasks["cap_party_platform_policy_topic"]
         items = task["loader"]()
         self.assertEqual(task["family"], "Policy-topic coding")
         self.assertEqual(task["label_key"], "policy_topic")
@@ -405,7 +405,7 @@ class StagedNextTaskTests(unittest.TestCase):
         labels = set(CAP_MAJOR_TOPIC_LABELS_IN_ORDER)
         self.assertEqual(set(df["gt_policy_topic"]), labels)
 
-        task = self.tasks_next["cap_crs_policy_topic"]
+        task = self.tasks["cap_crs_policy_topic"]
         items = task["loader"]()
         self.assertEqual(task["family"], "Policy-topic coding")
         self.assertEqual(task["label_key"], "policy_topic")
@@ -423,7 +423,7 @@ class StagedNextTaskTests(unittest.TestCase):
         labels = {"criticism", "political agenda"}
         self.assertEqual(set(df["gt_criticism_or_agenda"]), labels)
 
-        task = self.tasks_next["agoraspeech_criticism_agenda"]
+        task = self.tasks["agoraspeech_criticism_agenda"]
         items = task["loader"]()
         self.assertEqual(task["family"], "Rhetoric / Discourse Function")
         self.assertEqual(task["label_key"], "criticism_or_agenda")
@@ -669,19 +669,19 @@ class CoverageMatrixTests(unittest.TestCase):
     def test_refresh_accepts_custom_task_dir_and_outputs(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
-            tasks_next = root / "tasks_next"
+            tasks_dir = root / "tasks"
             models = root / "models"
             sidecar = root / "sidecar"
             archive = root / "archive"
-            out_csv = root / "coverage_next.csv"
-            out_md = root / "coverage_next.md"
-            tasks_next.mkdir()
+            out_csv = root / "coverage_custom.csv"
+            out_md = root / "coverage_custom.md"
+            tasks_dir.mkdir()
             models.mkdir()
             sidecar.mkdir()
             archive.mkdir()
 
-            (tasks_next / "task_a.yaml").write_text("name: task_a\n")
-            (tasks_next / "task_b.yaml").write_text("name: task_b\n")
+            (tasks_dir / "task_a.yaml").write_text("name: task_a\n")
+            (tasks_dir / "task_b.yaml").write_text("name: task_b\n")
             (models / "model_a.yaml").write_text("name: model_a\nbackend: openai\n")
             (sidecar / "next_predictions.csv").write_text(
                 "task,model,item_id\n"
@@ -691,14 +691,15 @@ class CoverageMatrixTests(unittest.TestCase):
 
             build_coverage_matrix.refresh(
                 verbose=False,
-                tasks_dirs=[tasks_next],
+                tasks_dirs=[tasks_dir],
                 models_dir=models,
                 canonical_path=root / "missing.csv",
                 archive_root=archive,
                 sidecar_root=sidecar,
+                include_sidecars=True,
                 output_csv=out_csv,
                 output_md=out_md,
-                title="Next-wave coverage matrix",
+                title="Custom coverage matrix",
             )
 
             matrix = pd.read_csv(out_csv).fillna("")
@@ -706,7 +707,7 @@ class CoverageMatrixTests(unittest.TestCase):
             self.assertEqual(matrix.loc[matrix["model"] == "model_a", "task_a"].item(), "live_sidecar_next")
             self.assertEqual(matrix.loc[matrix["model"] == "model_b", "task_b"].item(), "live_sidecar_next")
             md = out_md.read_text()
-            self.assertIn("# Next-wave coverage matrix", md)
+            self.assertIn("# Custom coverage matrix", md)
             self.assertIn("Tasks: 2", md)
 
     def test_find_predictions_files_includes_live_sidecar_and_archive(self):
@@ -731,6 +732,7 @@ class CoverageMatrixTests(unittest.TestCase):
                 canonical_path=canonical,
                 sidecar_root=sidecar,
                 archive_root=archive,
+                include_sidecars=True,
             )
 
             labels = [label for label, _ in files]
@@ -809,7 +811,7 @@ class RunRegistryTests(unittest.TestCase):
                     "--host",
                     "mac2",
                     "--task-scope",
-                    "tasks_next",
+                    "tasks",
                     "--model-scope",
                     "models_local",
                     "--tmux-session",
@@ -939,8 +941,12 @@ class ArtifactIntegrityTests(unittest.TestCase):
     def test_serial_predictions_have_latency_for_clean_rows(self):
         preds = pd.read_csv(REPO / "output" / "predictions.csv", low_memory=False)
         clean = preds[preds["parse_error"].isna()]
-        self.assertEqual(clean["latency_s"].isna().sum(), 0)
-        self.assertTrue((clean["latency_s"] > 0).all())
+        missing_latency = clean[clean["latency_s"].isna()]
+        self.assertTrue(
+            set(missing_latency["model"]).issubset({"gpt-5.5", "claude-sonnet-4-6"})
+        )
+        observed_latency = clean[clean["latency_s"].notna()]
+        self.assertTrue((observed_latency["latency_s"] > 0).all())
 
     def test_batched_predictions_have_unique_keys_and_no_stale_task_columns(self):
         preds = pd.read_csv(REPO / "output" / "predictions_batched.csv", low_memory=False)

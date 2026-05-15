@@ -1,0 +1,46 @@
+order: 21
+name: haunss_papea_claims
+family: Event coding
+source: Haunss et al. 2025
+data_file: ../data/haunss_papea_claims.csv
+prompt_file: ../prompts/haunss_papea_claims.txt
+label_kind: categorical
+label_key: protest_claim
+labels:
+  - Anti-Far-Right
+  - Anticapitalist
+  - Church
+  - COVID
+  - Democracy
+  - Economy
+  - Education
+  - Environment
+  - Far Right
+  - Foreign Rights
+  - Gender
+  - Infrastructure
+  - International
+  - Labour
+  - Media
+  - Migration
+  - Nuclear Power
+  - Other
+  - Peace
+  - Peasants
+  - Political System
+  - Repression
+  - Religion
+  - Rights
+  - Social
+  - Solidarity
+  - Tolerance
+  - Unclear
+id:
+  kind: column
+  column: source_event_id
+text:
+  template: |
+    Sentence:
+    {text}
+ground_truth:
+  column: gt_protest_claim

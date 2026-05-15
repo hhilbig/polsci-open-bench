@@ -1,0 +1,31 @@
+order: 24
+name: erlich_ati_topics
+family: Policy-topic coding
+source: Erlich et al. 2022
+data_file: ../data/erlich_ati_topics.csv
+prompt_file: ../prompts/erlich_ati_topics.txt
+label_kind: multi_binary
+labels:
+  - Activities
+  - Budget
+  - Evaluation
+  - External Contracts
+  - Institutional Structure
+  - Other
+  - Regulatory
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Access-to-information request:
+    {text}
+ground_truth:
+  columns:
+    Activities: gt_Activities
+    Budget: gt_Budget
+    Evaluation: gt_Evaluation
+    External Contracts: gt_External Contracts
+    Institutional Structure: gt_Institutional Structure
+    Other: gt_Other
+    Regulatory: gt_Regulatory

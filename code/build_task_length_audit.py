@@ -7,6 +7,8 @@ Outputs:
   - output/task_length_analysis.md
 """
 import argparse
+import math
+from collections import Counter
 from datetime import date
 from pathlib import Path
 
@@ -14,7 +16,11 @@ import numpy as np
 import pandas as pd
 
 from model_registry import add_model_loading_args, load_model_definitions_from_args
-from task_registry import add_task_loading_args, load_task_definitions_from_args
+from task_registry import (
+    add_task_loading_args,
+    load_task_definitions,
+    load_task_definitions_from_args,
+)
 
 
 HERE = Path(__file__).resolve().parent
@@ -36,9 +42,41 @@ def _series_summary(values):
     }
 
 
+def _effective_label_count(task, items):
+    counts = Counter()
+    if task["label_kind"] == "multi_binary":
+        labels = task["labels"]
+        for item in items:
+            counts[tuple(int(item["gt"][label]) for label in labels)] += 1
+    else:
+        label_key = task["label_key"]
+        for item in items:
+            counts[item["gt"][label_key]] += 1
+
+    total = sum(counts.values())
+    if total == 0:
+        return np.nan
+    entropy = 0.0
+    for count in counts.values():
+        p = count / total
+        entropy -= p * math.log(p)
+    return float(math.exp(entropy))
+
+
+def _coding_complexity(task, effective_label_count, prompt_words):
+    if task["label_kind"] == "multi_binary":
+        return "High"
+    if effective_label_count >= 8:
+        return "High"
+    if effective_label_count >= 3 or prompt_words >= 300:
+        return "Medium"
+    return "Low"
+
+
 def _task_length_row(task):
     items = task["loader"]()
     prompt_text = Path(task["prompt_path"]).read_text()
+    prompt_words = _word_count(prompt_text)
     item_chars = [len(item["user_content"]) for item in items]
     item_words = [_word_count(item["user_content"]) for item in items]
     item_lines = [item["user_content"].count("\n") + 1 for item in items]
@@ -46,6 +84,7 @@ def _task_length_row(task):
     char_stats = _series_summary(item_chars)
     word_stats = _series_summary(item_words)
     line_stats = _series_summary(item_lines)
+    effective_label_count = _effective_label_count(task, items)
 
     return {
         "task": task["name"],
@@ -53,9 +92,11 @@ def _task_length_row(task):
         "source": task.get("source"),
         "label_kind": task["label_kind"],
         "label_count": len(task["labels"]),
+        "effective_label_count": effective_label_count,
+        "coding_complexity": _coding_complexity(task, effective_label_count, prompt_words),
         "sample_n": len(items),
         "prompt_chars": len(prompt_text),
-        "prompt_words": _word_count(prompt_text),
+        "prompt_words": prompt_words,
         "item_chars_mean": char_stats["mean"],
         "item_chars_median": char_stats["median"],
         "item_chars_p90": char_stats["p90"],
@@ -152,6 +193,8 @@ def _write_markdown(df, path):
         for c in [
             "task",
             "family",
+            "coding_complexity",
+            "effective_label_count",
             "label_count",
             "prompt_chars",
             "item_chars_median",
@@ -182,9 +225,23 @@ def main():
     ap.add_argument("--summary", default=str(OUT / "summary.csv"))
     ap.add_argument("--output-csv", default=str(OUT / "task_length_audit.csv"))
     ap.add_argument("--output-md", default=str(OUT / "task_length_analysis.md"))
+    ap.add_argument(
+        "--extra-tasks-dir",
+        action="append",
+        default=[],
+        help="Additional directory of task manifests to append to the primary task set.",
+    )
     args = ap.parse_args()
 
     tasks = load_task_definitions_from_args(args)
+    seen = {task["name"] for task in tasks}
+    for extra_dir in args.extra_tasks_dir:
+        for task in load_task_definitions(tasks_dir=extra_dir):
+            if task["name"] in seen:
+                continue
+            tasks.append(task)
+            seen.add(task["name"])
+    tasks = sorted(tasks, key=lambda task: (task["order"], task["name"]))
     models = load_model_definitions_from_args(args)
     local_models = {
         model["name"] for model in models if model.get("compute_class") == "local"

@@ -9,13 +9,13 @@ Structured companion file:
 
 ## Current family counts
 
-- Relevance / Incivility: 2 tasks
-- Sentiment / Stance / Tone: 4 tasks
-- Event coding: 2 tasks
-- Policy-topic coding: 2 tasks
+Canonical task counts now live in [`docs/task_inventory.md`](task_inventory.md).
+As of the current inventory, the repo has 34 benchmark task definitions in
+`tasks/`.
 
-The benchmark is currently thinnest in Relevance / Incivility, Event coding,
-and Policy-topic coding.
+Current task families are listed in the generated inventory. This note is a
+historical sourcing record and should not be used as the source of truth for
+task counts.
 
 ## Repo constraint
 
@@ -55,7 +55,7 @@ These are entry gates, not performance gates. Low F1 after scoring is acceptable
 and scientifically useful; degraded task quality or weak requirement adherence
 is not.
 
-Do not stage a task unless it passes all of the following checks:
+Do not add a task unless it passes all of the following checks:
 
 1. Public text plus labels are directly ingestible from the replication archive,
    public corpus, or documented source.
@@ -68,7 +68,7 @@ Do not stage a task unless it passes all of the following checks:
 5. Exact duplicate texts with conflicting labels are removed. Exact same-label
    repeats should be deduplicated unless deduplication would discard more than
    20% of the source rows.
-6. The task is not redundant with a task already live-scored or staged, except
+6. The task is not redundant with a task already in the benchmark, except
    where the new target, domain, country, or source type adds meaningful coverage.
 7. The generated manifest loads through `task_registry`, sampled `item_id`
    values are unique, and the prompt schema can be parsed by the benchmark
@@ -112,25 +112,25 @@ Do not stage a task unless it passes all of the following checks:
 
 ## Fresh screen on 2026-05-07
 
-Passed the hard gates and staged under `tasks_next/`:
+Passed the hard gates and are implemented in `tasks/`:
 
 1. PolitiCAUSE
-   - Staged task: `politicause_causal_relation`
+   - Implemented task: `politicause_causal_relation`
    - Basis: public train/validation/test CSVs with sentence text and a direct binary causal-relation label.
    - Cleaning result: 17,771 clean rows after removing exact text conflicts and same-label duplicates.
 
 2. Policy Agendas Project, Democratic and Republican Party Platforms
-   - Staged task: `cap_party_platform_policy_topic`
+   - Implemented task: `cap_party_platform_policy_topic`
    - Basis: public party-platform quasi-statements with direct CAP major-topic labels.
    - Cleaning result: 37,338 clean rows after keeping standard CAP major topics and removing duplicate/conflicting exact texts.
 
 3. Policy Agendas Project, Congressional Research Service Reports
-   - Staged task: `cap_crs_policy_topic`
+   - Implemented task: `cap_crs_policy_topic`
    - Basis: public CRS report titles and summaries with direct CAP major-topic labels.
    - Cleaning result: 16,510 clean rows after keeping standard CAP major topics and removing duplicate/conflicting exact texts.
 
 4. AgoraSpeech
-   - Staged task: `agoraspeech_criticism_agenda`
+   - Implemented task: `agoraspeech_criticism_agenda`
    - Basis: public campaign-speech paragraphs with human-validated criticism-or-agenda labels and English translations.
    - Cleaning result: 5,279 clean rows, no text or label drops.
 
@@ -696,7 +696,7 @@ alternatives:
      - There are no missing or duplicate text strings.
      - Direct binary labels are available for `impoliteness` and `intolerance`.
    - Current read:
-     - This is staged as `twitcivility_impoliteness` using the direct `impoliteness` label.
+     - This is implemented as `twitcivility_impoliteness` using the direct `impoliteness` label.
      - Main weakness: it is weaker on the published political-science paper criterion.
 
 `The Silenced Text` remains viable only as a derived-label backup rather than a
@@ -710,44 +710,44 @@ balance but make the label rule more arbitrary.
 Current ranked replacement list:
 
 1. `The Dynamics of Political Incivility on Twitter`: implemented as `theocharis_dynamics_incivility`
-2. `toxicity-protests-ES`: staged as `toxicity_protests_es`
-3. `TwitCivility`: staged as `twitcivility_impoliteness`
+2. `toxicity-protests-ES`: implemented as `toxicity_protests_es`
+3. `TwitCivility`: implemented as `twitcivility_impoliteness`
 4. `The Silenced Text`, only if a derived label is acceptable
 
-## Additional staged candidates on 2026-05-06
+## Additional implemented candidates on 2026-05-06
 
-After the first `tasks_next/` wave, four additional candidates were inspected
-for staged scaffolding.
+After the first candidate pass, four additional candidates were inspected for
+benchmark scaffolding.
 
 1. `Bestvater and Monroe 2023, Sentiment Is Not Stance`
-   - Staged as `bestvater_wm_stance`.
+   - Implemented as `bestvater_wm_stance`.
    - Source file: `WM_tweets_groundtruth.tab`.
    - Cleaned size: `19,516` tweets.
    - Cleaning drop: `441 / 19,957` rows (`2.21%`).
    - Current read: clean, paper-backed, and useful as target-aware stance, but class-imbalanced and in an already well-covered family.
 
 2. `Erlich et al. 2022, Multi-Label Prediction for Political Text-as-Data`
-   - Staged as `erlich_ati_topics`.
+   - Implemented as `erlich_ati_topics`.
    - Source file: `hc_new.tab`.
    - Cleaned size: `4,751` Spanish access-to-information requests.
    - Cleaning drop: `171 / 4,922` rows (`3.47%`).
    - Current read: clean and useful because it exercises multi-binary political text coding, but it adds a special task shape.
 
 3. `PLOVER gold-standard records`
-   - Staged as `plover_cameo_event`.
+   - Implemented as `plover_cameo_event`.
    - Source file: `PLOVER_GSR_CAMEO.txt`.
    - Cleaned size: `312` event sentences across `18` event labels.
    - Cleaning drop: `10 / 322` records (`3.11%`).
    - Current read: usable event-coding fallback, but small and weaker on the published-paper replication criterion.
 
 4. `Political DEBATE / PolNLI event subset`
-   - Staged as `burnham_polnli_event_entailment`.
+   - Implemented as `burnham_polnli_event_entailment`.
    - Source file: existing cleaned `burnham_polnli_entailment.csv`, restricted to `source_task == "event extraction"`.
-   - Staged size: `2,854` event-extraction premise-hypothesis pairs.
+   - Cleaned size: `2,854` event-extraction premise-hypothesis pairs.
    - Current read: clean and benchmark-ready, but correlated with the already live PolNLI entailment task.
 
 `Wang 2023, Topic Classification for Political Texts with Pretrained Language
-Models` was screened but not staged. The visible Dataverse archive contains
+Models` was screened but not implemented. The visible Dataverse archive contains
 notebooks and a README; the notebooks reference `data_and_models.zip`, but that
 zip is absent from the visible Dataverse file list, so the labeled corpus was
 not directly ingestible from the archive as inspected.

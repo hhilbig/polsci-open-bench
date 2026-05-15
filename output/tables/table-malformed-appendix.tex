@@ -1,0 +1,38 @@
+\begin{table}[H]
+\centering
+\caption{Batched cells with schema or label failure rates of at least 5 percent, not a complete list of all task-model cells. Failures include responses that do not parse, responses with the wrong object or array shape, and responses that use labels outside the task schema. Local rows come from the full 34-task b=10 grid for the five local models (170 cells). OpenAI rows come from a limited 10-task prompt-batching run with b=10 and b=20 cells (40 cells). Claude Sonnet and DeepSeek API prompt batching are not covered here.}
+\centering
+\fontsize{8}{10}\selectfont
+\begin{tabular}[t]{llrlr}
+\toprule
+Task & Model & Batch size & Scope & Schema/label failure rate\\
+\midrule
+ATI topics (7-label) & Gemma 4 26B & 10 & Local b=10 34-task grid & 72\%\\
+CCC protest & gpt-5.5 & 10 & Limited OpenAI prompt-batching run & 68\%\\
+CCC protest type & Qwen3 30B-A3B & 10 & Local b=10 34-task grid & 51\%\\
+Wesleyan ads & gpt-5.5 & 20 & Limited OpenAI prompt-batching run & 48\%\\
+CCC protest & gpt-5.5 & 20 & Limited OpenAI prompt-batching run & 40\%\\
+\addlinespace
+BFRS Pakistan & gpt-5.5 & 20 & Limited OpenAI prompt-batching run & 32\%\\
+Cross-domain topics (8-cl) & Qwen3 30B-A3B & 10 & Local b=10 34-task grid & 30\%\\
+BFRS Pakistan & gpt-5.5 & 10 & Limited OpenAI prompt-batching run & 28\%\\
+Wesleyan ads & gpt-5.5 & 10 & Limited OpenAI prompt-batching run & 26\%\\
+BFRS violence (12-cl) & Qwen3 30B-A3B & 10 & Local b=10 34-task grid & 18\%\\
+\addlinespace
+Ballard incivility & gpt-5.5 & 20 & Limited OpenAI prompt-batching run & 16\%\\
+SemEval stance & gpt-5.5 & 20 & Limited OpenAI prompt-batching run & 16\%\\
+Wesleyan ad tone & Qwen3 30B-A3B & 10 & Local b=10 34-task grid & 16\%\\
+BFRS Pakistan & gpt-5.4-nano & 10 & Limited OpenAI prompt-batching run & 12\%\\
+SCOTUS sentiment & gpt-5.5 & 20 & Limited OpenAI prompt-batching run & 12\%\\
+\addlinespace
+Ballard incivility & gpt-5.5 & 10 & Limited OpenAI prompt-batching run & 10\%\\
+CMP manifestos & gpt-5.5 & 10 & Limited OpenAI prompt-batching run & 10\%\\
+GTD attack type (9-cl) & Qwen3 30B-A3B & 10 & Local b=10 34-task grid & 10\%\\
+CCC protest & gpt-5.4-nano & 20 & Limited OpenAI prompt-batching run & 8\%\\
+BFRS Pakistan & gpt-5.4-nano & 20 & Limited OpenAI prompt-batching run & 8\%\\
+\addlinespace
+PLOVER CAMEO event (18-cl) & Qwen3 30B-A3B & 10 & Local b=10 34-task grid & 6\%\\
+CCC protest & gpt-5.4-nano & 10 & Limited OpenAI prompt-batching run & 6\%\\
+\bottomrule
+\end{tabular}
+\end{table}
