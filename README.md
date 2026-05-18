@@ -5,7 +5,8 @@ text classification.
 
 The current release compares five local Ollama models with four commercial API
 models from OpenAI, Anthropic, and DeepSeek on 34 classification tasks from
-published political science replication archives. The report is the
+political science papers, public replication archives, and documented public
+datasets. The report is the
 authoritative project summary.
 
 ## Paper and Data
@@ -80,6 +81,7 @@ tasks, custom models, cost notes, and full rerun commands.
 - [`docs/reproduce.md`](docs/reproduce.md): setup and rerun instructions
 - [`docs/schema.md`](docs/schema.md): output schema
 - [`docs/prompts_provenance.md`](docs/prompts_provenance.md): prompt and task provenance
+- [`docs/task_source_fidelity_audit.md`](docs/task_source_fidelity_audit.md): source-fidelity audit for the 34 tasks
 - [`docs/custom_tasks.md`](docs/custom_tasks.md): custom task manifests
 - [`docs/custom_models.md`](docs/custom_models.md): custom model manifests
 - [`docs/release_workflow.md`](docs/release_workflow.md): release and arXiv workflow
@@ -107,5 +109,6 @@ source papers for the individual tasks listed in
 
 Code: MIT, see [`LICENSE`](LICENSE).
 
-Data: task CSVs are derived from public replication archives. Task-level data
-licenses inherit from the source paper or source dataset.
+Data: task CSVs are derived from public replication archives and documented
+public datasets. Task-level data licenses inherit from the source paper or
+source dataset.

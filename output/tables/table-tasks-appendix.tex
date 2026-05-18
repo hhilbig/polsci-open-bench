@@ -1,12 +1,12 @@
 \begingroup\fontsize{8}{10}\selectfont
 
 \begin{longtable}[t]{l>{\raggedright\arraybackslash}p{18em}>{\raggedright\arraybackslash}p{7em}>{\raggedright\arraybackslash}p{8em}lll}
-\caption{Thirty-four tasks in the benchmark. 'Type' is the report grouping used in Figure \ref{fig-family}; it is a broad annotation type rather than a source-provided task family. 'Provenance': Verbatim = prompt unchanged from source paper, Verbatim-adapted = source content with format-only changes, Derived = our prompt reasoned from the published codebook. 'Prompt': short (~15-35 lines) or long codebook (~47-126 lines). This is the trait that determines local batching feasibility. Source labels correspond to full entries in the references. The CMP task uses the Halterman \& Keith (2026) domain-collapsed 7-class version of the Manifesto Project (2025) CMP/MARPOR coding scheme, not the full CMP category set. \label{tab:tasks}}\\
+\caption{Thirty-four tasks in the benchmark. 'Type' is the report grouping used in Figure \ref{fig-family}; it is a broad annotation type rather than a source-provided task family. 'Provenance': Verbatim = prompt unchanged from source paper, Verbatim-adapted = source content with format-only changes, Derived = our prompt based on a source codebook, public label definitions, or task description. 'Prompt': short (~15-35 lines) or long codebook (~47-126 lines). This is the trait that determines local batching feasibility. Source labels correspond to full entries in the references. The CMP task uses the Halterman \& Keith (2026) domain-collapsed 7-class version of the Manifesto Project (2025) CMP/MARPOR coding scheme, not the full CMP category set. \label{tab:tasks}}\\
 \toprule
 Task & Description & Source & Type & Labels & Provenance & Prompt\\
 \midrule
 \endfirsthead
-\caption[]{Thirty-four tasks in the benchmark. 'Type' is the report grouping used in Figure \ref{fig-family}; it is a broad annotation type rather than a source-provided task family. 'Provenance': Verbatim = prompt unchanged from source paper, Verbatim-adapted = source content with format-only changes, Derived = our prompt reasoned from the published codebook. 'Prompt': short (~15-35 lines) or long codebook (~47-126 lines). This is the trait that determines local batching feasibility. Source labels correspond to full entries in the references. The CMP task uses the Halterman \& Keith (2026) domain-collapsed 7-class version of the Manifesto Project (2025) CMP/MARPOR coding scheme, not the full CMP category set.  }\\
+\caption[]{Thirty-four tasks in the benchmark. 'Type' is the report grouping used in Figure \ref{fig-family}; it is a broad annotation type rather than a source-provided task family. 'Provenance': Verbatim = prompt unchanged from source paper, Verbatim-adapted = source content with format-only changes, Derived = our prompt based on a source codebook, public label definitions, or task description. 'Prompt': short (~15-35 lines) or long codebook (~47-126 lines). This is the trait that determines local batching feasibility. Source labels correspond to full entries in the references. The CMP task uses the Halterman \& Keith (2026) domain-collapsed 7-class version of the Manifesto Project (2025) CMP/MARPOR coding scheme, not the full CMP category set.  }\\
 \toprule
 Task & Description & Source & Type & Labels & Provenance & Prompt\\
 \midrule
@@ -16,7 +16,7 @@ Task & Description & Source & Type & Labels & Provenance & Prompt\\
 \bottomrule
 \endlastfoot
 Gilardi relevance & Tweets, classified as about content moderation or not. & Gilardi et al. 2023 & Relevance \& Harm & binary & Verbatim & short\\
-Brandt relevance & News articles, classified as politics-relevant or not. & Brandt et al. 2025 & Relevance \& Harm & binary & Derived & short\\
+Brandt relevance & News articles, classified as conflict- or politics-relevant or not. & Brandt et al. 2025 & Relevance \& Harm & binary & Derived & short\\
 Burnham PolNLI & Premise-hypothesis pairs, classified for entailment. & Burnham et al. 2025 & Claims \& Relations & binary & Derived & short\\
 Ballard incivility & Tweets by U.S. members of Congress, classified for incivility. & Ballard 2022 & Relevance \& Harm & binary & Derived & short\\
 Line of Fire incivility & Political tweets, classified for incivility. & Rheault et al. 2019 & Relevance \& Harm & binary & Derived & short\\
@@ -29,7 +29,7 @@ Wesleyan ad tone & U.S. Meta political ads, classified by tone toward a candidat
 \addlinespace
 CCC protest type & News stories about U.S. protest events, classified by event type. & Halterman \& Keith 2026 & Events \& Actions & 4-class & Verbatim-adapted & long codebook\\
 BFRS violence & News stories about Pakistani political violence, classified by event type. & Halterman \& Keith 2026 & Events \& Actions & 12-class & Verbatim-adapted & long codebook\\
-PAPEA protest forms & Protest snippets, classified by protest form. & Haunss et al. 2025 & Events \& Actions & 7-class & Derived & long codebook\\
+PAPEA protest forms & Protest snippets, classified by one of seven common source protest-form labels. & Haunss et al. 2025 & Events \& Actions & 7-class & Derived & long codebook\\
 ICBe event type & Crisis-event sentences, classified by sentence event type. & Douglass et al. 2024 & Events \& Actions & 5-class & Derived & short\\
 CMP manifestos & Quasi-sentences from political party manifestos, classified by policy domain. & Halterman \& Keith 2026; Manifesto Project 2025 & Issues \& Topics & 7-class & Derived & long codebook\\
 \addlinespace
@@ -40,8 +40,8 @@ Spanish protest toxicity & Spanish protest tweets, classified for toxic content.
 TwitCivility impoliteness & Political tweets, classified for impoliteness. & Pendzel et al. 2023 & Relevance \& Harm & binary & Derived & short\\
 \addlinespace
 GTD attack type & Global Terrorism Database events, classified by primary attack type. & Brandt et al. 2025 & Events \& Actions & 9-class & Derived & long codebook\\
-PAPEA protest claims & Protest snippets, classified by protest claim. & Haunss et al. 2025 & Issues \& Topics & 28-class & Derived & long codebook\\
-PLOVER CAMEO event & Gold-standard event records, classified by CAMEO event type. & Halterman et al. 2023 & Events \& Actions & 18-class & Derived & long codebook\\
+PAPEA protest claims & Protest snippets, classified by source protest-claim label. & Haunss et al. 2025 & Issues \& Topics & 28-class & Derived & long codebook\\
+PLOVER CAMEO event & Gold-standard CAMEO examples, classified into PLOVER event categories. & Halterman et al. 2023 & Events \& Actions & 18-class & Derived & long codebook\\
 PolNLI event entailment & Event-extraction PolNLI pairs, classified for entailment. & Burnham et al. 2025 & Claims \& Relations & binary & Derived & short\\
 Women's March stance & Tweets about the Women's March, classified by stance. & Bestvater \& Monroe 2023 & Position \& Tone & binary & Derived & short\\
 \addlinespace
