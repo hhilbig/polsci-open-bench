@@ -1,7 +1,7 @@
 order: 19
 name: toxicity_protests_es
 family: Relevance / Incivility
-source: Gonzalez-Bustamante 2024
+source: González-Bustamante 2024
 data_file: ../data/toxicity_protests_es.csv
 prompt_file: ../prompts/toxicity_protests_es.txt
 label_kind: binary

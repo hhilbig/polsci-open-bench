@@ -1,7 +1,7 @@
 order: 16
 name: muller_fujimura_campaign_policy_area
 family: Policy-topic coding
-source: Müller and Fujimura 2024
+source: Müller and Fujimura 2025
 data_file: ../data/muller_fujimura_campaign_policy_area.csv
 prompt_file: ../prompts/muller_fujimura_campaign_policy_area.txt
 label_kind: categorical

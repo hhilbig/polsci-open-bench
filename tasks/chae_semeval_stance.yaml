@@ -1,7 +1,7 @@
 order: 4
 name: chae_semeval_stance
 family: Sentiment / Stance / Tone
-source: Chae and Davidson 2025
+source: Chae and Davidson 2026
 data_file: ../data/semeval_stance.csv
 prompt_file: ../prompts/chae_semeval_stance.txt
 label_kind: categorical

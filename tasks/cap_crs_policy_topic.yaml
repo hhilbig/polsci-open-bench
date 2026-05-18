@@ -1,7 +1,7 @@
 order: 33
 name: cap_crs_policy_topic
 family: Policy-topic coding
-source: Policy Agendas Project 2025
+source: Comparative Agendas Project 2022 and Congressional Research Service 2026
 data_file: ../data/cap_crs_policy_topic.csv
 prompt_file: ../prompts/cap_crs_policy_topic.txt
 label_kind: categorical

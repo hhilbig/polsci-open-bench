@@ -1,7 +1,7 @@
 order: 25
 name: plover_cameo_event
 family: Event coding
-source: PLOVER gold-standard records
+source: Halterman et al. 2023
 data_file: ../data/plover_cameo_event.csv
 prompt_file: ../prompts/plover_cameo_event.txt
 label_kind: categorical

@@ -1,7 +1,7 @@
 order: 8
 name: halterman_keith_bfrs
 family: Event coding
-source: Halterman and Keith 2025
+source: Halterman and Keith 2026
 data_file: ../data/halterman_keith_bfrs.csv
 prompt_file: ../prompts/halterman_keith_bfrs.txt
 label_kind: categorical

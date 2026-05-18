@@ -1,7 +1,7 @@
 order: 32
 name: cap_party_platform_policy_topic
 family: Policy-topic coding
-source: Policy Agendas Project 2025
+source: Comparative Agendas Project 2022
 data_file: ../data/cap_party_platform_policy_topic.csv
 prompt_file: ../prompts/cap_party_platform_policy_topic.txt
 label_kind: categorical

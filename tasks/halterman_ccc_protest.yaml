@@ -1,7 +1,7 @@
 order: 7
 name: halterman_ccc_protest
 family: Event coding
-source: Halterman and Keith 2025
+source: Halterman and Keith 2026
 data_file: ../data/halterman_ccc_hk2025.csv
 prompt_file: ../prompts/halterman_ccc_protest.txt
 label_kind: categorical

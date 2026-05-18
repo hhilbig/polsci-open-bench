@@ -1,7 +1,7 @@
 order: 22
 name: twitcivility_impoliteness
 family: Relevance / Incivility
-source: TwitCivility
+source: Pendzel et al. 2023
 data_file: ../data/twitcivility_impoliteness.csv
 prompt_file: ../prompts/twitcivility_impoliteness.txt
 label_kind: binary
