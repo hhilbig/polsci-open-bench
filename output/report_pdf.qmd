@@ -1,5 +1,5 @@
 ---
-title: "Local LLMs approach commercial models on political science classification tasks"
+title: "Local Open-Weight LLMs Are Competitive with Commercial APIs for Political Science Text Classification"
 author: "Hanno Hilbig\\thanks{hhilbig@ucdavis.edu. Code and data: \\url{https://github.com/hhilbig/polsci-open-bench}.}"
 date: "2026-05-18"
 bibliography: references.bib
