@@ -10,9 +10,11 @@ python3 code/task_inventory.py --write
 
 | Category | Directory | Count | Meaning |
 | --- | --- | --- | --- |
-| Canonical benchmark tasks | `tasks/` | 34 | Public 34-task benchmark manifests. |
+| Public benchmark tasks | `tasks/` | 34 | Public 34-task benchmark manifests. |
 
 ## Task Families
+
+These are source/task-manifest families. The report also groups tasks into five broader annotation types for figures and appendix tables.
 
 | Family | Tasks |
 | --- | --- |
@@ -27,13 +29,15 @@ python3 code/task_inventory.py --write
 
 ## Output Coverage
 
+`output/predictions_batched.csv` contains the raw prompt-batched runs. `output/summary_batched.csv` also includes copied `batch_size == 1` serial baselines for comparison, so its model and cell counts are larger than the raw batched file. `output/summary_batched_local_b10.csv` is the report-ready local 10-item comparison view.
+
 | Artifact | Path | Tasks | Models | Cells | Rows | Batch sizes |
 | --- | --- | --- | --- | --- | --- | --- |
-| Canonical serial predictions | `output/predictions.csv` | 34 | 9 | 306 | 147,825 |  |
-| Canonical serial summary | `output/summary.csv` | 34 | 9 | 306 | 306 |  |
-| Canonical batched predictions | `output/predictions_batched.csv` | 34 | 7 | 234 | 114,125 | 10, 20 |
-| Canonical batched summary | `output/summary_batched.csv` | 34 | 9 | 540 | 540 | 1, 10, 20 |
-| Local b=10 summary | `output/summary_batched_local_b10.csv` | 34 | 5 | 170 | 170 | 10 |
+| Serial predictions | `output/predictions.csv` | 34 | 9 | 306 | 147,825 |  |
+| Serial summary | `output/summary.csv` | 34 | 9 | 306 | 306 |  |
+| Prompt-batched predictions | `output/predictions_batched.csv` | 34 | 7 | 234 | 114,125 | 10, 20 |
+| Prompt-batched summary | `output/summary_batched.csv` | 34 | 9 | 540 | 540 | 1, 10, 20 |
+| Local 10-item comparison summary | `output/summary_batched_local_b10.csv` | 34 | 9 | 476 | 476 | 1, 10 |
 
 ## Tasks
 

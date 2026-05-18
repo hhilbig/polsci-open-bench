@@ -1,90 +1,71 @@
-# Twitter / X thread: polsci-open-bench
+# Twitter / X Thread: 34-Task Benchmark
 
-Six-post thread to accompany the PDF report. Each post under 280 characters
-(the X free-tier limit; X Premium allows 25,000 chars but most readers see
-truncated thumbnails on phones, so keep it tight).
+Four-post thread to accompany the current PDF report.
 
-Image attachments noted as "> Attach Figure N" — these refer to the four
-PDF figures.
+Repo link: <https://github.com/hhilbig/polsci-open-bench>
 
-Replace `<LINK>` with the GitHub repo URL or a short link to the PDF before
-posting.
+## Tweet 1 — Main Claim And Results
 
----
+Attach:
 
-### Post 1 — Hook
+- `output/figures/fig-mean-f1.png`
+- `output/figures/fig-best-local-api-gap.png`
+- Optional: `output/figures/fig-family.png`
 
-<!-- 268 chars -->
+Text:
 
-Can local LLMs do political science text classification well enough to replace API models for some applied research tasks?
+> Update on my open-weight LLM benchmark: I now compare 5 local models and 4 API models on 34 political-science text-classification tasks, covering 147,825 model-item classifications.
+>
+> Across these tasks, local models remain competitive with GPT/Claude, especially when cost, privacy, or reproducibility matter.
+>
+> The best local model matches or beats the best API model on 9 of 34 tasks, and task-level winners are split across 8 of 9 models.
 
-Small benchmark: 10 classification tasks, 7 models (4 local + gpt-5.5, gpt-5.4-nano, Claude Sonnet 4.6), 500 items per task. Practical guidance, not a leaderboard.
+## Tweet 2 — Concrete Speed / Quality Example
 
----
+Attach:
 
-### Post 2 — Headline performance result
+- `output/figures/fig-speed.png`
 
-<!-- 269 chars -->
+Text:
 
-Main result: the top three models (gpt-5.5, Claude Sonnet 4.6, Gemma 4 31B) are essentially tied on average, within 0.002 mean macro F1.
+> One concrete example: Gemma 4 26B runs locally on a 32 GB MacBook, trails gpt-5.5 by only 0.021 F1 on average, and classifies about 4,000 documents in ~52 minutes, or ~30 minutes with 10-item prompt batching.
 
-Most task-level differences fall inside bootstrap-CI overlap, so I would not read this as a sharp ranking.
+## Tweet 3 — Complexity
 
-> Attach Figure 1 (mean F1 with per-task dots)
+Attach:
 
----
+- `output/figures/fig-complexity.png`
+- Optional: `output/figures/fig-label-structure-gap.png`
 
-### Post 3 — Task heterogeneity
+Text:
 
-<!-- 271 chars -->
+> APIs still have their clearest edge on harder coding tasks.
+>
+> In this benchmark, "easy" means short binary or 3-class tasks like relevance, stance, or incivility. "Hard" means long codebooks, many active labels, or multiple outputs per item, e.g. policy topics or event/protest coding.
+>
+> Among high-complexity tasks, the best API model averages 0.605 F1 vs 0.555 for the best local model.
 
-The bigger lesson is task heterogeneity. Different models lead on different families: stance/tone, relevance/incivility, event coding, and policy-topic coding.
+## Tweet 4 — Link / Optional Bottom Line
 
-For applied researchers, the safest workflow is still a small validation sample on the actual task before committing.
+Attach:
 
-> Attach Figure 3 (mean F1 by task family)
+- Optional: `output/figures/fig-local-runtime-per-1000.png`
 
----
+Text:
 
-### Post 4 — Speed
+> Bottom line: local open-weight models are now a serious option for applied text coding, but batching still needs reliability checks because some task-model pairs return invalid labels or response formats.
+>
+> PDF/code: https://github.com/hhilbig/polsci-open-bench
 
-<!-- 261 chars -->
+## Notes
 
-Speed is not simply "API fast, local slow."
-
-Gemma 4 31B is the slowest in the grid, but Qwen3-30B-A3B (a local mixture-of-experts model) is the fastest. Local inference can be practical on consumer hardware; model architecture and quantization matter more than provenance.
-
-> Attach Figure 2 (mean F1 vs median latency, log-x)
-
----
-
-### Post 5 — Batching
-
-<!-- 273 chars -->
-
-Batching helps, but not everywhere.
-
-On short prompt tasks, b=10 gives 1.2–2.7x speedups with little F1 loss. On long codebook tasks, batching becomes fragile: gpt-5.5 batched on Halterman CCC at b=10 emits malformed JSON for 68% of items. gpt-5.4-nano is more robust there.
-
-> Attach Figure 4 (speedup vs delta F1, batched cells)
-
----
-
-### Post 6 — Bottom line + link
-
-<!-- 275 chars -->
-
-Bottom line: local open-weight models are credible for many political science classification workflows, but the results do not support a simple local versus API ranking.
-
-Task-level reversals are common. The aggregate leaderboard is for screening candidates, not for picking one without validation.
-
-PDF + code: <LINK>
-
----
-
-## Notes for posting
-
-- Order: 1 → 2 → 3 → 4 → 5 → 6, replying to each previous post.
-- Alt text for images: keep short ("Figure 1: bar chart of mean F1 across 7 models with per-task dots overlaid").
-- Bluesky: 300-char limit; thread reads identically.
-- Mastodon: 500-char limit; could merge posts 5 and 6 if desired.
+- The first tweet's 147,825 model-item classifications refers to the 34-task
+  one-item-at-a-time benchmark: 16,425 labeled items across tasks times 9
+  models.
+- The 4,000-document runtime example is grounded in the median cleaned corpus size
+  across the 34 task files, rounded from 3,816.
+- Gemma 4 26B timing uses median runtime per item across the 34-task benchmark:
+  about 0.782 seconds one-at-a-time and 0.444 seconds with 10-item prompt batching.
+- Gemma 4 26B's average F1 is 0.639, compared with 0.660 for gpt-5.5.
+- Keep "GPT/Claude" in the hook for audience clarity, even though DeepSeek V4
+  Pro is also included in the API model set.

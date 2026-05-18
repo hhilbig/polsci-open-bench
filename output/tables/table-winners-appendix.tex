@@ -1,11 +1,11 @@
 \begin{table}[H]
 \centering
-\caption{Top model per task by headline F1 across the unified 34-task benchmark, grouped by the report's five annotation types. Accuracy and MCC refer to the same model-task cell. CIs and the full per-(task, model) table are on the GitHub repository.}
+\caption{Top model per task by the main F1 score across the unified 34-task benchmark, grouped by the report's five annotation types. Accuracy and MCC refer to the same model-task pair. CIs and the full per-(task, model) table are on the GitHub repository. \label{tab:winners}}
 \centering
 \fontsize{8.5}{10.5}\selectfont
 \begin{tabular}[t]{llllll}
 \toprule
-Type & Task & Top model & Headline F1 & Accuracy & MCC\\
+Type & Task & Top model & Main F1 & Accuracy & MCC\\
 \midrule
  & Ballard incivility & Claude Sonnet 4.6 & 0.563 & 0.848 & 0.515\\
 \cmidrule{2-6}
@@ -35,17 +35,17 @@ Type & Task & Top model & Headline F1 & Accuracy & MCC\\
 \cmidrule{2-6}
 \multirow[t]{-7}{*}{\raggedright\arraybackslash Position \& Tone} & Women's March stance & Claude Sonnet 4.6 & 0.905 & 0.852 & 0.623\\
 \cmidrule{1-6}
- & BFRS violence (12-cl) & gpt-5.5 & 0.693 & 0.730 & 0.691\\
+ & BFRS violence (12 classes) & gpt-5.5 & 0.693 & 0.730 & 0.691\\
 \cmidrule{2-6}
  & CCC protest type & Qwen3 14B & 0.499 & 0.610 & 0.387\\
 \cmidrule{2-6}
- & GTD attack type (9-cl) & gpt-5.4-nano & 0.617 & 0.750 & 0.656\\
+ & GTD attack type (9 classes) & gpt-5.4-nano & 0.617 & 0.750 & 0.656\\
 \cmidrule{2-6}
- & ICBe event type (5-cl) & Gemma 4 26B & 0.530 & 0.584 & 0.463\\
+ & ICBe event type (5 classes) & Gemma 4 26B & 0.530 & 0.584 & 0.463\\
 \cmidrule{2-6}
- & PAPEA protest forms (7-cl) & gpt-5.5 & 0.965 & 0.972 & 0.958\\
+ & PAPEA protest forms (7 classes) & gpt-5.5 & 0.965 & 0.972 & 0.958\\
 \cmidrule{2-6}
-\multirow[t]{-6}{*}{\raggedright\arraybackslash Events \& Actions} & PLOVER CAMEO event (18-cl) & gpt-5.5 & 0.654 & 0.699 & 0.682\\
+\multirow[t]{-6}{*}{\raggedright\arraybackslash Events \& Actions} & PLOVER CAMEO event (18 classes) & gpt-5.5 & 0.654 & 0.699 & 0.682\\
 \cmidrule{1-6}
  & AgoraSpeech criticism/agenda & Mistral Sm 24B & 0.922 & 0.924 & 0.843\\
 \cmidrule{2-6}
@@ -59,21 +59,21 @@ Type & Task & Top model & Headline F1 & Accuracy & MCC\\
 \cmidrule{2-6}
 \multirow[t]{-6}{*}{\raggedright\arraybackslash Claims \& Relations} & PolitiCAUSE causal relation & Claude Sonnet 4.6 & 0.716 & 0.772 & 0.578\\
 \cmidrule{1-6}
- & ATI topics (7-label) & Claude Sonnet 4.6 & 0.502 & NA & NA\\
+ & ATI topics (7 labels) & Claude Sonnet 4.6 & 0.502 & NA & NA\\
 \cmidrule{2-6}
- & BES MII (50-cl) & gpt-5.5 & 0.547 & 0.946 & 0.934\\
+ & BES MII (50 classes) & gpt-5.5 & 0.547 & 0.946 & 0.934\\
 \cmidrule{2-6}
- & CAP CRS reports (21-cl) & gpt-5.5 & 0.732 & 0.774 & 0.757\\
+ & CAP CRS reports (21 classes) & gpt-5.5 & 0.732 & 0.774 & 0.757\\
 \cmidrule{2-6}
- & CAP party platforms (21-cl) & Claude Sonnet 4.6 & 0.731 & 0.736 & 0.719\\
+ & CAP party platforms (21 classes) & Claude Sonnet 4.6 & 0.731 & 0.736 & 0.719\\
 \cmidrule{2-6}
- & CMP manifestos (7-cl) & gpt-5.5 & 0.597 & 0.646 & 0.545\\
+ & CMP manifestos (7 classes) & gpt-5.5 & 0.597 & 0.646 & 0.545\\
 \cmidrule{2-6}
- & Campaign policy area (12-cl) & gpt-5.5 & 0.636 & 0.750 & 0.691\\
+ & Campaign policy area (12 classes) & gpt-5.5 & 0.636 & 0.750 & 0.691\\
 \cmidrule{2-6}
- & Cross-domain topics (8-cl) & Claude Sonnet 4.6 & 0.476 & 0.494 & 0.433\\
+ & Cross-domain topics (8 classes) & Claude Sonnet 4.6 & 0.476 & 0.494 & 0.433\\
 \cmidrule{2-6}
-\multirow[t]{-8}{*}{\raggedright\arraybackslash Issues \& Topics} & PAPEA protest claims (28-cl) & gpt-5.5 & 0.462 & 0.636 & 0.606\\
+\multirow[t]{-8}{*}{\raggedright\arraybackslash Issues \& Topics} & PAPEA protest claims (28 classes) & gpt-5.5 & 0.462 & 0.636 & 0.606\\
 \bottomrule
 \end{tabular}
 \end{table}

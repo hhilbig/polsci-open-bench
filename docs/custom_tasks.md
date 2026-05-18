@@ -67,25 +67,70 @@ ground_truth:
 
 ## Commands
 
-Run the example task:
+Run the example task without paid API calls:
+
+Shell 1:
+
+```bash
+python3 examples/local_openai_stub_server.py --max-requests 4
+```
+
+Shell 2:
 
 ```bash
 python3 code/benchmark.py \
   --task-dir examples/minimal_custom_task \
+  --model-manifest examples/minimal_custom_models/local_openai_stub.yaml \
   --output output/custom_predictions.csv
 
 python3 code/build_summary.py \
   --task-dir examples/minimal_custom_task \
+  --model-manifest examples/minimal_custom_models/local_openai_stub.yaml \
   --predictions output/custom_predictions.csv \
   --output output/custom_summary.csv
 ```
+
+The first command starts a deterministic local OpenAI-compatible test server and
+exits after four requests. In a separate shell, run the benchmark and summary
+commands. This path does not use OpenAI, Anthropic, or DeepSeek.
+
+The smoke test succeeds when `output/custom_predictions.csv` has four rows and
+`output/custom_summary.csv` has one row with `parse_err_rate = 0` and
+`headline_f1 = 1`.
+
+If you omit `--model-manifest`, the runner uses the built-in model set. That can
+call paid API models when API keys are present in the environment.
+
+## Ground Truth Details
+
+For binary and categorical tasks, set:
+
+```yaml
+ground_truth:
+  column: gt_relevant
+```
+
+For multi-binary tasks, either provide columns named `gt_{label}` for every
+entry in `labels`, or provide an explicit mapping:
+
+```yaml
+ground_truth:
+  columns:
+    Activities: gt_activities
+    Budget: gt_budget
+```
+
+Binary and multi-binary ground-truth values must be coercible to `0` or `1`.
+Categorical ground-truth values must exactly match one of the labels in the
+manifest.
 
 ## Task inventory contract
 
 The repo tracks task counts in [`docs/task_inventory.md`](task_inventory.md).
 That file is generated from `tasks/`, not hand-maintained.
 
-After adding, removing, or changing a task manifest, run:
+After adding, removing, or changing a built-in task manifest under `tasks/`,
+run:
 
 ```bash
 python3 code/task_inventory.py --write
@@ -94,3 +139,6 @@ python3 code/task_inventory.py --check
 
 The test suite includes a stale-doc check for this file, so adding a new task
 without refreshing the inventory should fail before the change is merged.
+
+External custom tasks passed with `--task-dir` or `--task-manifest` do not
+require updating the repo task inventory.

@@ -1,189 +1,100 @@
-# Release workflow
+# Release Workflow
 
-This repo uses three distinct states for benchmark work:
+Last updated: 2026-05-18
 
-1. `canonical`
-   - The official public benchmark artifacts.
-   - In practice, this means the checked-in outputs on `main`, especially:
-     - [`output/predictions.csv`](../output/predictions.csv)
-     - [`output/summary.csv`](../output/summary.csv)
-     - [`output/predictions_batched.csv`](../output/predictions_batched.csv)
-     - [`output/summary_batched.csv`](../output/summary_batched.csv)
-     - [`output/report_pdf.pdf`](../output/report_pdf.pdf)
+The current public release is the 34-task benchmark described in the PDF report.
+The report is the authoritative narrative artifact; the checked-in CSVs,
+figures, tables, prompts, and manifests support that report.
 
-2. `live-dev`
-   - New code, tasks, models, and docs under active development.
-   - Current convention: do this work on a long-lived development branch such as
-     `v2-benchmark-expansion`.
+## Public Release Files
 
-3. `sidecar`
-   - Real benchmark outputs that are informative and preserved, but not yet
-     canonical.
-   - These live in dated archive folders under [`output/archive/`](../output/archive).
+The public benchmark files live directly under `output/`:
 
-## Why this split exists
+- [`output/predictions.csv`](../output/predictions.csv)
+- [`output/summary.csv`](../output/summary.csv)
+- [`output/predictions_batched.csv`](../output/predictions_batched.csv)
+- [`output/summary_batched.csv`](../output/summary_batched.csv)
+- [`output/summary_batched_local_b10.csv`](../output/summary_batched_local_b10.csv)
+- [`output/report_pdf.pdf`](../output/report_pdf.pdf)
 
-- Task and model expansion is incremental.
-- Full benchmark reruns are expensive and time-consuming.
-- Partial reruns are often useful before the whole comparison grid is ready.
-- The public repo can still show incremental development without pretending
-  that every intermediate run is the new benchmark.
+The task and model definitions live in:
 
-## Branch convention
+- [`tasks/`](../tasks)
+- [`models/`](../models)
 
-- `main`
-  - last stable public benchmark release
-- `v2-benchmark-expansion`
-  - current development branch for the next benchmark iteration
+The generated task inventory is [`docs/task_inventory.md`](task_inventory.md).
+Regenerate it whenever task manifests change:
 
-Use the development branch for:
+```bash
+python3 code/task_inventory.py --write
+python3 code/task_inventory.py --check
+```
 
-- new task ingestion
-- new model manifests
-- infrastructure refactors
-- sidecar runs
-- release-candidate rebuilds
+## Development Runs
 
-## Sidecar convention
+Intermediate or exploratory outputs should not overwrite the public release
+files until the comparison set is complete enough to interpret. Keep such files
+in ignored working directories such as `output/sidecar/`, `output/openai_batch/`,
+or `output/anthropic_batch/`, then promote only after the intended task-model
+grid is complete and checked.
 
-Use a sidecar when a run is any of the following:
+Before launching a long local, remote, or API run, register it in the run ledger.
+The append-only ledger lives at `output/run_registry.jsonl`, and the readable
+snapshot is `docs/run_status.md`. Both files are ignored because they can
+contain local paths, process ids, API batch ids, and cost notes.
 
-- partial across tasks
-- partial across models
-- exploratory or provisional
-- a new condition not yet intended for the core benchmark
-- a completed subset whose comparison set is still incomplete
-
-Store sidecars in a dated folder, for example:
-
-- [`output/archive/deepseek_sidecar_2026-05-02/`](../output/archive/deepseek_sidecar_2026-05-02)
-- [`output/archive/openweight_new_tasks_2026-05-02/`](../output/archive/openweight_new_tasks_2026-05-02)
-
-Each sidecar folder should contain:
-
-- raw predictions
-- summary outputs
-- a short `README.md` describing scope, model/task coverage, and merge status
-
-## Run ledger
-
-Every non-trivial run should be registered before launch so the next session can
-recover the current state without reading shell history or reconstructing logs.
-
-The append-only ledger lives at [`output/run_registry.jsonl`](../output/run_registry.jsonl),
-and the human-readable snapshot lives at [`docs/run_status.md`](run_status.md).
-Use [`code/run_registry.py`](../code/run_registry.py) to maintain both files.
-
-Minimum required fields for sidecar, API, local, droplet, and `mac2` runs:
-
-- `run_id`
-- host or machine (`local`, `mac2`, `droplet`)
-- runner script
-- task scope
-- model scope
-- output path
-- log path, if the run writes one
-- tmux session, if launched under tmux
-- cost cap, for paid API runs
-- current status: `queued`, `running`, `completed`, `failed`, `blocked`, `needs_attention`, or `tabled`
-
-Typical manual registration:
+Typical registration:
 
 ```bash
 python3 code/run_registry.py start \
-  --run-id droplet-batched-deepseek-20260508 \
-  --runner batch_benchmark.py \
-  --host droplet \
+  --run-id local-example-20260518 \
+  --runner benchmark.py \
+  --host local \
   --task-scope tasks \
-  --model-scope deepseek-v4-pro \
-  --batch-sizes 10,20 \
-  --output output/predictions_batched_deepseek_run.csv \
-  --log logs/batched_deepseek_20260508.log \
-  --tmux-session pob-deepseek \
-  --cost-cap-usd 15
+  --model-scope example-model \
+  --output output/sidecar/example_predictions.csv \
+  --log logs/example_20260518.log
 
 python3 code/run_registry.py render-status
 ```
 
-Use `finish` for terminal states (`completed`, `failed`, `cancelled`) and
-`update --run-status needs_attention` for a run whose files exist but still need
-archive, merge, or manual review.
-Use `update --run-status tabled` for a completed sidecar that should not be
-promoted without a new substantive decision, for example because parse-error
-rates exceeded the clean-baseline threshold.
+Use `finish` for terminal states and `update --run-status tabled` for completed
+runs that should not enter the public benchmark, for example because invalid
+output rates are too high.
 
-The benchmark runners also accept optional ledger flags:
+## Promotion Rule
+
+Promote a run into the public release files only when all of the following hold:
+
+- the intended task-model grid is complete or the missing cells are explicitly
+  out of scope;
+- row counts match the task inventory;
+- summaries rebuild cleanly;
+- report figures and tables rebuild cleanly;
+- the PDF renders; and
+- public docs describe the new task and model counts.
+
+## Release Checklist
+
+Before posting or pushing a public release:
 
 ```bash
-python3 code/batch_benchmark.py \
-  --run-id droplet-batched-deepseek-20260508 \
-  --run-log logs/batched_deepseek_20260508.log \
-  --run-tmux-session pob-deepseek \
-  --render-run-status
+python3 code/task_inventory.py --check
+python3 code/build_coverage_matrix.py
+python3 -m unittest discover -s tests
+Rscript code/build_report_assets.R
+quarto render output/report_pdf.qmd --to pdf
 ```
 
-Before ending a work session, render the snapshot:
+Then check:
 
-```bash
-python3 code/run_registry.py render-status
-```
+- [`README.md`](../README.md)
+- [`docs/status.md`](status.md)
+- [`docs/schema.md`](schema.md)
+- [`docs/reproduce.md`](reproduce.md)
+- [`docs/prompts_provenance.md`](prompts_provenance.md)
+- [`docs/twitter_thread.md`](twitter_thread.md)
+- [`docs/post_release_changes.md`](post_release_changes.md)
 
-## Coverage matrix
-
-The model x task coverage matrix lives at [`docs/coverage_matrix.md`](coverage_matrix.md)
-and [`output/coverage_matrix.csv`](../output/coverage_matrix.csv). It is rebuilt by
-`python3 code/build_coverage_matrix.py`, which scans `output/predictions.csv`, every
-`*predictions*.csv` under `output/sidecar/`, and every `*predictions*.csv` under
-`output/archive/`. `code/benchmark.py` calls the same refresh at the end of every
-run, so the matrix stays in sync with active sidecar files as well as archived
-sidecars. After moving a sidecar into `output/archive/<sidecar>/` by hand, rerun
-the script so the matrix records the archived source label.
-
-## Promotion rule
-
-Do not merge sidecar outputs into canonical outputs until the comparison set is
-complete enough to interpret cleanly.
-
-Examples:
-
-- four new tasks run only for local open-weight models: keep as sidecar
-- four new tasks run for the intended local and API comparison set: candidate
-  for canonical merge
-- DeepSeek thinking-mode experiment: keep as sidecar unless it becomes an
-  explicitly benchmarked condition
-
-## Documentation rule
-
-Whenever a change affects benchmark logic, live task/model scope, scored
-artifacts, or public-facing docs:
-
-1. update the relevant code or docs
-2. verify the change
-3. update [`docs/post_release_changes.md`](post_release_changes.md)
-
-Use [`docs/status.md`](status.md) as the short operational snapshot and
-[`docs/post_release_changes.md`](post_release_changes.md) as the running
-post-release changelog.
-
-## Release cycle
-
-Typical pattern:
-
-1. add tasks, models, or infrastructure on `v2-benchmark-expansion`
-2. run smoke tests
-3. run selective reruns as sidecars
-4. keep the changelog current
-5. once the intended matrix is complete, rerun the canonical outputs
-6. rebuild summaries and report
-7. merge or publish as the next benchmark version
-
-## Naming guidance
-
-- `canonical outputs`
-  - official benchmark files on `main`
-- `live-dev`
-  - current branch state under development
-- `sidecar`
-  - preserved but non-canonical result bundle
-- `prepared`
-  - code or manifest exists, but the model/task has not been benchmarked yet
+The public docs should report the same task count, model count, main F1
+terminology, and batching terminology as the PDF report.

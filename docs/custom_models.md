@@ -152,6 +152,10 @@ compute_class: local
 think: false
 ```
 
+This is a template. Replace `name` with an Ollama model that is installed on
+your machine, for example `qwen3:14b-q4_K_M`, before expecting real model
+outputs.
+
 Example for an OpenAI-compatible local server:
 
 ```yaml
@@ -161,6 +165,22 @@ backend: openai
 compute_class: local
 base_url: http://localhost:8000/v1
 api_key_env: LOCAL_OPENAI_KEY
+```
+
+The repository also includes a deterministic no-cost OpenAI-compatible stub for
+smoke tests:
+
+```bash
+python3 examples/local_openai_stub_server.py --max-requests 4
+```
+
+Use it with:
+
+```bash
+python3 code/benchmark.py \
+  --task-dir examples/minimal_custom_task \
+  --model-manifest examples/minimal_custom_models/local_openai_stub.yaml \
+  --output output/custom_predictions.csv
 ```
 
 ## Commands
@@ -179,6 +199,11 @@ python3 code/build_summary.py \
   --predictions output/custom_predictions.csv \
   --output output/custom_summary.csv
 ```
+
+This Ollama example is local and cost-safe, but it requires an installed Ollama
+model with the exact manifest name. If Ollama is not running or the model name
+does not exist, the runner now exits with an error when no usable predictions
+are produced.
 
 Run the batched benchmark with the same model:
 

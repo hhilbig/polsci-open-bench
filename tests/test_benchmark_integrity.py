@@ -739,7 +739,7 @@ class CoverageMatrixTests(unittest.TestCase):
             paths = [path.name for _, path in files]
             self.assertEqual(
                 labels,
-                ["canonical", "live_sidecar_api_v2pt2", "archived_run"],
+                ["public-release", "live_sidecar_api_v2pt2", "archived_run"],
             )
             self.assertEqual(
                 paths,

@@ -86,11 +86,15 @@ def _count_csv(path: Path, batch_size: int | None = None) -> dict | None:
 def _coverage_rows(repo: Path) -> list[dict]:
     rows = []
     specs = [
-        ("Canonical serial predictions", repo / "output" / "predictions.csv", None),
-        ("Canonical serial summary", repo / "output" / "summary.csv", None),
-        ("Canonical batched predictions", repo / "output" / "predictions_batched.csv", None),
-        ("Canonical batched summary", repo / "output" / "summary_batched.csv", None),
-        ("Local b=10 summary", repo / "output" / "summary_batched_local_b10.csv", 10),
+        ("Serial predictions", repo / "output" / "predictions.csv", None),
+        ("Serial summary", repo / "output" / "summary.csv", None),
+        ("Prompt-batched predictions", repo / "output" / "predictions_batched.csv", None),
+        ("Prompt-batched summary", repo / "output" / "summary_batched.csv", None),
+        (
+            "Local 10-item comparison summary",
+            repo / "output" / "summary_batched_local_b10.csv",
+            None,
+        ),
     ]
     for label, path, batch_size in specs:
         counts = _count_csv(path, batch_size=batch_size)
@@ -151,7 +155,7 @@ def render_markdown(repo: Path = REPO) -> str:
             ["Category", "Directory", "Count", "Meaning"],
             [
                 [
-                    "Canonical benchmark tasks",
+                    "Public benchmark tasks",
                     "`tasks/`",
                     str(len(tasks)),
                     "Public 34-task benchmark manifests.",
@@ -160,11 +164,24 @@ def render_markdown(repo: Path = REPO) -> str:
         )
     )
     lines.extend(["", "## Task Families", ""])
+    lines.append(
+        "These are source/task-manifest families. The report also groups tasks into "
+        "five broader annotation types for figures and appendix tables."
+    )
+    lines.append("")
     lines.extend(_family_table(tasks))
 
     coverage = _coverage_rows(repo)
     if coverage:
         lines.extend(["", "## Output Coverage", ""])
+        lines.append(
+            "`output/predictions_batched.csv` contains the raw prompt-batched runs. "
+            "`output/summary_batched.csv` also includes copied `batch_size == 1` "
+            "serial baselines for comparison, so its model and cell counts are "
+            "larger than the raw batched file. `output/summary_batched_local_b10.csv` "
+            "is the report-ready local 10-item comparison view."
+        )
+        lines.append("")
         lines.extend(
             _table(
                 ["Artifact", "Path", "Tasks", "Models", "Cells", "Rows", "Batch sizes"],

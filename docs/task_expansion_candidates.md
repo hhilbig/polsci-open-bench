@@ -9,7 +9,7 @@ Structured companion file:
 
 ## Current family counts
 
-Canonical task counts now live in [`docs/task_inventory.md`](task_inventory.md).
+Public benchmark task counts now live in [`docs/task_inventory.md`](task_inventory.md).
 As of the current inventory, the repo has 34 benchmark task definitions in
 `tasks/`.
 

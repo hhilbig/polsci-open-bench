@@ -1,6 +1,6 @@
 # Output schema contract
 
-The benchmark writes two raw prediction files and two summary files to
+The benchmark writes two raw prediction files and three summary files to
 `output/`. The intended schema is defined by the live task manifests in
 [`tasks/`](../tasks). Model-level summary semantics are defined by the live
 model manifests in [`models/`](../models).
@@ -22,6 +22,7 @@ Core columns:
 | `eval_count` | int | optional | Output tokens if reported by the backend |
 | `parse_error` | string | optional | Null on clean parse, else parse or API error |
 | `raw_content_preview` | string | optional | First 200 chars of raw model output |
+| `source_file_label` | string | optional | Source split or source file label when a task builder keeps that provenance |
 
 Task-specific label columns are wide and sparse: each row carries only the
 `pred_*` and `gt_*` columns relevant to its task, and all unrelated task columns
@@ -39,7 +40,7 @@ Latency contract:
   before receiving a model response may have missing `latency_s`, but those rows
   must carry a non-null `parse_error`.
 - New backends and custom runners should preserve this field so downstream users
-  can compare practical throughput, not just classification accuracy.
+  can compare runtime, not just classification accuracy.
 
 Active task label columns:
 
@@ -47,22 +48,38 @@ Active task label columns:
 |---|---|---|
 | `gilardi_relevance` | binary | `pred_relevant`, `gt_relevant` |
 | `ballard_incivility` | binary | `pred_uncivil`, `gt_uncivil` |
-| `rheault_line_of_fire_incivility` | binary | `pred_uncivil`, `gt_uncivil` |
-| `theocharis_dynamics_incivility` | binary | `pred_uncivil`, `gt_uncivil` |
-| `brandt_political_relevance` | binary | `pred_relevant`, `gt_relevant` |
 | `gilardi_stance` | categorical | `pred_stance`, `gt_stance` |
 | `chae_semeval_stance` | categorical | `pred_stance`, `gt_stance` |
 | `ornstein_scotus_sentiment` | categorical | `pred_sentiment`, `gt_sentiment` |
+| `wesleyan_creative_ads_2022` | categorical | `pred_tone`, `gt_tone` |
 | `halterman_ccc_protest` | categorical | `pred_protest_type`, `gt_protest_type` |
 | `halterman_keith_bfrs` | categorical | `pred_event_type`, `gt_event_type` |
-| `douglass_icbe_sentence_event_type` | categorical | `pred_event_type`, `gt_event_type` |
-| `haunss_papea_fgz_forms` | categorical | `pred_protest_form`, `gt_protest_form` |
 | `halterman_keith_cmp` | categorical | `pred_policy_domain`, `gt_policy_domain` |
-| `osnabruegge_cross_domain_topic` | categorical | `pred_policy_domain`, `gt_policy_domain` |
-| `muller_fujimura_campaign_policy_area` | categorical | `pred_policy_area`, `gt_policy_area` |
-| `wesleyan_creative_ads_2022` | categorical | `pred_tone`, `gt_tone` |
 | `mellon_bes_mii_2024` | categorical | `pred_issue`, `gt_issue` |
+| `osnabruegge_cross_domain_topic` | categorical | `pred_policy_domain`, `gt_policy_domain` |
+| `rheault_line_of_fire_incivility` | binary | `pred_uncivil`, `gt_uncivil` |
+| `haunss_papea_fgz_forms` | categorical | `pred_protest_form`, `gt_protest_form` |
+| `brandt_political_relevance` | binary | `pred_relevant`, `gt_relevant` |
+| `douglass_icbe_sentence_event_type` | categorical | `pred_event_type`, `gt_event_type` |
+| `muller_fujimura_campaign_policy_area` | categorical | `pred_policy_area`, `gt_policy_area` |
 | `burnham_polnli_entailment` | binary | `pred_entails`, `gt_entails` |
+| `theocharis_dynamics_incivility` | binary | `pred_uncivil`, `gt_uncivil` |
+| `toxicity_protests_es` | binary | `pred_toxic`, `gt_toxic` |
+| `brandt_gtd_attack_type` | categorical | `pred_attack_type`, `gt_attack_type` |
+| `haunss_papea_claims` | categorical | `pred_protest_claim`, `gt_protest_claim` |
+| `twitcivility_impoliteness` | binary | `pred_impolite`, `gt_impolite` |
+| `bestvater_wm_stance` | binary | `pred_pro_womens_march`, `gt_pro_womens_march` |
+| `erlich_ati_topics` | multi-binary | `pred_Activities`, `gt_Activities`, `pred_Budget`, `gt_Budget`, `pred_Evaluation`, `gt_Evaluation`, `pred_External Contracts`, `gt_External Contracts`, `pred_Institutional Structure`, `gt_Institutional Structure`, `pred_Other`, `gt_Other`, `pred_Regulatory`, `gt_Regulatory` |
+| `plover_cameo_event` | categorical | `pred_event_type`, `gt_event_type` |
+| `burnham_polnli_event_entailment` | binary | `pred_entails`, `gt_entails` |
+| `burnham_trump_stance` | categorical | `pred_stance_toward_trump`, `gt_stance_toward_trump` |
+| `burnham_covid_threat_minimization` | binary | `pred_threat_minimizing`, `gt_threat_minimizing` |
+| `dicocco_manifesto_populism` | binary | `pred_populist`, `gt_populist` |
+| `bestvater_kavanaugh_stance` | binary | `pred_pro_kavanaugh`, `gt_pro_kavanaugh` |
+| `politicause_causal_relation` | binary | `pred_causal_relation`, `gt_causal_relation` |
+| `cap_party_platform_policy_topic` | categorical | `pred_policy_topic`, `gt_policy_topic` |
+| `cap_crs_policy_topic` | categorical | `pred_policy_topic`, `gt_policy_topic` |
+| `agoraspeech_criticism_agenda` | categorical | `pred_criticism_or_agenda`, `gt_criticism_or_agenda` |
 
 ### `output/predictions_batched.csv`
 
@@ -108,16 +125,28 @@ One row per `(task, model)` from the serial benchmark.
 | `usd_per_1000` | float | Models whose manifest provides `cost_per_call_usd`; benchmark-side approximation, not provider-reconciled billing |
 | `usd_per_1000_correct` | float | Same as above, scaled by share correct |
 | `f1_*` | float | Per-label F1 on cleanly parsed items |
-| `avg_f1` | float | Mean F1 across labels for multi-class tasks |
+| `avg_f1` | float | Mean across the available `f1_*` label columns for that row |
 | `accuracy` | float | Exact-match accuracy where defined |
 | `mcc` | float | Matthews correlation coefficient |
-| `headline_f1` | float | Unified task-level primary metric |
+| `headline_f1` | float | Unified task-level main F1 metric |
 | `headline_f1_lo`, `headline_f1_hi` | float | 95% paired bootstrap interval |
 
-`headline_f1` is defined as:
+The report calls `headline_f1` the main F1 score. The column name is retained
+for backward compatibility. It is defined as:
 
 - positive-class F1 for binary tasks
+- mean per-label F1 for multi-binary tasks
 - macro F1 across the task label set for categorical tasks
+
+Use `headline_f1` to reproduce the report. `avg_f1` is a lower-level summary of
+the row's label-specific `f1_*` columns. The two often match for categorical
+tasks, but `headline_f1` is the stable report-level outcome because it also
+handles binary and multi-binary tasks consistently.
+
+The `f1_*` columns are generated from task labels. Some labels contain spaces,
+slashes, parentheses, commas, or mixed capitalization. In R or Python, quote
+these column names or clean them before using them in formulas or attribute
+access.
 
 Cost note:
 
@@ -129,7 +158,11 @@ Cost note:
 
 ### `output/summary_batched.csv`
 
-One row per `(task, model, batch_size)` from the batched benchmark.
+One row per `(task, model, batch_size)` in the batching comparison summary.
+Rows with `batch_size == 1` are one-item-at-a-time baselines copied into the
+same summary so that `agreement_vs_b1` and speed comparisons can be computed in
+one table. They do not imply that `output/predictions_batched.csv` contains raw
+batch-size-1 predictions.
 
 | Column | Type | Description |
 |---|---|---|
@@ -140,10 +173,22 @@ One row per `(task, model, batch_size)` from the batched benchmark.
 | `mean_latency_s`, `median_latency_s` | float | Per-item latency summaries |
 | `median_batch_latency_s` | float | Median wall time for the actual batched call |
 | `f1_*` | float | Per-label F1 on cleanly parsed items |
-| `avg_f1` | float | Mean F1 across labels for multi-class tasks |
+| `avg_f1` | float | Mean across the available `f1_*` label columns for that row |
 | `accuracy` | float | Exact-match accuracy where defined |
-| `headline_f1` | float | Unified task-level primary metric |
+| `headline_f1` | float | Unified task-level main F1 metric |
 | `agreement_vs_b1` | float | Share of items whose prediction matches the same model at `batch_size == 1` |
+
+### `output/summary_batched_local_b10.csv`
+
+Subset view of `summary_batched.csv` used for the local 10-item prompt
+comparison. It includes:
+
+- `batch_size == 10` rows for the five local models across all 34 tasks;
+- `batch_size == 1` baseline rows for all nine serial models; and
+- the same columns as `summary_batched.csv`.
+
+This file is convenient for local speed and reliability plots. For the raw
+10-item prompt outputs, use `output/predictions_batched.csv`.
 
 ## Merging semantics
 

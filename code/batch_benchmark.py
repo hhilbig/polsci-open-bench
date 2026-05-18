@@ -2,7 +2,7 @@
 """
 Batched classification benchmark (Pipal-style). Runs the same tasks and
 models as benchmark.py but at multiple batch sizes, writing to a
-separate predictions CSV so the main benchmark outputs stay canonical.
+separate predictions CSV so serial release outputs stay separate.
 
 Grid (default):
   tasks       = task manifests in tasks/
@@ -26,8 +26,9 @@ Usage:
   python3 code/batch_benchmark.py
   python3 code/batch_benchmark.py --only-task gilardi_relevance --batch-sizes 10,20
   python3 code/batch_benchmark.py --resume    # skip cells already in output CSV
-  python3 code/batch_benchmark.py --task-dir examples/minimal_custom_task
-  python3 code/batch_benchmark.py --models-dir examples/minimal_custom_models
+  python3 code/batch_benchmark.py --task-dir examples/minimal_custom_task \
+    --model-manifest examples/minimal_custom_models/my_ollama_model.yaml \
+    --output output/custom_batched_predictions.csv
 """
 import argparse
 import json
@@ -53,6 +54,7 @@ from benchmark import (  # noqa: E402
     make_anthropic_client,
     make_openai_client,
     parse_content as parse_single_content,
+    require_usable_rows,
     response_format_type,
     warmup_ollama,
 )
@@ -373,8 +375,8 @@ def main():
     ap.add_argument("--resume", action="store_true",
                     help="Skip cells already present in the output CSV")
     ap.add_argument("--only-new-items", action="store_true",
-                    help="Only run the v2-new 250 items (skip v1's first N_V1=250). "
-                         "Mirrors benchmark.py's flag for the v2 incremental path.")
+                    help="Only run items after the first N_V1 baseline items. "
+                         "Mirrors benchmark.py's flag for incremental extension runs.")
     ap.add_argument("--merge-into", dest="merge_into", default=None,
                     help="After the run, merge new rows into an existing CSV by "
                          "(task, model, batch_size, item_id), replacing matches.")
@@ -389,7 +391,7 @@ def main():
     ap.add_argument("--run-tmux-session", default=None,
                     help="tmux session name stored in the run ledger.")
     ap.add_argument("--run-cost-cap-usd", default=None,
-                    help="Cost ceiling stored in the run ledger for paid API runs.")
+                    help="Cost ceiling stored in the run ledger for paid API runs; metadata only, not enforced.")
     ap.add_argument("--render-run-status", action="store_true",
                     help=f"Render {DEFAULT_STATUS_MD.relative_to(OUT.parent)} after ledger updates.")
     args = ap.parse_args()
@@ -576,10 +578,32 @@ def main():
         raise
 
     if args.merge_into:
+        require_usable_rows(all_rows, out_path)
         from benchmark import merge_into  # reuse the union-merge from the serial pipeline
         merge_path = Path(args.merge_into)
         # Use (task, model, batch_size, item_id) as the key for batched merges
         merge_into(merge_path, all_rows, key_cols=("task", "model", "batch_size", "item_id"))
+
+    try:
+        require_usable_rows(all_rows, out_path)
+    except Exception as exc:
+        if args.run_id:
+            append_event(
+                args.run_ledger,
+                event="fail",
+                run_id=args.run_id,
+                status="failed",
+                runner="batch_benchmark.py",
+                output=str(out_path),
+                merge_into=args.merge_into,
+                error=repr(exc),
+                completed_cells=completed_cells,
+                total_cells=total_cells,
+                rows_written=len(all_rows),
+            )
+            if args.render_run_status:
+                render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
+        raise
 
     print(f"\n=== ALL DONE ===", flush=True)
     print(f"  predictions: {out_path}", flush=True)

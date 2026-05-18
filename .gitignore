@@ -44,12 +44,17 @@ launch/
 output/run.log
 output/rerun.log
 
+# Local run ledger/status. These files can contain machine paths, process ids,
+# API batch ids, and cost notes from private development runs.
+output/run_registry.jsonl
+docs/run_status.md
+
 # Mid-flight benchmark working dir (overwritten by run scripts)
 output/tmp/
 .tmp_runtime/
 
-# Non-canonical run/import scratch. Canonical release files live directly under
-# output/ and are the only benchmark outputs used by the report.
+# Development run/import scratch. Public release files live directly under
+# output/ and are the benchmark outputs used by the report.
 output/sidecar/
 output/openai_batch/
 output/anthropic_batch/

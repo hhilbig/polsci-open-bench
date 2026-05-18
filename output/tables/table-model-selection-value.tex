@@ -1,0 +1,19 @@
+\begin{table}[H]
+\centering
+\caption{Mean F1 under single-model choices and task-specific upper bounds. The task-specific rows choose the best model after observing task-level performance, so they describe an upper bound rather than expected performance from a validation sample. \label{tab:model-selection-value}}
+\centering
+\fontsize{9}{11}\selectfont
+\begin{tabular}[t]{llr}
+\toprule
+Selection rule & Model or rule & Mean F1\\
+\midrule
+Best single model & Claude Sonnet 4.6 & 0.668\\
+Best single local model & Gemma 4 31B & 0.648\\
+Best single API model & Claude Sonnet 4.6 & 0.668\\
+Task-specific upper bound: local & Best local per task & 0.673\\
+Task-specific upper bound: API & Best API per task & 0.688\\
+\addlinespace
+Task-specific upper bound: all models & Best model per task & 0.696\\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,4 +1,4 @@
-"""Scan canonical predictions and emit a model x task coverage matrix.
+"""Scan public release predictions and emit a model x task coverage matrix.
 
 Outputs:
   output/coverage_matrix.csv  (wide: rows=models, cols=tasks, cells=sources or empty)
@@ -55,7 +55,7 @@ def find_predictions_files(canonical_path: Path | None = None,
     sidecar_root = sidecar_root or REPO_ROOT / "output" / "sidecar"
     files: list[tuple[str, Path]] = []
     if canonical_path.exists():
-        files.append(("canonical", canonical_path))
+        files.append(("public-release", canonical_path))
     if include_sidecars and sidecar_root.exists():
         for fn in sorted(sidecar_root.iterdir()):
             if fn.suffix.lower() != ".csv":
@@ -200,7 +200,7 @@ def refresh(
     output_csv: Path | None = None,
     output_md: Path | None = None,
     include_sidecars: bool = False,
-    title: str = "Benchmark coverage matrix",
+    title: str = "Serial benchmark coverage matrix",
 ) -> tuple[Path, Path]:
     tasks_dirs = [_repo_path(p) for p in tasks_dirs] if tasks_dirs else None
     models_dir = _repo_path(models_dir)
@@ -249,7 +249,13 @@ def _parse_args() -> argparse.Namespace:
         help="Directory of task manifests to include. Can be repeated. Defaults to tasks/.",
     )
     parser.add_argument("--models-dir", type=Path, help="Directory of model manifests.")
-    parser.add_argument("--canonical-path", type=Path, help="Canonical predictions CSV.")
+    parser.add_argument(
+        "--predictions-path",
+        "--canonical-path",
+        dest="canonical_path",
+        type=Path,
+        help="Predictions CSV to scan. Defaults to output/predictions.csv.",
+    )
     parser.add_argument("--archive-root", type=Path, help="Archive root containing sidecar runs.")
     parser.add_argument("--sidecar-root", type=Path, help="Live sidecar output directory.")
     parser.add_argument(
@@ -259,7 +265,7 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--output-csv", type=Path, help="Coverage matrix CSV output path.")
     parser.add_argument("--output-md", type=Path, help="Coverage matrix Markdown output path.")
-    parser.add_argument("--title", default="Benchmark coverage matrix", help="Markdown title.")
+    parser.add_argument("--title", default="Serial benchmark coverage matrix", help="Markdown title.")
     return parser.parse_args()
 
 

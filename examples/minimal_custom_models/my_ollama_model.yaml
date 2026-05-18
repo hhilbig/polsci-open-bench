@@ -1,3 +1,4 @@
+# Template only: replace this with an Ollama model installed on your machine.
 name: my-local-ollama-model
 display_name: My Local Ollama Model
 backend: ollama

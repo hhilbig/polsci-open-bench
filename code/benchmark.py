@@ -24,8 +24,11 @@ Basic usage:
   # Run only one task across all models
   python3 code/benchmark.py --only-task gilardi_stance
 
-  # Run a self-contained custom task directory
-  python3 code/benchmark.py --task-dir examples/minimal_custom_task
+  # Run a self-contained custom task directory with an explicit local model
+  python3 code/benchmark.py \\
+    --task-dir examples/minimal_custom_task \\
+    --model-manifest examples/minimal_custom_models/local_openai_stub.yaml \\
+    --output output/custom_predictions.csv
 
 Parse strategy:
   Primary  - JSON via raw_decode (trailing content ignored).
@@ -377,10 +380,10 @@ def run_task(task, models, model_clients, checkpoint_path, only_new_items=False)
     system_prompt = Path(task["prompt_path"]).read_text()
     items = task["loader"]()
     if only_new_items:
-        # Items are returned as (v1, then v2-new). Skip the v1 items.
+        # Items are returned as baseline items followed by added items.
         skipped = items[:N_V1]
         items = items[N_V1:]
-        print(f"\n[only-new-items] skipping first {len(skipped)} v1 items; running {len(items)} new items.", flush=True)
+        print(f"\n[only-new-items] skipping first {len(skipped)} baseline items; running {len(items)} added items.", flush=True)
     print(f"\n########## TASK: {task['name']} ({len(items)} items) ##########", flush=True)
     rows = []
     for m in models:
@@ -479,6 +482,30 @@ def merge_into(existing_csv: Path, new_rows: list,
           f"{len(new_df)}; total now {len(merged)}", flush=True)
 
 
+def has_usable_rows(rows):
+    return any(not row.get("parse_error") for row in rows)
+
+
+def require_usable_rows(rows, output_path, context="run"):
+    if not rows:
+        raise RuntimeError(f"No prediction rows were written for {context}.")
+    if not has_usable_rows(rows):
+        raise RuntimeError(
+            f"No usable predictions were written for {context}: all {len(rows)} rows "
+            f"in {output_path} have parse_error set. Check model availability, API keys, "
+            "or the model manifest before treating this run as successful."
+        )
+
+
+def _is_public_predictions_path(path):
+    if not path:
+        return False
+    try:
+        return Path(path).expanduser().resolve() == (OUT / "predictions.csv").resolve()
+    except OSError:
+        return False
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     add_task_loading_args(ap)
@@ -491,9 +518,9 @@ def main():
                     help="After running, merge this run's rows into an existing CSV "
                          "(replacing matching task/model/item_id rows).")
     ap.add_argument("--only-new-items", action="store_true",
-                    help="Only run the v2-new 250 items (skip the v1 250). Used for "
-                         "Ollama carry-over: existing v1 predictions are kept; only the "
-                         "new items 250..499 get model calls.")
+                    help="Only run items after the first N_V1 baseline items. Used for "
+                         "incremental extension runs where existing baseline predictions "
+                         "are kept and only added items get model calls.")
     ap.add_argument("--run-id", default=None,
                     help="Optional run id for output/run_registry.jsonl bookkeeping.")
     ap.add_argument("--run-ledger", default=str(DEFAULT_LEDGER),
@@ -505,7 +532,7 @@ def main():
     ap.add_argument("--run-tmux-session", default=None,
                     help="tmux session name stored in the run ledger.")
     ap.add_argument("--run-cost-cap-usd", default=None,
-                    help="Cost ceiling stored in the run ledger for paid API runs.")
+                    help="Cost ceiling stored in the run ledger for paid API runs; metadata only, not enforced.")
     ap.add_argument("--render-run-status", action="store_true",
                     help=f"Render {DEFAULT_STATUS_MD.relative_to(REPO)} after ledger updates.")
     args = ap.parse_args()
@@ -596,6 +623,7 @@ def main():
             pd.DataFrame(all_rows).to_csv(args.output, index=False)
             # Per-task merge so a mid-run kill preserves completed tasks.
             if args.merge_into:
+                require_usable_rows(task_rows, args.output, context=task["name"])
                 merge_into(Path(args.merge_into), task_rows)
             if args.run_id:
                 append_event(
@@ -629,6 +657,25 @@ def main():
                 render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
         raise
 
+    try:
+        require_usable_rows(all_rows, args.output)
+    except Exception as exc:
+        if args.run_id:
+            append_event(
+                args.run_ledger,
+                event="fail",
+                run_id=args.run_id,
+                status="failed",
+                runner="benchmark.py",
+                output=args.output,
+                merge_into=args.merge_into,
+                error=repr(exc),
+                rows_written=len(all_rows),
+            )
+            if args.render_run_status:
+                render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
+        raise
+
     print("\n=== ALL DONE ===", flush=True)
     print(f"  predictions: {args.output}", flush=True)
     if args.merge_into:
@@ -649,12 +696,13 @@ def main():
         if args.render_run_status:
             render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
 
-    try:
-        from build_coverage_matrix import refresh as refresh_coverage
-        refresh_coverage(verbose=False)
-        print("  coverage matrix: docs/coverage_matrix.md", flush=True)
-    except Exception as exc:
-        print(f"  coverage matrix refresh skipped: {exc}", flush=True)
+    if _is_public_predictions_path(args.output) or _is_public_predictions_path(args.merge_into):
+        try:
+            from build_coverage_matrix import refresh as refresh_coverage
+            refresh_coverage(verbose=False)
+            print("  coverage matrix: docs/coverage_matrix.md", flush=True)
+        except Exception as exc:
+            print(f"  coverage matrix refresh skipped: {exc}", flush=True)
 
 
 if __name__ == "__main__":

@@ -13,13 +13,20 @@ batching, or task-specific validation still matter.
 ## Main Outputs
 
 - PDF report: [`output/report_pdf.pdf`](output/report_pdf.pdf)
-- Canonical serial predictions: [`output/predictions.csv`](output/predictions.csv)
-- Canonical serial summary: [`output/summary.csv`](output/summary.csv)
-- Canonical prompt-batched predictions: [`output/predictions_batched.csv`](output/predictions_batched.csv)
-- Canonical prompt-batched summary: [`output/summary_batched.csv`](output/summary_batched.csv)
-- Local b=10 summary: [`output/summary_batched_local_b10.csv`](output/summary_batched_local_b10.csv)
+- Serial predictions: [`output/predictions.csv`](output/predictions.csv)
+- Serial summary: [`output/summary.csv`](output/summary.csv)
+- Prompt-batched predictions: [`output/predictions_batched.csv`](output/predictions_batched.csv)
+- Prompt-batched summary: [`output/summary_batched.csv`](output/summary_batched.csv)
+- Local 10-item comparison summary: [`output/summary_batched_local_b10.csv`](output/summary_batched_local_b10.csv)
 - Task inventory: [`docs/task_inventory.md`](docs/task_inventory.md)
 - Reproduction guide: [`docs/reproduce.md`](docs/reproduce.md)
+
+The raw prompt-batched file has mixed scope: it contains the full 34-task local
+10-item prompt grid plus OpenAI diagnostic prompt-batching rows. The
+report-ready local batching view is `output/summary_batched_local_b10.csv`.
+`output/summary_batched.csv` also contains copied one-item-at-a-time baselines
+for comparison, which is why its model and cell counts are larger than the raw
+batched file.
 
 ## Headline Findings
 
@@ -27,39 +34,40 @@ Main takeaway: local open-weight models are competitive on many tasks, but the
 benchmark does not support a single global model ranking. Task-specific
 validation matters.
 
-**Figure 1. Mean headline F1 across 34 tasks per model.**
+**Figure 1. Mean F1 across 34 tasks per model.**
 
-![Mean headline F1 across thirty-four tasks per model](output/figures/fig-mean-f1.png)
+![Mean F1 across thirty-four tasks per model](output/figures/fig-mean-f1.png)
 
 - The four strongest models, `claude-sonnet-4-6`, `gpt-5.5`,
   `gemma4:31b-it-q4_K_M`, and `deepseek-v4-pro`, are within 0.021 mean
-  headline F1.
+  F1.
 - The best local model matches or exceeds the best API model on 9 of 34 tasks.
-  The average best-local-minus-best-API gap is -0.015 headline F1.
+  On average, the best API model exceeds the best local model by 0.015 F1.
 - Top point estimates are split across eight of the nine models, so average
   rank is a weak guide to model choice for a specific task.
 
-**Figure 2. Best API minus best local headline F1 by task.**
+**Figure 2. Best API minus best local F1 by task.**
 
-![Best API minus best local headline F1 by task](output/figures/fig-best-local-api-gap.png)
+![Best API minus best local F1 by task](output/figures/fig-best-local-api-gap.png)
 
 - API models have their clearest edge on complex tasks with many active labels,
-  long codebooks, or multi-output schemas.
+  long codebooks, or multiple outputs per item.
 - Local inference is practical on one 32 GB Apple Silicon laptop. On a typical
-  500-item task, median single-item runtimes range from about 5 minutes for
+  500-item task, median one-item-at-a-time runtimes range from about 5 minutes for
   Qwen3 30B-A3B to about 29 minutes for Gemma 4 31B.
-- Prompt batching at b=10 covers all 34 tasks for the five local models. It
-  improves median local throughput by about 1.23x to 1.86x, but some
-  model-task cells have high schema or label failure rates.
+- Prompt batching with 10 items per prompt covers all 34 tasks for the five local models. It
+  reduces median local per-item runtime by about 1.23x to 1.86x, but some
+  task-model pairs have high response-format or label failure rates.
 
 ## Scope
 
-- **Tasks:** 34 canonical task manifests in [`tasks/`](tasks)
+- **Tasks:** 34 public benchmark task manifests in [`tasks/`](tasks)
 - **Models:** 5 local Ollama models and 4 commercial API models
-- **Serial coverage:** 34 tasks x 9 models = 306 model-task cells
-- **Local b=10 coverage:** 34 tasks x 5 local models = 170 model-task cells
+- **Serial coverage:** 34 tasks x 9 models = 306 task-model pairs
+- **Serial classifications:** 147,825 model-item classifications
+- **Local 10-item prompt coverage:** 34 tasks x 5 local models = 170 task-model pairs
 - **Items:** 293 to 500 per task, depending on cleaned data availability
-- **Metrics:** headline F1, accuracy, MCC, per-item latency, schema/label
+- **Metrics:** main F1, accuracy, MCC, time per item, response-format/label
   failure rate
 - **Local hardware:** Apple M2 Pro, 32 GB unified memory, macOS Tahoe 26.1,
   Ollama 0.19.0
@@ -71,6 +79,10 @@ The generated source of truth for task counts is
 python3 code/task_inventory.py --write
 python3 code/task_inventory.py --check
 ```
+
+In the CSVs, the report's "main F1" is the column `headline_f1`. The older
+column name is retained for compatibility. Use `headline_f1` rather than
+`avg_f1` when reproducing the report figures.
 
 ## What This Benchmark Is
 
@@ -103,23 +115,57 @@ JSON outputs; Anthropic calls used tool-use forcing for the same schema.
 
 ## Reproduce
 
-Create a Python environment, install dependencies, and set API keys as needed:
+Create a Python environment and install dependencies:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install -r requirements.txt
+```
+
+Set API keys only if you intend to run paid API models:
+
+```bash
 export OPENAI_API_KEY=...
 export ANTHROPIC_API_KEY=...
 export DEEPSEEK_API_KEY=...
 ```
 
-Run the serial benchmark and rebuild canonical summaries:
+For a no-cost smoke test of the custom benchmark path, run the local stub server
+in one shell:
+
+```bash
+python3 examples/local_openai_stub_server.py --max-requests 4
+```
+
+Then run the bundled custom task against that local stub in another shell:
+
+```bash
+python3 code/benchmark.py \
+  --task-dir examples/minimal_custom_task \
+  --model-manifest examples/minimal_custom_models/local_openai_stub.yaml \
+  --output output/custom_predictions.csv
+
+python3 code/build_summary.py \
+  --task-dir examples/minimal_custom_task \
+  --model-manifest examples/minimal_custom_models/local_openai_stub.yaml \
+  --predictions output/custom_predictions.csv \
+  --output output/custom_summary.csv
+```
+
+The smoke test succeeds when `output/custom_predictions.csv` has four rows and
+`output/custom_summary.csv` has one row with `parse_err_rate = 0` and
+`headline_f1 = 1`.
+
+Run the serial benchmark and rebuild summaries:
 
 ```bash
 python3 code/benchmark.py
 python3 code/build_summary.py
 ```
+
+These commands overwrite the checked-in release outputs. They also call paid API
+models if API keys are present.
 
 Run prompt batching and rebuild batched summaries:
 
@@ -144,7 +190,7 @@ dependencies, cost notes, custom tasks, and custom model manifests.
 code/      benchmark runners, summary builders, report-asset builders
 data/      cleaned task files
 models/    model manifests for the built-in benchmark
-tasks/     canonical task manifests for the built-in benchmark
+tasks/     task manifests for the built-in benchmark
 prompts/   task prompts
 output/    predictions, summaries, figures, tables, reports
 docs/      provenance, schema, reproduction notes, project status

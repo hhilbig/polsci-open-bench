@@ -5,7 +5,7 @@ instructions for adding a new task.
 
 ## Verified local tooling
 
-The cleanup branch was verified locally with:
+The current release was verified locally with:
 
 - `Python 3.14.3`
 - `R 4.5.2`
@@ -32,7 +32,7 @@ The serial and batched benchmark runners depend on the packages in
 
 Built-in benchmark tasks live in YAML manifests under [`tasks/`](../tasks).
 The generated task-count inventory is [`docs/task_inventory.md`](task_inventory.md):
-it records the canonical 34-task set and output coverage.
+it records the public 34-task benchmark and output coverage.
 
 You can also run a custom task without editing core code by supplying either:
 
@@ -95,7 +95,8 @@ quarto render output/report_pdf.qmd
 ### Ollama (local)
 
 The benchmark was run with Ollama 0.19.0 on Apple Silicon (M2 Pro, 32 GB
-unified memory). Quantization is `Q4_K_M` for all four local models.
+unified memory). Most local manifests use `Q4_K_M`; `gemma4:26b` uses its
+published local Ollama tag.
 
 Pull the five local models used in the checked-in release benchmark:
 
@@ -197,6 +198,10 @@ provider-side paths above.
 
 Run the full serial benchmark and rebuild the serial summary:
 
+These commands overwrite the checked-in release outputs and can call paid API
+models if API keys are set. Use a custom `--output` path and explicit
+`--model-manifest` for smoke tests or custom benchmarks.
+
 ```bash
 python3 code/benchmark.py
 python3 code/build_summary.py
@@ -220,6 +225,10 @@ python3 code/build_task_length_audit.py
 Useful when you have edited one prompt or want to fill in a single
 `(task, model)` cell rather than rerunning the whole grid:
 
+Commands that omit `--model-manifest` use the built-in model set. If API keys
+are set, those commands can call paid API models. For no-cost checks, use an
+explicit local manifest and a custom `--output` path.
+
 ```bash
 # Run one task across all models
 python3 code/benchmark.py --only-task gilardi_stance
@@ -230,7 +239,7 @@ python3 code/benchmark.py \
   --only-task halterman_ccc_protest \
   --merge-into output/predictions.csv
 
-# Run only the v2-new 250 items for a task/model cell
+# Run only newly sampled items for a task/model cell
 python3 code/benchmark.py \
   --only-model qwen3:30b-a3b-q4_K_M \
   --only-task halterman_ccc_protest \
@@ -245,10 +254,12 @@ python3 code/batch_benchmark.py \
 # Run a custom task directory through the same pipeline
 python3 code/benchmark.py \
   --task-dir examples/minimal_custom_task \
+  --model-manifest examples/minimal_custom_models/local_openai_stub.yaml \
   --output output/custom_predictions.csv
 
 python3 code/build_summary.py \
   --task-dir examples/minimal_custom_task \
+  --model-manifest examples/minimal_custom_models/local_openai_stub.yaml \
   --predictions output/custom_predictions.csv \
   --output output/custom_summary.csv
 
@@ -270,6 +281,15 @@ python3 code/batch_benchmark.py \
   --model-manifest examples/minimal_custom_models/my_ollama_model.yaml \
   --output output/custom_predictions_batched.csv
 ```
+
+`examples/minimal_custom_models/my_ollama_model.yaml` is a template. Replace
+`my-local-ollama-model` with an Ollama model installed on your machine before
+using that manifest.
+
+For the bundled stub smoke test, success means four rows in
+`output/custom_predictions.csv` and one row in `output/custom_summary.csv`.
+The most important summary fields are `parse_ok`, `parse_err_rate`,
+`headline_f1`, `median_latency_s`, and `usd_per_1000`.
 
 Rebuild summaries after any rerun:
 
@@ -300,6 +320,10 @@ fields for `mean_latency_s`, `median_latency_s`, and batched wall-time summaries
    output columns.
 
 See the built-in manifests in [`tasks/`](../tasks) for examples.
+
+For a no-cost smoke test, first run
+`python3 examples/local_openai_stub_server.py --max-requests 4` in another shell,
+then run the custom-task commands above.
 
 ## Adding a new model
 

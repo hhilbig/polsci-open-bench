@@ -1,35 +1,35 @@
 task,task_short,family,model_short_API,model_short_Local,headline_f1_API,headline_f1_Local,local_minus_api_best_f1,api_minus_local_best_f1,advantage
-cap_party_platform_policy_topic,CAP party platforms (21-cl),Issues & Topics,Claude Sonnet 4.6,Gemma 4 31B,0.7313208025863664,0.6466154865250479,-0.08470531606131859,0.08470531606131859,Best API higher
-plover_cameo_event,PLOVER CAMEO event (18-cl),Events & Actions,gpt-5.5,Gemma 4 31B,0.6537294490610169,0.5774070180942642,-0.07632243096675273,0.07632243096675273,Best API higher
-politicause_causal_relation,PolitiCAUSE causal relation,Claims & Relations,Claude Sonnet 4.6,Gemma 4 31B,0.7164179104477612,0.6636971046770601,-0.05272080577070104,0.05272080577070104,Best API higher
-haunss_papea_claims,PAPEA protest claims (28-cl),Issues & Topics,gpt-5.5,Gemma 4 31B,0.4623399842577075,0.41287056230682045,-0.04946942195088705,0.04946942195088705,Best API higher
-bestvater_wm_stance,Women's March stance,Position & Tone,Claude Sonnet 4.6,Gemma 4 31B,0.90537084398977,0.8590250329380764,-0.04634581105169355,0.04634581105169355,Best API higher
-cap_crs_policy_topic,CAP CRS reports (21-cl),Issues & Topics,gpt-5.5,Gemma 4 31B,0.7321803176091826,0.6895630976597388,-0.042617219949443785,0.042617219949443785,Best API higher
-brandt_gtd_attack_type,GTD attack type (9-cl),Events & Actions,gpt-5.4-nano,Mistral Sm 24B,0.6166733347077308,0.5750213769427017,-0.04165195776502906,0.04165195776502906,Best API higher
-ballard_incivility,Ballard incivility,Relevance & Harm,Claude Sonnet 4.6,Gemma 4 31B,0.5632183908045977,0.5222929936305732,-0.040925397174024436,0.040925397174024436,Best API higher
-osnabruegge_cross_domain_topic,Cross-domain topics (8-cl),Issues & Topics,Claude Sonnet 4.6,Gemma 4 31B,0.4755147533687056,0.4353198183355853,-0.04019493503312027,0.04019493503312027,Best API higher
-gilardi_stance,Gilardi stance,Position & Tone,Claude Sonnet 4.6,Gemma 4 31B,0.5676814731385978,0.5291208158507948,-0.038560657287803,0.038560657287803,Best API higher
-gilardi_relevance,Gilardi relevance,Relevance & Harm,gpt-5.5,Gemma 4 31B,0.9501084598698482,0.9147609147609148,-0.03534754510893334,0.03534754510893334,Best API higher
-burnham_trump_stance,Trump stance,Position & Tone,Claude Sonnet 4.6,Gemma 4 31B,0.8035347193357035,0.7683974832569618,-0.03513723607874175,0.03513723607874175,Best API higher
-theocharis_dynamics_incivility,Theocharis incivility,Relevance & Harm,gpt-5.5,Gemma 4 31B,0.6824324324324325,0.6571428571428571,-0.025289575289575317,0.025289575289575317,Best API higher
-erlich_ati_topics,ATI topics (7-label),Issues & Topics,Claude Sonnet 4.6,Gemma 4 31B,0.5016109474071208,0.4767635368949859,-0.02484741051213485,0.02484741051213485,Best API higher
-bestvater_kavanaugh_stance,Kavanaugh stance,Position & Tone,gpt-5.5,Gemma 4 31B,0.9543726235741444,0.9318181818181818,-0.022554441755962662,0.022554441755962662,Best API higher
-halterman_keith_cmp,CMP manifestos (7-cl),Issues & Topics,gpt-5.5,Gemma 4 31B,0.5971026611041956,0.5770605285451851,-0.02004213255901055,0.02004213255901055,Best API higher
-mellon_bes_mii_2024,BES MII (50-cl),Issues & Topics,gpt-5.5,Gemma 4 26B,0.5467361661728767,0.5277135555767765,-0.01902261059610022,0.01902261059610022,Best API higher
-rheault_line_of_fire_incivility,Line of Fire incivility,Relevance & Harm,DeepSeek V4 Pro,Gemma 4 26B,0.6068965517241379,0.5882352941176471,-0.018661257606490844,0.018661257606490844,Best API higher
-burnham_polnli_entailment,Burnham PolNLI,Claims & Relations,gpt-5.5,Gemma 4 31B,0.9081632653061223,0.8900523560209425,-0.018110909285179888,0.018110909285179888,Best API higher
-wesleyan_creative_ads_2022,Wesleyan ad tone,Position & Tone,gpt-5.4-nano,Gemma 4 26B,0.7110276217292517,0.6978563677861257,-0.013171253943126016,0.013171253943126016,Best API higher
-halterman_keith_bfrs,BFRS violence (12-cl),Events & Actions,gpt-5.5,Gemma 4 26B,0.6931006919583643,0.6808003001865107,-0.012300391771853603,0.012300391771853603,Best API higher
-muller_fujimura_campaign_policy_area,Campaign policy area (12-cl),Issues & Topics,gpt-5.5,Gemma 4 31B,0.6359389352160312,0.628407986248298,-0.007530948967733209,0.007530948967733209,Best API higher
-haunss_papea_fgz_forms,PAPEA protest forms (7-cl),Events & Actions,gpt-5.5,Gemma 4 31B,0.9646428729486743,0.9575104130779049,-0.007132459870769492,0.007132459870769492,Best API higher
-ornstein_scotus_sentiment,SCOTUS sentiment,Position & Tone,DeepSeek V4 Pro,Qwen3 14B,0.6683597711140085,0.6649066662015963,-0.0034531049124121305,0.0034531049124121305,Best API higher
-chae_semeval_stance,SemEval 2016 stance,Position & Tone,gpt-5.5,Gemma 4 31B,0.7728660973490605,0.7724432212061942,-4.2287614286629083e-4,4.2287614286629083e-4,Best API higher
-burnham_polnli_event_entailment,PolNLI event entailment,Claims & Relations,gpt-5.5,Gemma 4 31B,0.9730769230769232,0.974074074074074,9.971509971508086e-4,-9.971509971508086e-4,Best local higher
-toxicity_protests_es,Spanish protest toxicity,Relevance & Harm,Claude Sonnet 4.6,Gemma 4 26B,0.8877005347593583,0.8937007874015748,0.006000252642216486,-0.006000252642216486,Best local higher
-agoraspeech_criticism_agenda,AgoraSpeech criticism/agenda,Claims & Relations,DeepSeek V4 Pro,Mistral Sm 24B,0.9144170579029732,0.9216830720021104,0.007266014099137186,-0.007266014099137186,Best local higher
-twitcivility_impoliteness,TwitCivility impoliteness,Relevance & Harm,gpt-5.4-nano,Gemma 4 31B,0.6217228464419475,0.6308243727598566,0.009101526317909059,-0.009101526317909059,Best local higher
-brandt_political_relevance,Brandt relevance,Relevance & Harm,Claude Sonnet 4.6,Qwen3 14B,0.726027397260274,0.7391304347826086,0.01310303752233466,-0.01310303752233466,Best local higher
-douglass_icbe_sentence_event_type,ICBe event type (5-cl),Events & Actions,DeepSeek V4 Pro,Gemma 4 26B,0.5055795347230292,0.5296694213046859,0.024089886581656672,-0.024089886581656672,Best local higher
-halterman_ccc_protest,CCC protest type,Events & Actions,gpt-5.5,Qwen3 14B,0.453165087274399,0.49881503776753905,0.045649950493140024,-0.045649950493140024,Best local higher
-burnham_covid_threat_minimization,COVID threat minimization,Claims & Relations,gpt-5.4-nano,Mistral Sm 24B,0.5378151260504201,0.6015037593984962,0.06368863334807606,-0.06368863334807606,Best local higher
-dicocco_manifesto_populism,Manifesto populism,Claims & Relations,Claude Sonnet 4.6,Mistral Sm 24B,0.3606557377049181,0.4545454545454546,0.09388971684053649,-0.09388971684053649,Best local higher
+dicocco_manifesto_populism,Manifesto populism,Claims & Relations,Claude Sonnet 4.6,Mistral Sm 24B,0.3606557377049181,0.4545454545454546,0.09388971684053649,-0.09388971684053649,Local ahead
+burnham_covid_threat_minimization,COVID threat minimization,Claims & Relations,gpt-5.4-nano,Mistral Sm 24B,0.5378151260504201,0.6015037593984962,0.06368863334807606,-0.06368863334807606,Local ahead
+halterman_ccc_protest,CCC protest type,Events & Actions,gpt-5.5,Qwen3 14B,0.453165087274399,0.49881503776753905,0.045649950493140024,-0.045649950493140024,Local ahead
+douglass_icbe_sentence_event_type,ICBe event type (5 classes),Events & Actions,DeepSeek V4 Pro,Gemma 4 26B,0.5055795347230292,0.5296694213046859,0.024089886581656672,-0.024089886581656672,Local ahead
+brandt_political_relevance,Brandt relevance,Relevance & Harm,Claude Sonnet 4.6,Qwen3 14B,0.726027397260274,0.7391304347826086,0.01310303752233466,-0.01310303752233466,Local ahead
+twitcivility_impoliteness,TwitCivility impoliteness,Relevance & Harm,gpt-5.4-nano,Gemma 4 31B,0.6217228464419475,0.6308243727598566,0.009101526317909059,-0.009101526317909059,Local ahead
+agoraspeech_criticism_agenda,AgoraSpeech criticism/agenda,Claims & Relations,DeepSeek V4 Pro,Mistral Sm 24B,0.9144170579029732,0.9216830720021104,0.007266014099137186,-0.007266014099137186,Local ahead
+toxicity_protests_es,Spanish protest toxicity,Relevance & Harm,Claude Sonnet 4.6,Gemma 4 26B,0.8877005347593583,0.8937007874015748,0.006000252642216486,-0.006000252642216486,Local ahead
+burnham_polnli_event_entailment,PolNLI event entailment,Claims & Relations,gpt-5.5,Gemma 4 31B,0.9730769230769232,0.974074074074074,9.971509971508086e-4,-9.971509971508086e-4,Local ahead
+chae_semeval_stance,SemEval 2016 stance,Position & Tone,gpt-5.5,Gemma 4 31B,0.7728660973490605,0.7724432212061942,-4.2287614286629083e-4,4.2287614286629083e-4,API ahead
+ornstein_scotus_sentiment,SCOTUS sentiment,Position & Tone,DeepSeek V4 Pro,Qwen3 14B,0.6683597711140085,0.6649066662015963,-0.0034531049124121305,0.0034531049124121305,API ahead
+haunss_papea_fgz_forms,PAPEA protest forms (7 classes),Events & Actions,gpt-5.5,Gemma 4 31B,0.9646428729486743,0.9575104130779049,-0.007132459870769492,0.007132459870769492,API ahead
+muller_fujimura_campaign_policy_area,Campaign policy area (12 classes),Issues & Topics,gpt-5.5,Gemma 4 31B,0.6359389352160312,0.628407986248298,-0.007530948967733209,0.007530948967733209,API ahead
+halterman_keith_bfrs,BFRS violence (12 classes),Events & Actions,gpt-5.5,Gemma 4 26B,0.6931006919583643,0.6808003001865107,-0.012300391771853603,0.012300391771853603,API ahead
+wesleyan_creative_ads_2022,Wesleyan ad tone,Position & Tone,gpt-5.4-nano,Gemma 4 26B,0.7110276217292517,0.6978563677861257,-0.013171253943126016,0.013171253943126016,API ahead
+burnham_polnli_entailment,Burnham PolNLI,Claims & Relations,gpt-5.5,Gemma 4 31B,0.9081632653061223,0.8900523560209425,-0.018110909285179888,0.018110909285179888,API ahead
+rheault_line_of_fire_incivility,Line of Fire incivility,Relevance & Harm,DeepSeek V4 Pro,Gemma 4 26B,0.6068965517241379,0.5882352941176471,-0.018661257606490844,0.018661257606490844,API ahead
+mellon_bes_mii_2024,BES MII (50 classes),Issues & Topics,gpt-5.5,Gemma 4 26B,0.5467361661728767,0.5277135555767765,-0.01902261059610022,0.01902261059610022,API ahead
+halterman_keith_cmp,CMP manifestos (7 classes),Issues & Topics,gpt-5.5,Gemma 4 31B,0.5971026611041956,0.5770605285451851,-0.02004213255901055,0.02004213255901055,API ahead
+bestvater_kavanaugh_stance,Kavanaugh stance,Position & Tone,gpt-5.5,Gemma 4 31B,0.9543726235741444,0.9318181818181818,-0.022554441755962662,0.022554441755962662,API ahead
+erlich_ati_topics,ATI topics (7 labels),Issues & Topics,Claude Sonnet 4.6,Gemma 4 31B,0.5016109474071208,0.4767635368949859,-0.02484741051213485,0.02484741051213485,API ahead
+theocharis_dynamics_incivility,Theocharis incivility,Relevance & Harm,gpt-5.5,Gemma 4 31B,0.6824324324324325,0.6571428571428571,-0.025289575289575317,0.025289575289575317,API ahead
+burnham_trump_stance,Trump stance,Position & Tone,Claude Sonnet 4.6,Gemma 4 31B,0.8035347193357035,0.7683974832569618,-0.03513723607874175,0.03513723607874175,API ahead
+gilardi_relevance,Gilardi relevance,Relevance & Harm,gpt-5.5,Gemma 4 31B,0.9501084598698482,0.9147609147609148,-0.03534754510893334,0.03534754510893334,API ahead
+gilardi_stance,Gilardi stance,Position & Tone,Claude Sonnet 4.6,Gemma 4 31B,0.5676814731385978,0.5291208158507948,-0.038560657287803,0.038560657287803,API ahead
+osnabruegge_cross_domain_topic,Cross-domain topics (8 classes),Issues & Topics,Claude Sonnet 4.6,Gemma 4 31B,0.4755147533687056,0.4353198183355853,-0.04019493503312027,0.04019493503312027,API ahead
+ballard_incivility,Ballard incivility,Relevance & Harm,Claude Sonnet 4.6,Gemma 4 31B,0.5632183908045977,0.5222929936305732,-0.040925397174024436,0.040925397174024436,API ahead
+brandt_gtd_attack_type,GTD attack type (9 classes),Events & Actions,gpt-5.4-nano,Mistral Sm 24B,0.6166733347077308,0.5750213769427017,-0.04165195776502906,0.04165195776502906,API ahead
+cap_crs_policy_topic,CAP CRS reports (21 classes),Issues & Topics,gpt-5.5,Gemma 4 31B,0.7321803176091826,0.6895630976597388,-0.042617219949443785,0.042617219949443785,API ahead
+bestvater_wm_stance,Women's March stance,Position & Tone,Claude Sonnet 4.6,Gemma 4 31B,0.90537084398977,0.8590250329380764,-0.04634581105169355,0.04634581105169355,API ahead
+haunss_papea_claims,PAPEA protest claims (28 classes),Issues & Topics,gpt-5.5,Gemma 4 31B,0.4623399842577075,0.41287056230682045,-0.04946942195088705,0.04946942195088705,API ahead
+politicause_causal_relation,PolitiCAUSE causal relation,Claims & Relations,Claude Sonnet 4.6,Gemma 4 31B,0.7164179104477612,0.6636971046770601,-0.05272080577070104,0.05272080577070104,API ahead
+plover_cameo_event,PLOVER CAMEO event (18 classes),Events & Actions,gpt-5.5,Gemma 4 31B,0.6537294490610169,0.5774070180942642,-0.07632243096675273,0.07632243096675273,API ahead
+cap_party_platform_policy_topic,CAP party platforms (21 classes),Issues & Topics,Claude Sonnet 4.6,Gemma 4 31B,0.7313208025863664,0.6466154865250479,-0.08470531606131859,0.08470531606131859,API ahead

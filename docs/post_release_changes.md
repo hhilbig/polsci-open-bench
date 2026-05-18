@@ -1,416 +1,83 @@
-# Post-release changes
+# Public Release Notes
 
-Last updated: 2026-05-09
+Last updated: 2026-05-18
 
-This note inventories the current working-tree changes relative to
-`HEAD` commit `1d20dce` (2026-04-29), which appears to be the last
-pre-release repo state.
+This note summarizes the current public release state. The report is the
+authoritative narrative artifact; the repository stores the data, prompts,
+summaries, figures, and reproduction instructions that support it.
 
-## Bottom line
+## Current Release
 
-- The public, scored benchmark artifacts still correspond to the original
-  10-task release.
-- Since release, the repo has been upgraded in four main ways:
-  - benchmark infrastructure is now manifest driven
-  - raw artifact integrity issues were repaired
-  - four new live tasks were added for future reruns
-  - reporting, docs, and tests were expanded substantially
+- The public benchmark covers 34 political science classification tasks.
+- The serial benchmark covers 9 models: 5 local open-weight models and 4
+  commercial API models.
+- The serial grid is complete: 34 tasks x 9 models = 306 task-model pairs.
+- The release includes 147,825 serial model-item classifications.
+- The local prompt-batching grid is complete for the five local models with 10
+  items per prompt: 34 tasks x 5 models = 170 task-model pairs.
+- The main public report is [`output/report_pdf.pdf`](../output/report_pdf.pdf).
 
-## 1. Infrastructure and reproducibility
+## Main Artifacts
 
-- Added manifest-driven task loading:
-  - [`code/task_registry.py`](../code/task_registry.py)
-  - [`tasks/`](../tasks)
-- Added manifest-driven model loading:
-  - [`code/model_registry.py`](../code/model_registry.py)
-  - [`models/`](../models)
-- Added a built-in DeepSeek API model manifest:
-  - [`models/deepseek_v4_pro.yaml`](../models/deepseek_v4_pro.yaml)
-- Added provider-specific OpenAI-compatible manifest fields for cases like
-  DeepSeek:
-  - `provider`
-  - `response_format_type`
-  - `thinking_mode`
-- Added run-status scaffolding for long-running local, sidecar, `mac2`,
-  droplet, and API jobs:
-  - [`code/run_registry.py`](../code/run_registry.py)
-  - [`output/run_registry.jsonl`](../output/run_registry.jsonl)
-  - [`docs/run_status.md`](run_status.md)
-- Updated the future local-model watchlist in [`TODO.md`](../TODO.md) after a
-  May 2026 open-weight model scan. `granite4.1:8b` was later tabled after a
-  completed sidecar showed a 5.3% parse-error rate on the 18-task grid; Baidu
-  ERNIE 4.5, DeepSeek V4 Flash, Nemotron Elastic, Granite Switch, and Ling
-  remain conditional watchlist items.
-- Updated the main runners and summary builders to use the registries:
-  - [`code/benchmark.py`](../code/benchmark.py)
-  - [`code/batch_benchmark.py`](../code/batch_benchmark.py)
-  - [`code/build_summary.py`](../code/build_summary.py)
-  - [`code/build_summary_batched.py`](../code/build_summary_batched.py)
-- Added pinned Python dependencies:
-  - [`requirements.txt`](../requirements.txt)
-- Added custom extension docs and minimal examples:
-  - [`docs/custom_tasks.md`](custom_tasks.md)
-  - [`docs/custom_models.md`](custom_models.md)
-  - [`examples/minimal_custom_task/`](../examples/minimal_custom_task)
-  - [`examples/minimal_custom_models/`](../examples/minimal_custom_models)
-- Hardened built-in API model loading so OpenAI-compatible or Anthropic models
-  without configured keys are skipped with a notice rather than run into the
-  benchmark as error rows.
-- Added a DeepSeek-specific compatibility path in the OpenAI runner:
-  - `deepseek-v4-pro` now uses `response_format={"type": "json_object"}`
-  - the runner appends explicit JSON-only output reminders for that path
-  - the live DeepSeek manifest forces non-thinking mode
+- Serial predictions: [`output/predictions.csv`](../output/predictions.csv)
+- Serial summary: [`output/summary.csv`](../output/summary.csv)
+- Prompt-batched predictions:
+  [`output/predictions_batched.csv`](../output/predictions_batched.csv)
+- Prompt-batched summary:
+  [`output/summary_batched.csv`](../output/summary_batched.csv)
+- Local 10-item comparison summary:
+  [`output/summary_batched_local_b10.csv`](../output/summary_batched_local_b10.csv)
+- Task inventory: [`docs/task_inventory.md`](task_inventory.md)
+- Output schema: [`docs/schema.md`](schema.md)
+- Reproduction guide: [`docs/reproduce.md`](reproduce.md)
 
-## 2. Integrity repairs to released artifacts
+## What Changed Since The Earlier Release
 
-- Sampled `item_id` values are now guaranteed unique within task.
-- The checked-in raw prediction files were repaired to use the same
-  deterministic duplicate-ID suffixing as the live loaders:
-  - [`output/predictions.csv`](../output/predictions.csv)
-  - [`output/predictions_batched.csv`](../output/predictions_batched.csv)
-- Stale `state_adaptation` columns were removed from the batched raw file.
-- The serial summary was rebuilt after the repair:
-  - [`output/summary.csv`](../output/summary.csv)
-- The substantive benchmark results did not change in scope:
-  - the checked-in scored benchmark still covers the original 10 tasks
-  - no new model calls were made during this post-release maintenance wave
-- The only metric changes from the integrity repair were small paired-bootstrap
-  CI updates, concentrated in `gilardi_relevance`.
+The earlier public repository described a smaller benchmark. The current release
+promotes the expanded task and model set into one public 34-task benchmark.
 
-## 3. New live tasks added after release
+- The task set now contains 34 task manifests under [`tasks/`](../tasks).
+- The model set now contains five local Ollama models and four API models:
+  OpenAI, Anthropic, and DeepSeek.
+- The serial prediction and summary files were rebuilt for the full 34-task
+  grid.
+- Local prompt batching with 10 items per prompt was completed for all 34 tasks
+  and all five local models.
+- The report was rebuilt around the current results, including local/API gaps,
+  coding complexity, runtime, batching reliability, cost, and appendix tables.
+- Public docs were updated to use the current terminology: "main F1" in prose,
+  "items" rather than "texts" where the unit is a benchmark row, and "10 items
+  per prompt" rather than shorthand batching notation.
 
-These tasks are now implemented in the live manifests and ready for future
-benchmark reruns, but they are not yet included in the checked-in scored
-prediction artifacts.
+## Result Notes
 
-1. `osnabruegge_cross_domain_topic`
-   - Source: Osnabruegge, Ash, and Morelli (2023)
-   - Family: `Policy-topic coding`
-   - Files:
-     - [`code/build_osnabruegge_cross_domain_topic_task.py`](../code/build_osnabruegge_cross_domain_topic_task.py)
-     - [`data/osnabruegge_cross_domain_topic.csv`](../data/osnabruegge_cross_domain_topic.csv)
-     - [`tasks/osnabruegge_cross_domain_topic.yaml`](../tasks/osnabruegge_cross_domain_topic.yaml)
-     - [`prompts/osnabruegge_cross_domain_topic.txt`](../prompts/osnabruegge_cross_domain_topic.txt)
+- Local models match or exceed API performance on 9 of 34 tasks when comparing
+  the best local and best API model within each task.
+- On average, the best API model exceeds the best local model by 0.015 main F1.
+- The four strongest models, Claude Sonnet 4.6, gpt-5.5, Gemma 4 31B, and
+  DeepSeek V4 Pro, are separated by 0.021 mean F1.
+- API models have their clearest edge on high-complexity tasks with many active
+  labels, long codebooks, or multiple outputs per item.
+- Local prompt batching usually reduces runtime per item, but some model-task
+  pairs return invalid response formats or invalid labels.
 
-2. `rheault_line_of_fire_incivility`
-   - Source: Rheault, Rayment, and Musulan (2019)
-   - Family: `Relevance / Incivility`
-   - Files:
-     - [`code/build_rheault_line_of_fire_task.py`](../code/build_rheault_line_of_fire_task.py)
-     - [`data/rheault_line_of_fire_incivility.csv`](../data/rheault_line_of_fire_incivility.csv)
-     - [`tasks/rheault_line_of_fire_incivility.yaml`](../tasks/rheault_line_of_fire_incivility.yaml)
-     - [`prompts/rheault_line_of_fire_incivility.txt`](../prompts/rheault_line_of_fire_incivility.txt)
+## Reliability And Scope
 
-3. `haunss_papea_fgz_forms`
-   - Source: Haunss et al. (2025)
-   - Family: `Event coding`
-   - Files:
-     - [`code/build_haunss_papea_fgz_forms_task.py`](../code/build_haunss_papea_fgz_forms_task.py)
-     - [`data/haunss_papea_fgz_forms.csv`](../data/haunss_papea_fgz_forms.csv)
-     - [`tasks/haunss_papea_fgz_forms.yaml`](../tasks/haunss_papea_fgz_forms.yaml)
-     - [`prompts/haunss_papea_fgz_forms.txt`](../prompts/haunss_papea_fgz_forms.txt)
+- Performance metrics are computed over usable outputs. Response-format and
+  label failure rates therefore need to be read alongside F1, accuracy, and MCC.
+- Provider Batch API mode is different from prompt batching. Provider Batch API
+  changes request processing and billing; prompt batching places several items
+  into one model call.
+- Granite 4.1 8B is not part of the current nine-model benchmark. It was tabled
+  after a completed run showed an elevated parse-error rate.
+- The benchmark studies prompt-based classification. It is not a replacement for
+  supervised baselines when large labeled datasets exist.
 
-4. `brandt_political_relevance`
-   - Source: Brandt et al. (2025)
-   - Family: `Relevance / Incivility`
-   - Files:
-     - [`code/build_brandt_political_relevance_task.py`](../code/build_brandt_political_relevance_task.py)
-     - [`data/brandt_political_relevance.csv`](../data/brandt_political_relevance.csv)
-     - [`tasks/brandt_political_relevance.yaml`](../tasks/brandt_political_relevance.yaml)
-     - [`prompts/brandt_political_relevance.txt`](../prompts/brandt_political_relevance.txt)
-   - Note:
-     - this public corpus has 320 usable rows after exact-text deduplication, so
-       the live loader uses all available rows rather than forcing a 500-item sample
+## Release Checklist
 
-5. `theocharis_dynamics_incivility`
-   - Source: Theocharis et al. (2020)
-   - Family: `Relevance / Incivility`
-   - Files:
-     - [`code/build_theocharis_dynamics_incivility_task.py`](../code/build_theocharis_dynamics_incivility_task.py)
-     - [`data/theocharis_dynamics_incivility.csv`](../data/theocharis_dynamics_incivility.csv)
-     - [`tasks/theocharis_dynamics_incivility.yaml`](../tasks/theocharis_dynamics_incivility.yaml)
-     - [`prompts/theocharis_dynamics_incivility.txt`](../prompts/theocharis_dynamics_incivility.txt)
-   - Note:
-     - this public replication training file has 4,000 labeled rows; the live
-       build drops 3 rows during exact-text conflict and duplicate handling,
-       leaving 3,997 usable tweets
-
-## 4. Diagnostics, tests, and reporting
-
-- Added a task-length audit build:
-  - [`code/build_task_length_audit.py`](../code/build_task_length_audit.py)
-  - [`output/task_length_audit.csv`](../output/task_length_audit.csv)
-  - [`output/task_length_analysis.md`](../output/task_length_analysis.md)
-- Added loader, manifest, and artifact integrity tests:
-  - [`tests/test_benchmark_integrity.py`](../tests/test_benchmark_integrity.py)
-- Updated report inputs and rerendered public-facing artifacts:
-  - [`output/report_pdf.qmd`](../output/report_pdf.qmd)
-  - [`output/report_pdf.pdf`](../output/report_pdf.pdf)
-  - [`output/figures/fig-mean-f1.png`](../output/figures/fig-mean-f1.png)
-  - [`output/figures/fig-speed.png`](../output/figures/fig-speed.png)
-
-## 5. Documentation and roadmap
-
-- Expanded core docs:
-  - [`README.md`](../README.md)
-  - [`docs/reproduce.md`](reproduce.md)
-  - [`docs/schema.md`](schema.md)
-  - [`docs/prompts_provenance.md`](prompts_provenance.md)
-  - [`docs/status.md`](status.md)
-  - cost-tracking guidance in the scaffolding docs now distinguishes
-    provider-reconciled billing from manifest-level benchmark approximations
-- Added ongoing roadmap / maintenance tracking:
-  - [`TODO.md`](../TODO.md)
-- Added an explicit branch / sidecar / canonical workflow note:
-  - [`docs/release_workflow.md`](release_workflow.md)
-- Added sourcing notes for benchmark expansion:
-  - [`docs/task_expansion_candidates.md`](task_expansion_candidates.md)
-  - [`docs/task_expansion_candidates.csv`](task_expansion_candidates.csv)
-- The roadmap now also records a possible future local-model expansion pass,
-  including a concrete shortlist:
-  - add next: run the prepared built-in `gemma4:26b` manifest
-  - sidecar only or conditional: `LFM2-24B-A2B`, `gpt-oss:20b`,
-    `glm-4.7-flash`
-  - skip for now: larger or more overlapping options such as
-    `DeepSeek-R1-Distill-Qwen-32B`, `gpt-oss:120b`, and `Qwen 2.5-72B`
-  - the new built-in manifest lives at
-    [`models/gemma4_26b_a4b.yaml`](../models/gemma4_26b_a4b.yaml)
-- A second parallel sourcing pass on 2026-05-03 expanded the structured task
-  candidate queue with new `Relevance / Incivility`, `Event coding`,
-  `Policy-topic coding`, and `new family` leads, including `Clicks and Stones`,
-  `Political DEBATE / PolNLI`, and `Campaign communication and legislative leadership`.
-- That sourcing pass also produced a locked broader next verification wave of
-  four targets:
-  - `ICBe`
-  - `Campaign communication and legislative leadership`
-  - `Clicks and Stones`
-  - `Political DEBATE / PolNLI`
-- `ICBe` has now been replication-verified as the first target in that wave.
-  Direct inspection of the public files shows a clean path to a sentence-level
-  event task using the aligned agreed-event file plus the public sentence
-  corpus. The current recommended first slice is a `5`-class sentence task:
-  `No Event`, `Action`, `Speech`, `Thought`, and `Mixed`.
-- That `ICBe` sentence task is now live in the repo as
-  [`douglass_icbe_sentence_event_type`](../tasks/douglass_icbe_sentence_event_type.yaml),
-  built from the public RDS files with `12,676` cleaned sentence rows after
-  dropping `4` malformed sentence rows from the public corpus.
-- `Campaign communication and legislative leadership` has now also been
-  implemented in the live manifests as
-  [`muller_fujimura_campaign_policy_area`](../tasks/muller_fujimura_campaign_policy_area.yaml),
-  built from the public supervised sentence splits. The live task keeps `12`
-  policy-area labels, drops `12` rows tied to exact-text label conflicts, then
-  deduplicates exact repeated text-label pairs to leave `2,915` cleaned rows.
-- `Clicks and Stones` failed the direct-ingest screen. The public archive
-  exposes legislator-level aggregate hostility rates and replication code for
-  those aggregates, but not tweet-level public text plus labels.
-- `Political DEBATE / PolNLI` has now been implemented as
-  [`burnham_polnli_entailment`](../tasks/burnham_polnli_entailment.yaml), using
-  the public PolNLI test split. The live task keeps `15,314` cleaned
-  premise-hypothesis pairs after dropping `52` duplicate or conflicting pairs
-  and maps the source coding so `gt_entails = 1` means the hypothesis is
-  supported by the premise.
-
-## 6. Current live state after the post-release wave
-
-- Checked-in scored benchmark: still 10 tasks
-- Live built-in task library: now 18 tasks
-- Live built-in model manifests: now 9 models, including `deepseek-v4-pro`
-  and the prepared `gemma4:26b` local manifest
-- New task families are more balanced than at release:
-  - `Relevance / Incivility`: now 5 live tasks
-  - `Sentiment / Stance / Tone`: 4 live tasks
-  - `Event coding`: 4 live tasks
-  - `Policy-topic coding`: 4 live tasks
-  - `Hypothesis-conditioned classification`: 1 live pilot task
-
-## 7. Not done yet
-
-- The four newly added live tasks have now been run for the four local
-  open-weight models in a sidecar artifact, but that sidecar has not been
-  merged into the canonical public outputs.
-- No post-release full serial rerun with the main API models has been committed
-  yet.
-- No post-release batched rerun has been committed yet.
-- A 2026-05-04 replacement screen for the failed `Clicks and Stones` slot
-  rejected three additional `Relevance / Incivility` candidates for the live
-  benchmark:
-  - `Super-Unsupervised Classification for Labelling Text`: label/score files
-    do not expose text, and the only public text example file has 35 rows.
-  - `Citizens' Perceptions of Online Abuse Directed at Politicians`: public
-    data expose numeric message IDs and respondent ratings, but not message text.
-  - `Online Abuse of Politicians`: public data expose numeric message IDs and
-    politician ratings, but not message text.
-- The same screen verified three direct-label alternatives:
-  - `The Dynamics of Political Incivility on Twitter`: `4,000` public English
-    tweets with direct `uncivil` labels in a paper-backed replication repo,
-    now implemented as `theocharis_dynamics_incivility`.
-  - `toxicity-protests-ES`: `1,000` public Spanish protest-discourse rows with
-    human coder labels, useful for multilingual coverage.
-  - `TwitCivility`: `13,124` public rows with direct `impoliteness` and
-    `intolerance` labels, but weaker on the published-political-science-paper
-    criterion.
-- Non-English tasks are acceptable for future benchmark expansion if they
-  otherwise satisfy the task-selection criteria.
-- The next recommended task-collection step is to either implement the
-  multilingual `toxicity-protests-ES` fallback or return to balancing additions
-  across the other original task families.
-
-## 8. DeepSeek Sidecar Runs
-
-- Two post-release DeepSeek serial runs were completed on `mac2` and copied back
-  into a dated sidecar archive:
-  - [`output/archive/deepseek_sidecar_2026-05-02/`](../output/archive/deepseek_sidecar_2026-05-02)
-- These artifacts are explicitly not merged into the canonical public outputs in
-  `output/predictions.csv`, `output/summary.csv`, or `output/report_pdf.pdf`.
-- Sidecar contents:
-  - `deepseek_full_predictions_nonthinking.csv`
-  - `deepseek_full_summary_nonthinking.csv`
-  - `deepseek_full_predictions_thinking.csv`
-  - `deepseek_full_summary_thinking.csv`
-- Non-thinking DeepSeek sidecar:
-  - 14 live tasks
-  - 6,820 rows
-  - 0 parse errors
-  - mean latency about 1.59 s/item
-- Thinking DeepSeek sidecar:
-  - 14 live tasks
-  - 6,820 rows
-  - 152 parse errors
-  - mean latency about 8.17 s/item
-- Substantive read:
-  - thinking mode improved DeepSeek's mean macro F1 on the original 10 release
-    tasks from about 0.591 to about 0.609
-  - but it also made the model much slower and much less robust on structured
-    output, so both conditions are being retained as sidecar artifacts rather
-    than merged into the canonical benchmark
-
-## 9. Open-weight sidecar run for new tasks
-
-- A local-model rerun for the four post-release tasks was completed on `mac2`
-  and copied back into a dated sidecar archive:
-  - [`output/archive/openweight_new_tasks_2026-05-02/`](../output/archive/openweight_new_tasks_2026-05-02)
-- Sidecar contents:
-  - `new_tasks_openweight_predictions.csv`
-  - `new_tasks_openweight_summary.csv`
-- Coverage:
-  - 4 tasks
-  - 4 local open-weight models
-  - 7,280 scored rows
-  - 0 parse errors
-- Best sidecar model by task:
-  - `brandt_political_relevance`: `qwen3:14b-q4_K_M` (`0.739`)
-  - `haunss_papea_fgz_forms`: `gemma4:31b-it-q4_K_M` (`0.958`)
-  - `osnabruegge_cross_domain_topic`: `gemma4:31b-it-q4_K_M` (`0.435`)
-  - `rheault_line_of_fire_incivility`: `gemma4:31b-it-q4_K_M` (`0.582`)
-- Merge decision:
-  - these results are being kept as sidecar artifacts for now
-  - they are not merged into `output/predictions.csv`, `output/summary.csv`, or
-    `output/report_pdf.pdf` because the main API models have not yet been rerun
-    on the same four tasks
-
-## 10. OpenAI-only proprietary sidecar for new tasks
-
-- An OpenAI-only rerun for the four post-release tasks was completed and stored
-  as a dated sidecar archive:
-  - [`output/archive/proprietary_openai_only_new_tasks_2026-05-03/`](../output/archive/proprietary_openai_only_new_tasks_2026-05-03)
-- Sidecar contents:
-  - `proprietary_openai_only_predictions.csv`
-  - `proprietary_openai_only_summary.csv`
-  - `proprietary_openai_only.log`
-- Coverage:
-  - 4 tasks
-  - 2 OpenAI models
-  - 3,640 scored rows
-  - 0 parse errors
-- Best sidecar model by task:
-  - `brandt_political_relevance`: `gpt-5.4-nano` (`0.646`)
-  - `haunss_papea_fgz_forms`: `gpt-5.5` (`0.965`)
-  - `osnabruegge_cross_domain_topic`: `gpt-5.5` (`0.443`)
-  - `rheault_line_of_fire_incivility`: `gpt-5.4-nano` (`0.607`)
-- Merge decision:
-  - these results are being kept as sidecar artifacts for now
-  - they are not merged into `output/predictions.csv`, `output/summary.csv`, or
-    `output/report_pdf.pdf` because the Claude run is still missing for the
-    same four tasks
-
-## 11. Combined six-model comparison table for new tasks
-
-- Added a helper archive that combines the existing open-weight and OpenAI-only
-  sidecars for the four post-release tasks:
-  - [`output/archive/new_tasks_full_comparison_2026-05-03/`](../output/archive/new_tasks_full_comparison_2026-05-03)
-- Files:
-  - `combined_new_tasks_summary_long.csv`
-  - `combined_new_tasks_headline_f1_wide.csv`
-  - `combined_new_tasks_headline_f1.md`
-- Scope:
-  - 4 tasks
-  - 6 models
-  - 24 `(task, model)` cells
-- Purpose:
-  - provide one compact comparison table across the currently completed local
-    and OpenAI reruns
-  - remain non-canonical until the same task set is completed for Claude
-
-## 12. Phi-4 Mini sidecar decision
-
-- A `phi4-mini` sidecar over the live 18-task benchmark completed on `mac2` on
-  2026-05-09.
-- Sidecar output:
-  - `/Users/hannohilbig/sidecar-runs/phi4-mini-2026-05-09/output/sidecar/phi4_mini_predictions.csv`
-- Quick metrics:
-  - 18 tasks
-  - 8,820 scored rows
-  - 29 parse errors (0.33%)
-  - mean headline F1: 0.488
-  - median latency: about 0.45 s/item
-- Decision:
-  - keep Phi-4 Mini as an archived speed-baseline artifact
-  - do not promote it into the main `models/` lineup
-  - reason: the speed gain over `qwen3:30b-a3b-q4_K_M` is only about 1.35x on
-    median latency, while accuracy is materially weaker
-
-## 13. GPT-5.5 and Claude Sonnet Batch API merge for extension tasks
-
-- The GPT-5.5 OpenAI Batch API run for the 16 additional manifests completed
-  on 2026-05-11 and was merged with the imported `mac2` sidecar artifacts.
-- The Claude Sonnet 4.6 Anthropic Batch API run for the same 16 manifests
-  completed on 2026-05-14. Retries repaired provider errors and Anthropic
-  schema-key restrictions. One CAP CRS row remains a genuine malformed output:
-  `cap_crs_9818` repeatedly returned `Intelligence Affairs`, which is not a
-  valid CAP major-topic label.
-- These artifacts were folded into the canonical release files on
-  2026-05-15. The public report now reads `output/predictions.csv`,
-  `output/summary.csv`, `output/predictions_batched.csv`, and
-  `output/summary_batched.csv` directly.
-- Coverage:
-  - 16 extension tasks
-  - 9 observed models
-  - 144 `(task, model)` cells
-  - 68,445 prediction rows
-  - 85 parse/API errors after normalization: 84 from the imported open-weight
-    sidecar and 1 from Claude Sonnet 4.6; GPT-5.5 itself has 7,605 rows and
-    0 parse/API errors
-- GPT-5.5 Batch API cost:
-  - estimated batch-discounted cost: $14.13
-  - recorded cost cap: $20
-- Merge decision:
-  - treat the 16 extension tasks as canonical in the report
-  - no model-task cells remain missing in the unified 34-task grid
-
-## 14. Canonical 34-task public-release promotion
-
-- On 2026-05-15, the benchmark artifacts were reorganized around one canonical
-  34-task task set.
-- Task manifests:
-  - all 34 canonical manifests now live in [`tasks/`](../tasks)
-  - generated task counts now come from [`docs/task_inventory.md`](task_inventory.md)
-- Canonical artifacts:
-  - [`output/predictions.csv`](../output/predictions.csv): 147,825 serial
-    prediction rows
-  - [`output/summary.csv`](../output/summary.csv): 306 serial model-task cells
-  - [`output/predictions_batched.csv`](../output/predictions_batched.csv):
-    114,125 prompt-batched prediction rows
-  - [`output/summary_batched_local_b10.csv`](../output/summary_batched_local_b10.csv):
-    all 34 tasks x 5 local models at b=10
-- Public docs, report prose, task inventory, and coverage matrix now describe
-  the benchmark as a single 34-task grid rather than separate waves.
+- [x] Report PDF rebuilt.
+- [x] README updated for the 34-task release.
+- [x] Task inventory refreshed.
+- [x] Output schema updated for all 34 tasks.
+- [x] Twitter/X thread draft saved in [`docs/twitter_thread.md`](twitter_thread.md).
+- [x] Appendix tables kept in the PDF.

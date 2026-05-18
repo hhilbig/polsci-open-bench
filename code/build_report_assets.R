@@ -120,7 +120,7 @@ model_palette <- c(
   "gpt-5.5"           = "#1f1f1f",
   "gpt-5.4-nano"      = "#8a8a8a",
   "DeepSeek V4 Pro"   = "#555555",
-  "Claude Sonnet 4.6" = "#b8b8b8"
+  "Claude Sonnet 4.6" = "#a8a8a8"
 )
 
 label_models <- function(data) {
@@ -155,30 +155,30 @@ label_tasks <- function(data, expanded = TRUE) {
         "gilardi_stance"             = "Gilardi stance",
         "ornstein_scotus_sentiment"  = "SCOTUS sentiment",
         "halterman_ccc_protest"      = if (expanded) "CCC protest type" else "CCC protest",
-        "haunss_papea_fgz_forms"     = if (expanded) "PAPEA protest forms (7-cl)" else "PAPEA protest forms",
-        "douglass_icbe_sentence_event_type" = if (expanded) "ICBe event type (5-cl)" else "ICBe event type",
+        "haunss_papea_fgz_forms"     = if (expanded) "PAPEA protest forms (7 classes)" else "PAPEA protest forms",
+        "douglass_icbe_sentence_event_type" = if (expanded) "ICBe event type (5 classes)" else "ICBe event type",
         "chae_semeval_stance"        = if (expanded) "SemEval 2016 stance" else "SemEval stance",
-        "halterman_keith_bfrs"       = if (expanded) "BFRS violence (12-cl)" else "BFRS Pakistan",
-        "halterman_keith_cmp"        = if (expanded) "CMP manifestos (7-cl)" else "CMP manifestos",
-        "mellon_bes_mii_2024"        = if (expanded) "BES MII (50-cl)" else "BES MII",
-        "muller_fujimura_campaign_policy_area" = if (expanded) "Campaign policy area (12-cl)" else "Campaign policy area",
-        "osnabruegge_cross_domain_topic" = if (expanded) "Cross-domain topics (8-cl)" else "Cross-domain topics",
+        "halterman_keith_bfrs"       = if (expanded) "BFRS violence (12 classes)" else "BFRS Pakistan",
+        "halterman_keith_cmp"        = if (expanded) "CMP manifestos (7 classes)" else "CMP manifestos",
+        "mellon_bes_mii_2024"        = if (expanded) "BES MII (50 classes)" else "BES MII",
+        "muller_fujimura_campaign_policy_area" = if (expanded) "Campaign policy area (12 classes)" else "Campaign policy area",
+        "osnabruegge_cross_domain_topic" = if (expanded) "Cross-domain topics (8 classes)" else "Cross-domain topics",
         "wesleyan_creative_ads_2022" = if (expanded) "Wesleyan ad tone" else "Wesleyan ads",
         "toxicity_protests_es"       = "Spanish protest toxicity",
-        "brandt_gtd_attack_type"     = "GTD attack type (9-cl)",
-        "haunss_papea_claims"        = "PAPEA protest claims (28-cl)",
+        "brandt_gtd_attack_type"     = "GTD attack type (9 classes)",
+        "haunss_papea_claims"        = "PAPEA protest claims (28 classes)",
         "twitcivility_impoliteness"  = "TwitCivility impoliteness",
         "bestvater_wm_stance"        = "Women's March stance",
-        "erlich_ati_topics"          = "ATI topics (7-label)",
-        "plover_cameo_event"         = "PLOVER CAMEO event (18-cl)",
+        "erlich_ati_topics"          = "ATI topics (7 labels)",
+        "plover_cameo_event"         = "PLOVER CAMEO event (18 classes)",
         "burnham_polnli_event_entailment" = "PolNLI event entailment",
         "burnham_trump_stance"       = "Trump stance",
         "burnham_covid_threat_minimization" = "COVID threat minimization",
         "dicocco_manifesto_populism" = "Manifesto populism",
         "bestvater_kavanaugh_stance" = "Kavanaugh stance",
         "politicause_causal_relation" = "PolitiCAUSE causal relation",
-        "cap_party_platform_policy_topic" = "CAP party platforms (21-cl)",
-        "cap_crs_policy_topic"       = "CAP CRS reports (21-cl)",
+        "cap_party_platform_policy_topic" = "CAP party platforms (21 classes)",
+        "cap_crs_policy_topic"       = "CAP CRS reports (21 classes)",
         "agoraspeech_criticism_agenda" = "AgoraSpeech criticism/agenda"
       )
     )
@@ -258,8 +258,8 @@ per_task <- df |>
 p_mean_f1 <- ggplot() +
   geom_jitter(data = per_task,
               aes(x = model_short, y = headline_f1),
-              width = 0.22, height = 0, size = 1.5, alpha = 0.22,
-              color = "grey72") +
+              width = 0.22, height = 0, size = 1.45, alpha = 0.18,
+              color = "grey78") +
   geom_point(data = agg_f1 |> filter(!is.na(mean_f1)),
              aes(x = model_short, y = mean_f1, fill = model_short),
              shape = 21, size = 5, stroke = 0.6, color = "grey20") +
@@ -269,21 +269,22 @@ p_mean_f1 <- ggplot() +
             vjust = -1.5, size = 2.8, fontface = "bold") +
   scale_y_continuous(limits = c(0.20, 1.02), breaks = seq(0.2, 1, 0.2)) +
   scale_fill_manual(values = model_palette, guide = "none") +
-  labs(x = NULL, y = "Mean headline F1 across tasks") +
-  theme_hanno(fontsize = 10) +
+  labs(x = NULL, y = "Mean F1 across tasks") +
+  theme_hanno(fontsize = 10.5) +
   theme(panel.grid.major.x = element_blank(),
         axis.text.x = element_text(angle = 25, hjust = 1),
-        legend.position = "none")
+        legend.position = "none",
+        plot.margin = margin(5.5, 12, 12, 24))
 
 ggsave("output/figures/fig-mean-f1.png", plot = p_mean_f1,
-       width = 6.5, height = 3.8, dpi = 300, bg = "white")
+       width = 6.0, height = 3.45, dpi = 300, bg = "white")
 
 # Figure 2: family/type means
 fam_levels <- c(
-  "Relevance & Harm\n\"Does this count, or cross a line?\"",
-  "Position & Tone\n\"What side or tone does it take?\"",
-  "Events & Actions\n\"What happened?\"",
-  "Claims & Relations\n\"What claim or relation is stated?\"",
+  "Relevance & Harm\n\"Is it relevant or harmful?\"",
+  "Position & Tone\n\"What position or tone does it express?\"",
+  "Events & Actions\n\"What action or event is described?\"",
+  "Claims & Relations\n\"What claim or relationship is asserted?\"",
   "Issues & Topics\n\"What issue is this about?\""
 )
 family_label <- function(f) {
@@ -303,20 +304,23 @@ fam_df <- df |>
 p_family <- ggplot(fam_df, aes(x = fct_rev(model_short), y = family_mean_f1, fill = model_short)) +
   geom_col(width = 0.75) +
   geom_text(aes(label = sprintf("%.2f", family_mean_f1)),
-            hjust = -0.15, size = 2.4) +
+            hjust = -0.15, size = 2.2, color = "grey20") +
   coord_flip() +
   facet_wrap(~ family, ncol = 2) +
   scale_y_continuous(limits = c(0, 1.05), breaks = seq(0, 1, 0.25),
                      expand = expansion(mult = c(0, 0.05))) +
   scale_fill_manual(values = model_palette) +
-  labs(x = NULL, y = "Mean headline F1 within type") +
-  theme_hanno(fontsize = 10) +
+  labs(x = NULL, y = "Mean F1 within type") +
+  theme_hanno(fontsize = 10.5) +
   theme(legend.position = "none",
         panel.grid.major.y = element_blank(),
-        strip.text = element_text(face = "bold", size = 8))
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        strip.background = element_rect(fill = "grey94", color = "grey45", linewidth = 0.35),
+        strip.text = element_text(face = "bold", size = 7.4))
 
 ggsave("output/figures/fig-family.png", plot = p_family,
-       width = 6.9, height = 6.2, dpi = 300, bg = "white")
+       width = 6.35, height = 5.65, dpi = 300, bg = "white")
 
 # Figure 3: local speed and performance
 serial_speed_df <- df |>
@@ -326,7 +330,7 @@ serial_speed_df <- df |>
             median_latency = median(median_latency_s, na.rm = TRUE),
             n_tasks = n_distinct(task),
             .groups = "drop") |>
-  mutate(call_mode = "Single item")
+  mutate(call_mode = "One-at-a-time")
 
 batched_speed_df <- sb_local_b10 |>
   filter(!is_api, batch_size == 10) |>
@@ -336,10 +340,10 @@ batched_speed_df <- sb_local_b10 |>
             n_tasks = n_distinct(task),
             .groups = "drop") |>
   filter(n_tasks == active_task_count) |>
-  mutate(call_mode = "Batched b=10")
+  mutate(call_mode = "10 items per prompt")
 
 speed_df <- bind_rows(serial_speed_df, batched_speed_df) |>
-  mutate(call_mode = factor(call_mode, levels = c("Single item", "Batched b=10")))
+  mutate(call_mode = factor(call_mode, levels = c("One-at-a-time", "10 items per prompt")))
 
 speed_label_df <- speed_df |>
   group_by(model_short) |>
@@ -377,19 +381,19 @@ p_speed <- ggplot(speed_df, aes(x = median_latency, y = mean_f1, color = model_s
                 labels = function(x) paste0(x, "s"),
                 expand = expansion(mult = c(0.16, 0.08))) +
   scale_color_manual(values = model_palette, guide = "none") +
-  scale_shape_manual(values = c("Single item" = 16, "Batched b=10" = 17),
+  scale_shape_manual(values = c("One-at-a-time" = 16, "10 items per prompt" = 17),
                      name = NULL) +
-  labs(x = "Median per-item latency (s, log scale)",
-       y = "Mean headline F1") +
-  theme_hanno(fontsize = 11) +
+  labs(x = "Median seconds per item (log scale)",
+       y = "Mean F1") +
+  theme_hanno(fontsize = 11.5) +
   theme(legend.position = "bottom",
         panel.grid.minor = element_blank(),
         plot.margin = margin(5.5, 12, 5.5, 12))
 
 ggsave("output/figures/fig-speed.png", plot = p_speed,
-       width = 6, height = 3.5, dpi = 300, bg = "white")
+       width = 5.55, height = 3.15, dpi = 300, bg = "white")
 
-# Appendix figure: local runtime per 1,000 observations
+# Appendix figure: local runtime per 1,000 items
 runtime_single <- df |>
   filter(!is_api) |>
   group_by(model_short) |>
@@ -398,7 +402,7 @@ runtime_single <- df |>
     n_tasks = n_distinct(task),
     .groups = "drop"
   ) |>
-  mutate(call_mode = "Single item")
+  mutate(call_mode = "One-at-a-time")
 
 runtime_b10 <- sb_local_b10 |>
   filter(!is_api, batch_size == 10) |>
@@ -409,7 +413,7 @@ runtime_b10 <- sb_local_b10 |>
     .groups = "drop"
   ) |>
   filter(n_tasks == active_task_count) |>
-  mutate(call_mode = "b=10 prompt batching")
+  mutate(call_mode = "10 items per prompt")
 
 runtime_order <- runtime_single |>
   arrange(minutes_per_1000) |>
@@ -418,7 +422,7 @@ runtime_order <- runtime_single |>
 runtime_per_1000 <- bind_rows(runtime_single, runtime_b10) |>
   mutate(
     model_short = factor(model_short, levels = rev(runtime_order)),
-    call_mode = factor(call_mode, levels = c("Single item", "b=10 prompt batching"))
+    call_mode = factor(call_mode, levels = c("One-at-a-time", "10 items per prompt"))
   )
 
 write_csv(runtime_per_1000, "output/local_runtime_minutes_per_1000.csv")
@@ -434,12 +438,12 @@ p_runtime <- ggplot(
   scale_x_continuous(limits = c(0, max(runtime_per_1000$minutes_per_1000, na.rm = TRUE) * 1.18),
                      breaks = seq(0, 60, 15),
                      expand = expansion(mult = c(0, 0.01))) +
-  scale_fill_manual(values = c("Single item" = "grey50",
-                               "b=10 prompt batching" = "#009E73"),
+  scale_fill_manual(values = c("One-at-a-time" = "grey50",
+                               "10 items per prompt" = "#009E73"),
                     name = NULL) +
-  labs(x = "Median minutes per 1,000 observations",
+  labs(x = "Median minutes per 1,000 items",
        y = NULL) +
-  theme_hanno(fontsize = 10) +
+  theme_hanno(fontsize = 10.5) +
   theme(legend.position = "bottom",
         panel.grid.major.y = element_blank(),
         panel.grid.minor = element_blank())
@@ -460,13 +464,13 @@ complexity_cells <- df |>
 complexity_means <- complexity_cells |>
   group_by(coding_complexity, compute_class) |>
   summarise(mean_f1 = mean(headline_f1, na.rm = TRUE), n = n(), .groups = "drop") |>
-  mutate(panel = "All model-task cells")
+  mutate(panel = "All model-task results")
 
 best_by_task <- complexity_cells |>
   group_by(task, coding_complexity, compute_class) |>
   slice_max(headline_f1, n = 1, with_ties = FALSE) |>
   ungroup() |>
-  mutate(panel = "Best within API/local per task")
+  mutate(panel = "Best API and best local model per task")
 
 best_means <- best_by_task |>
   group_by(coding_complexity, compute_class, panel) |>
@@ -474,7 +478,7 @@ best_means <- best_by_task |>
 
 complexity_plot_means <- bind_rows(complexity_means, best_means) |>
   mutate(
-    panel = factor(panel, levels = c("All model-task cells", "Best within API/local per task")),
+    panel = factor(panel, levels = c("All model-task results", "Best API and best local model per task")),
     compute_class = factor(compute_class, levels = c("API", "Local"))
   )
 
@@ -499,14 +503,14 @@ p_complexity <- ggplot() +
   scale_y_continuous(limits = c(0.15, 1.02), breaks = seq(0.2, 1, 0.2)) +
   scale_color_manual(values = complexity_palette, name = NULL) +
   scale_fill_manual(values = complexity_palette, guide = "none") +
-  labs(x = "Coding complexity", y = "Headline F1") +
+  labs(x = "Coding complexity", y = "F1") +
   theme_hanno(fontsize = 10) +
   theme(legend.position = "bottom",
         strip.text = element_text(face = "bold", size = 8.5),
         panel.grid.minor = element_blank())
 
 ggsave("output/figures/fig-complexity.png", plot = p_complexity,
-       width = 6.8, height = 3.8, dpi = 300, bg = "white")
+       width = 6.2, height = 3.45, dpi = 300, bg = "white")
 
 # Appendix figures: additional heterogeneity checks
 best_local_api <- df |>
@@ -525,8 +529,8 @@ best_local_api <- df |>
     local_minus_api_best_f1 = headline_f1_Local - headline_f1_API,
     api_minus_local_best_f1 = -local_minus_api_best_f1,
     advantage = case_when(
-      local_minus_api_best_f1 > 0 ~ "Best local higher",
-      local_minus_api_best_f1 < 0 ~ "Best API higher",
+      api_minus_local_best_f1 < 0 ~ "Local ahead",
+      api_minus_local_best_f1 > 0 ~ "API ahead",
       TRUE ~ "Tie"
     ),
     task_short = as.character(task_short),
@@ -534,48 +538,43 @@ best_local_api <- df |>
                                        "Events & Actions", "Claims & Relations",
                                        "Issues & Topics"))
   ) |>
-  arrange(local_minus_api_best_f1)
+  arrange(api_minus_local_best_f1)
 
 write_csv(best_local_api, "output/best_local_api_task_gap.csv")
 
-density_gap <- density(
-  best_local_api$api_minus_local_best_f1,
-  from = min(best_local_api$api_minus_local_best_f1, na.rm = TRUE) - 0.025,
-  to = max(best_local_api$api_minus_local_best_f1, na.rm = TRUE) + 0.025,
-  n = 512
-)
-density_gap_df <- tibble(
-  x = density_gap$x,
-  y = density_gap$y
-)
+gap_plot_df <- best_local_api |>
+  mutate(
+    task_label = fct_reorder(task_short, api_minus_local_best_f1),
+    advantage = if_else(api_minus_local_best_f1 < 0, "Local ahead", "API ahead"),
+    advantage = factor(advantage, levels = c("Local ahead", "API ahead"))
+  )
 
-p_best_local_api <- ggplot(
-  density_gap_df,
-  aes(x = x, y = y)
-) +
-  geom_area(data = density_gap_df |> filter(x <= 0),
-            aes(fill = "Local higher"), alpha = 0.95) +
-  geom_area(data = density_gap_df |> filter(x >= 0),
-            aes(fill = "API higher"), alpha = 0.95) +
-  geom_line(color = "white", linewidth = 0.35) +
-  geom_vline(xintercept = 0, color = "grey35", linewidth = 0.45) +
+p_best_local_api <- ggplot(gap_plot_df, aes(y = task_label)) +
+  geom_vline(xintercept = 0, color = "grey45", linewidth = 0.45, linetype = "dashed") +
+  geom_segment(aes(x = 0, xend = api_minus_local_best_f1,
+                   yend = task_label, color = advantage),
+               linewidth = 0.45) +
+  geom_point(aes(x = api_minus_local_best_f1, fill = advantage),
+             shape = 21, size = 2.1, stroke = 0.35, color = "white") +
   scale_x_continuous(labels = label_number(accuracy = 0.01),
-                     breaks = seq(-0.14, 0.12, 0.04),
-                     expand = expansion(mult = c(0.01, 0.01))) +
-  scale_y_continuous(breaks = pretty_breaks(4),
-                     expand = expansion(mult = c(0, 0.04))) +
-  scale_fill_manual(values = c("Local higher" = "#009E73",
-                               "API higher" = "#333333"),
+                     breaks = seq(-0.12, 0.16, 0.04),
+                     expand = expansion(mult = c(0.03, 0.03))) +
+  scale_color_manual(values = c("Local ahead" = "#009E73",
+                                "API ahead" = "#333333"),
+                     guide = "none") +
+  scale_fill_manual(values = c("Local ahead" = "#009E73",
+                               "API ahead" = "#333333"),
                     name = NULL) +
-  labs(x = "Best API headline F1 minus best local headline F1",
-       y = "Density") +
+  labs(x = "API advantage in main F1",
+       y = NULL) +
   theme_hanno(fontsize = 10) +
   theme(legend.position = "bottom",
-        panel.grid.major.x = element_blank(),
+        axis.text.y = element_text(size = 6.6),
+        panel.grid.major.y = element_blank(),
         panel.grid.minor = element_blank())
 
 ggsave("output/figures/fig-best-local-api-gap.png", plot = p_best_local_api,
-       width = 5.8, height = 3.0, dpi = 300, bg = "white")
+       width = 5.8, height = 4.75, dpi = 300, bg = "white")
 
 single_model_means <- df |>
   filter(!is.na(headline_f1)) |>
@@ -641,27 +640,30 @@ model_selection_value <- bind_rows(
 
 write_csv(model_selection_value, "output/model_selection_value.csv")
 
-p_model_selection_value <- ggplot(
-  model_selection_value,
-  aes(x = selection_rule, y = mean_f1, fill = rule_type)
-) +
-  geom_col(width = 0.68) +
-  geom_text(aes(label = sprintf("%.3f", mean_f1)),
-            vjust = -0.35, size = 2.8) +
-  scale_y_continuous(limits = c(0, 0.82), breaks = seq(0, 0.8, 0.2),
-                     expand = expansion(mult = c(0, 0.03))) +
-  scale_fill_manual(values = c("Single model" = "grey55",
-                               "Task-specific upper bound" = "#0072B2"),
-                    name = NULL) +
-  labs(x = NULL, y = "Mean headline F1") +
-  theme_hanno(fontsize = 10) +
-  theme(axis.text.x = element_text(angle = 24, hjust = 1),
-        legend.position = "bottom",
-        panel.grid.major.x = element_blank())
+model_selection_print <- model_selection_value |>
+  mutate(
+    `Selection rule` = recode(as.character(selection_rule),
+      "Best single model" = "Best single model",
+      "Best single local model" = "Best single local model",
+      "Best single API model" = "Best single API model",
+      "Oracle task-specific local choice" = "Task-specific upper bound: local",
+      "Oracle task-specific API choice" = "Task-specific upper bound: API",
+      "Oracle task-specific all-model choice" = "Task-specific upper bound: all models"
+    )
+  ) |>
+  transmute(
+    `Selection rule`,
+    `Model or rule` = detail,
+    `Mean F1` = sprintf("%.3f", mean_f1)
+  )
 
-ggsave("output/figures/fig-model-selection-value.png",
-       plot = p_model_selection_value,
-       width = 6.5, height = 3.9, dpi = 300, bg = "white")
+write_latex(
+  kable(model_selection_print, format = "latex", align = "llr",
+        booktabs = TRUE,
+        caption = "Mean F1 under single-model choices and task-specific upper bounds. The task-specific rows choose the best model after observing task-level performance, so they describe an upper bound rather than expected performance from a validation sample. \\label{tab:model-selection-value}") |>
+    kable_styling(font_size = 9, latex_options = c("HOLD_position")),
+  "output/tables/table-model-selection-value.tex"
+)
 
 label_gap_df <- best_local_api |>
   left_join(task_length_raw |>
@@ -678,45 +680,41 @@ label_gap_df <- best_local_api |>
                                         "3-class",
                                         "Many-class / multi-label"))
   ) |>
-  filter(!is.na(effective_label_count), !is.na(local_minus_api_best_f1))
+  filter(!is.na(effective_label_count), !is.na(api_minus_local_best_f1))
 
 write_csv(label_gap_df, "output/local_api_gap_by_label_structure.csv")
 
 p_label_gap <- ggplot(
   label_gap_df,
   aes(x = effective_label_count,
-      y = local_minus_api_best_f1,
-      color = label_structure,
+      y = api_minus_local_best_f1,
       shape = label_structure)
 ) +
-  geom_hline(yintercept = 0, color = "grey45", linewidth = 0.4) +
-  geom_point(size = 2.7, alpha = 0.9) +
+  geom_hline(yintercept = 0, color = "grey45", linewidth = 0.4, linetype = "dashed") +
+  geom_point(size = 2.8, alpha = 0.92, color = "grey25") +
   geom_smooth(data = label_gap_df,
               aes(x = effective_label_count,
-                  y = local_minus_api_best_f1),
+                  y = api_minus_local_best_f1),
               inherit.aes = FALSE,
               method = "lm", se = FALSE,
-              color = "grey30", linewidth = 0.55, linetype = "dashed") +
+              color = "grey30", linewidth = 0.55, linetype = "solid") +
   scale_x_log10(breaks = c(1, 2, 3, 5, 10, 20),
                 labels = label_number(accuracy = 1)) +
   scale_y_continuous(labels = label_number(accuracy = 0.01),
                      breaks = seq(-0.12, 0.14, 0.04)) +
-  scale_color_manual(values = c("Binary / 2-class" = "#009E73",
-                                "3-class" = "#d95f02",
-                                "Many-class / multi-label" = "#333333"),
-                     name = NULL) +
   scale_shape_manual(values = c("Binary / 2-class" = 16,
                                 "3-class" = 17,
                                 "Many-class / multi-label" = 15),
                      name = NULL) +
   labs(x = "Effective number of labels (log scale)",
-       y = "Best local headline F1 minus best API headline F1") +
-  theme_hanno(fontsize = 10) +
+       y = "Best API minus best local F1") +
+  theme_hanno(fontsize = 10.5) +
   theme(legend.position = "bottom",
-        panel.grid.minor = element_blank())
+        panel.grid.minor = element_blank(),
+        plot.margin = margin(8, 10, 8, 24))
 
 ggsave("output/figures/fig-label-structure-gap.png", plot = p_label_gap,
-       width = 6.6, height = 4.1, dpi = 300, bg = "white")
+       width = 5.95, height = 3.65, dpi = 300, bg = "white")
 
 # Table: paired task-level bootstrap for cross-task mean differences
 set.seed(20260514)
@@ -775,7 +773,7 @@ task_bootstrap_print <- task_bootstrap |>
 write_latex(
   kable(task_bootstrap_print, format = "latex", align = "lrrr",
         escape = FALSE, booktabs = TRUE,
-        caption = "Paired task-level bootstrap intervals for cross-task mean headline-F1 differences among the four strongest models. Each bootstrap resamples the 34 tasks with replacement and recomputes the paired mean difference. These intervals assess sensitivity to benchmark composition; they do not replace the paired-by-item bootstrap intervals used for within-task comparisons. \\label{tab:task-bootstrap}") |>
+        caption = "Paired task-level bootstrap intervals for cross-task mean-F1 differences among the four strongest models. Each bootstrap resamples the 34 tasks with replacement and recomputes the paired mean difference. These intervals assess sensitivity to benchmark composition; they do not replace the paired-by-item bootstrap intervals used for within-task comparisons. \\label{tab:task-bootstrap}") |>
     kable_styling(font_size = 9, latex_options = c("HOLD_position")),
   "output/tables/table-task-bootstrap-appendix.tex"
 )
@@ -790,14 +788,14 @@ tasks_table <- tibble::tribble(
   "Line of Fire incivility", "Political tweets, classified for incivility.", "Rheault et al. 2019", "Relevance & Harm", "binary", "Derived", "short",
   "Theocharis incivility", "Political tweets, classified for incivility.", "Theocharis et al. 2020", "Relevance & Harm", "binary", "Derived", "short",
   "Gilardi stance", "Tweets about content moderation, classified by stance toward moderation.", "Gilardi 2023", "Position & Tone", "3-class", "Verbatim", "short",
-  "SemEval stance", "Tweets toward five named political targets, classified by stance.", "Chae & Davidson 2025", "Position & Tone", "3-class", "Derived", "short",
+  "SemEval stance", "Tweets toward five named political targets, classified by stance.", "Chae & Davidson 2026", "Position & Tone", "3-class", "Derived", "short",
   "SCOTUS sentiment", "Tweets about U.S. Supreme Court rulings, classified by sentiment.", "Ornstein et al. 2025", "Position & Tone", "3-class", "Derived", "short",
   "Wesleyan ad tone", "U.S. Meta political ads, classified by tone toward a candidate.", "Zhang et al. 2025", "Position & Tone", "3-class", "Derived", "short",
-  "CCC protest type", "News stories about U.S. protest events, classified by event type.", "Halterman & Keith 2025", "Events & Actions", "4-class", "Verbatim-adapted", "long codebook",
-  "BFRS violence", "News stories about Pakistani political violence, classified by event type.", "Halterman & Keith 2025", "Events & Actions", "12-class", "Verbatim-adapted", "long codebook",
+  "CCC protest type", "News stories about U.S. protest events, classified by event type.", "Halterman & Keith 2026", "Events & Actions", "4-class", "Verbatim-adapted", "long codebook",
+  "BFRS violence", "News stories about Pakistani political violence, classified by event type.", "Halterman & Keith 2026", "Events & Actions", "12-class", "Verbatim-adapted", "long codebook",
   "PAPEA protest forms", "Protest snippets, classified by protest form.", "Haunss et al. 2025", "Events & Actions", "7-class", "Derived", "long codebook",
   "ICBe event type", "Crisis-event sentences, classified by sentence event type.", "Douglass et al. 2024", "Events & Actions", "5-class", "Derived", "short",
-  "CMP manifestos", "Quasi-sentences from political party manifestos, classified by policy domain.", "Halterman & Keith 2025", "Issues & Topics", "7-class", "Derived", "long codebook",
+  "CMP manifestos", "Quasi-sentences from political party manifestos, classified by policy domain.", "Halterman & Keith 2026", "Issues & Topics", "7-class", "Derived", "long codebook",
   "Cross-domain topics", "Political text, classified by broad policy domain.", "Osnabruegge et al. 2023", "Issues & Topics", "8-class", "Derived", "long codebook",
   "Campaign policy area", "Campaign statements, classified by policy area.", "Muller & Fujimura 2024", "Issues & Topics", "12-class", "Derived", "long codebook",
   "BES MII", "Open-ended British Election Study responses, classified by issue topic.", "Mellon et al. 2024", "Issues & Topics", "50-class", "Verbatim-adapted", "long codebook",
@@ -822,7 +820,7 @@ tasks_table <- tibble::tribble(
 write_latex(
   kable(tasks_table, format = "latex", align = "lllllll", booktabs = TRUE,
         longtable = TRUE,
-        caption = "Thirty-four tasks in the benchmark. 'Type' is the report grouping used in Figure \\ref{fig-family}; it is a broad annotation type rather than a source-provided task family. 'Provenance': Verbatim = prompt unchanged from source paper, Verbatim-adapted = source content with format-only changes, Derived = our prompt reasoned from the published codebook. 'Prompt': short (~15-35 lines) or long codebook (~47-126 lines). This is the trait that determines local batching feasibility. The CMP task uses the Halterman \\& Keith (2025) domain-collapsed 7-class version of the CMP/MARPOR coding scheme, not the full CMP category set. \\label{tab:tasks}") |>
+        caption = "Thirty-four tasks in the benchmark. 'Type' is the report grouping used in Figure \\ref{fig-family}; it is a broad annotation type rather than a source-provided task family. 'Provenance': Verbatim = prompt unchanged from source paper, Verbatim-adapted = source content with format-only changes, Derived = our prompt reasoned from the published codebook. 'Prompt': short (~15-35 lines) or long codebook (~47-126 lines). This is the trait that determines local batching feasibility. The CMP task uses the Halterman \\& Keith (2026) domain-collapsed 7-class version of the CMP/MARPOR coding scheme, not the full CMP category set. \\label{tab:tasks}") |>
     kable_styling(font_size = 8, latex_options = c("repeat_header"),
                   repeat_header_text = "") |>
     column_spec(2, width = "18em") |>
@@ -845,28 +843,28 @@ winners <- df |>
     Type = family,
     Task = as.character(task_short),
     `Top model` = as.character(model_short),
-    `Headline F1` = sprintf("%.3f", headline_f1),
+    `Main F1` = sprintf("%.3f", headline_f1),
     Accuracy = sprintf("%.3f", accuracy),
     MCC = sprintf("%.3f", mcc)
   )
 
 write_latex(
   kable(winners, format = "latex", align = "llllll", booktabs = TRUE,
-        caption = "Top model per task by headline F1 across the unified 34-task benchmark, grouped by the report's five annotation types. Accuracy and MCC refer to the same model-task cell. CIs and the full per-(task, model) table are on the GitHub repository.") |>
+        caption = "Top model per task by the main F1 score across the unified 34-task benchmark, grouped by the report's five annotation types. Accuracy and MCC refer to the same model-task pair. CIs and the full per-(task, model) table are on the GitHub repository. \\label{tab:winners}") |>
     kable_styling(font_size = 8.5, latex_options = c("HOLD_position")) |>
     collapse_rows(columns = 1, valign = "top"),
   "output/tables/table-winners-appendix.tex"
 )
 
-# Table: schema/label reliability failures
+# Table: response-format/label failures
 malformed_local <- batch_local_df |>
   filter(b10_parse_err_rate >= 0.05) |>
   transmute(
     Task = as.character(task_short),
     Model = as.character(model_short),
     `Batch size` = 10,
-    Scope = "Local b=10 34-task grid",
-    `Schema/label failure rate` = b10_parse_err_rate
+    Scope = "Local b=10",
+    `Failure rate` = b10_parse_err_rate
   )
 
 malformed_api <- sb |>
@@ -877,17 +875,17 @@ malformed_api <- sb |>
     Task = as.character(task_short),
     Model = as.character(model_short),
     `Batch size` = batch_size,
-    Scope = "Limited OpenAI prompt-batching run",
-    `Schema/label failure rate` = parse_err_rate
+    Scope = "OpenAI diagnostic",
+    `Failure rate` = parse_err_rate
   )
 
 malformed <- bind_rows(malformed_local, malformed_api) |>
-  arrange(desc(`Schema/label failure rate`)) |>
-  mutate(`Schema/label failure rate` = scales::percent(`Schema/label failure rate`, accuracy = 1))
+  arrange(desc(`Failure rate`)) |>
+  mutate(`Failure rate` = scales::percent(`Failure rate`, accuracy = 1))
 
 write_latex(
   kable(malformed, format = "latex", align = "llrlr", booktabs = TRUE,
-        caption = "Batched cells with schema or label failure rates of at least 5 percent, not a complete list of all task-model cells. Failures include responses that do not parse, responses with the wrong object or array shape, and responses that use labels outside the task schema. Local rows come from the full 34-task b=10 grid for the five local models (170 cells). OpenAI rows come from a limited 10-task prompt-batching run with b=10 and b=20 cells (40 cells). Claude Sonnet and DeepSeek API prompt batching are not covered here.") |>
+        caption = "Batched model-task pairs with response-format or label failure rates of at least 5 percent, not a complete list of all model-task pairs. Failures include responses that do not parse, responses with the wrong object or array shape, and responses that use labels outside the allowed label set. Local rows come from the full 34-task grid with 10 items per prompt for the five local models (170 pairs). OpenAI rows come from a separate 10-task prompt-batching diagnostic with 10 and 20 items per prompt (40 pairs); these rows do not enter the main one-item-at-a-time benchmark. Claude Sonnet and DeepSeek API prompt batching are not covered here. \\label{tab:malformed}") |>
     kable_styling(font_size = 8, latex_options = c("HOLD_position")),
   "output/tables/table-malformed-appendix.tex"
 )
@@ -897,7 +895,7 @@ altmet <- df |>
   group_by(model_short) |>
   summarise(`Observed tasks` = n_distinct(task),
             `Missing tasks` = total_task_count - `Observed tasks`,
-            `Mean headline F1` = if_else(`Observed tasks` == total_task_count,
+            `Mean F1` = if_else(`Observed tasks` == total_task_count,
                                       mean(headline_f1, na.rm = TRUE),
                                       NA_real_),
             `Mean accuracy` = if_else(`Observed tasks` == total_task_count,
@@ -907,19 +905,19 @@ altmet <- df |>
                                  mean(mcc, na.rm = TRUE),
                                  NA_real_),
             .groups = "drop") |>
-  arrange(is.na(`Mean headline F1`), desc(`Mean headline F1`), desc(`Observed tasks`)) |>
+  arrange(is.na(`Mean F1`), desc(`Mean F1`), desc(`Observed tasks`)) |>
   transmute(
     Model = as.character(model_short),
     Coverage = paste0(`Observed tasks`, "/", total_task_count),
     Missing = if_else(`Missing tasks` == 0, "", as.character(`Missing tasks`)),
-    `Mean headline F1` = if_else(is.na(`Mean headline F1`), "", sprintf("%.3f", `Mean headline F1`)),
+    `Mean F1` = if_else(is.na(`Mean F1`), "", sprintf("%.3f", `Mean F1`)),
     `Mean accuracy` = if_else(is.na(`Mean accuracy`), "", sprintf("%.3f", `Mean accuracy`)),
     `Mean MCC` = if_else(is.na(`Mean MCC`), "", sprintf("%.3f", `Mean MCC`))
   )
 
 write_latex(
   kable(altmet, format = "latex", align = "lrrrrr", booktabs = TRUE,
-        caption = "Unified 34-task model averages. Coverage is complete for all nine models in this version. Headline F1 is the task-specific summary metric; accuracy and MCC describe overall agreement. For imbalanced tasks, all three answer different questions. \\label{tab:altmetrics}") |>
+        caption = "Unified 34-task model averages. Coverage is complete for all nine models in this version. The main F1 score is the task-specific summary metric; accuracy and MCC describe overall agreement. For imbalanced tasks, all three answer different questions. \\label{tab:altmetrics}") |>
     kable_styling(font_size = 9, latex_options = c("HOLD_position")),
   "output/tables/table-altmetrics-appendix.tex"
 )

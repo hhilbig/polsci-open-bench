@@ -1,11 +1,11 @@
 model_short,minutes_per_1000,n_tasks,call_mode
-Gemma 4 26B,13.036377083426487,34,Single item
-Gemma 4 31B,57.14488680416234,34,Single item
-Qwen3 14B,17.5435178791691,34,Single item
-Qwen3 30B-A3B,9.689986979158977,34,Single item
-Mistral Sm 24B,30.46311405833156,34,Single item
-Gemma 4 26B,7.406325468279343,34,b=10 prompt batching
-Gemma 4 31B,41.8009868574912,34,b=10 prompt batching
-Qwen3 14B,14.215703072889784,34,b=10 prompt batching
-Qwen3 30B-A3B,5.210785138721499,34,b=10 prompt batching
-Mistral Sm 24B,24.063936597510164,34,b=10 prompt batching
+Gemma 4 26B,13.036377083426487,34,One-at-a-time
+Gemma 4 31B,57.14488680416234,34,One-at-a-time
+Qwen3 14B,17.5435178791691,34,One-at-a-time
+Qwen3 30B-A3B,9.689986979158977,34,One-at-a-time
+Mistral Sm 24B,30.46311405833156,34,One-at-a-time
+Gemma 4 26B,7.406325468279343,34,10 items per prompt
+Gemma 4 31B,41.8009868574912,34,10 items per prompt
+Qwen3 14B,14.215703072889784,34,10 items per prompt
+Qwen3 30B-A3B,5.210785138721499,34,10 items per prompt
+Mistral Sm 24B,24.063936597510164,34,10 items per prompt
