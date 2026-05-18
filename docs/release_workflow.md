@@ -98,3 +98,32 @@ Then check:
 
 The public docs should report the same task count, model count, main F1
 terminology, and batching terminology as the PDF report.
+
+## arXiv Checklist
+
+Use the PDF report as the authoritative manuscript. Before uploading to arXiv:
+
+1. Render the PDF and keep the generated LaTeX source.
+
+```bash
+quarto render output/report_pdf.qmd --to pdf
+```
+
+2. Build the minimal source bundle.
+
+```bash
+python3 code/build_arxiv_bundle.py
+```
+
+3. Compile the bundle from a clean directory before upload. The tarball is
+   written to `output/arxiv/polsci-open-bench-arxiv-source.tar.gz`, with a file
+   manifest at `output/arxiv/manifest.txt`.
+
+Recommended arXiv categories:
+
+- Primary: `cs.CL` (Computation and Language)
+- Secondary: `cs.LG` if a machine-learning audience is useful
+
+The source bundle contains the Quarto-generated `main.tex` and the referenced
+figure files only. References are embedded in the generated LaTeX by Pandoc, so
+the arXiv bundle does not need `references.bib` to compile.

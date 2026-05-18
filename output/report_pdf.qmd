@@ -75,13 +75,13 @@ Figure \ref{fig-mean-f1} shows the 34-task model averages and the spread of task
 
 The task-level bootstrap gives the same result (Table \ref{tab:task-bootstrap}). The Claude Sonnet 4.6 versus gpt-5.5 interval includes zero, Gemma 4 31B and DeepSeek V4 Pro are effectively tied, and the estimated Claude advantage over Gemma 4 31B and DeepSeek V4 Pro is about two F1 points. Many within-task leader differences are also too uncertain to treat as firm rankings. In practice, these small average gaps are not enough to rank the models reliably.
 
-```{r fig-mean-f1, out.width="0.82\\linewidth", fig.cap="Mean F1 across thirty-four tasks per model. Large filled circles show 34-task means. Small gray dots show observed per-task main F1 values. \\label{fig-mean-f1}"}
+```{r fig-mean-f1, out.width="0.82\\linewidth", fig.cap="Mean F1 across thirty-four tasks per model. Large filled circles show 34-task means. Small gray dots show observed per-task main F1 values."}
 include_graphics("figures/fig-mean-f1.png")
 ```
 
 The local/API comparison in Figure \ref{fig-best-local-api-gap} directly addresses the paper's main question. After selecting the best model within each class for each task, the best local model matches or exceeds the best API model on 9 of the 34 tasks. On average, the best API model exceeds the best local model by 0.015 F1, and the median API advantage is 0.019. Figure \ref{fig-best-local-api-gap} uses the same sign convention: values below zero favor local models and values above zero favor API models. This is not evidence that local models dominate API models. It shows that the API advantage is often small enough that local model calls are worth validating on the target task.
 
-```{r fig-best-local-api-gap, out.width="0.74\\linewidth", fig.pos="!htbp", fig.cap="API advantage in main F1 by task. Values below zero favor the local model class; values above zero favor the API model class. \\label{fig-best-local-api-gap}"}
+```{r fig-best-local-api-gap, out.width="0.74\\linewidth", fig.pos="!htbp", fig.cap="API advantage in main F1 by task. Values below zero favor the local model class; values above zero favor the API model class."}
 include_graphics("figures/fig-best-local-api-gap.png")
 ```
 
@@ -97,7 +97,7 @@ At the task level, the top point estimates are split across eight models (Table 
 
 The winner split matters because model strengths differ by task. Even models with lower average performance sometimes produce the best task-level point estimate. A model that is weaker on average can still be the best model for a specific task.
 
-```{r fig-family, out.width="0.86\\linewidth", fig.cap="Mean F1 within five broad annotation types, by model. Type-level averages are descriptive only. \\label{fig-family}"}
+```{r fig-family, out.width="0.86\\linewidth", fig.cap="Mean F1 within five broad annotation types, by model. Type-level averages are descriptive only."}
 include_graphics("figures/fig-family.png")
 ```
 
@@ -107,13 +107,13 @@ Figure \ref{fig-complexity} examines whether coding complexity explains the larg
 
 Performance falls as coding tasks become more complex, but local models remain close on many tasks. Mean F1 falls from 0.70 to 0.57 for API model-task pairs and from 0.67 to 0.52 for local pairs as tasks move from low to high complexity. When I instead compare the best API model with the best local model on each task, the low-complexity gap nearly disappears (0.740 versus 0.735), while the high-complexity gap is about 0.05 F1 (0.605 versus 0.555). This is the clearest API edge in the complexity groups: long codebooks, many effective labels, and tasks with multiple outputs per item.
 
-```{r fig-complexity, out.width="0.84\\linewidth", fig.cap="Coding complexity and model performance across the 34-task benchmark. The left panel shows mean F1 across all model-task results, separately for local and API models. The right panel shows the best local model and best API model per task within each complexity group. Points show group means; lines connect complexity groups within model class. \\label{fig-complexity}"}
+```{r fig-complexity, out.width="0.84\\linewidth", fig.cap="Coding complexity and model performance across the 34-task benchmark. The left panel shows mean F1 across all model-task results, separately for local and API models. The right panel shows the best local model and best API model per task within each complexity group. Points show group means; lines connect complexity groups within model class."}
 include_graphics("figures/fig-complexity.png")
 ```
 
 Figure \ref{fig-label-structure-gap} shows one reason for the complexity result: tasks with more actively used labels tend to show larger API advantages. Effective label count measures how many labels actually matter in the sample, rather than simply counting every possible label. The relationship is positive. The simple correlation between effective label count and the API-minus-local gap is about 0.50. Binary and two-class tasks have a mean API advantage of 0.004, while many-class or multi-label tasks have a mean API advantage of 0.025.
 
-```{r fig-label-structure-gap, out.width="0.70\\linewidth", fig.cap="API advantage in main F1 by effective number of labels. The dashed horizontal line marks equal performance; the solid line is a descriptive linear fit across tasks. \\label{fig-label-structure-gap}"}
+```{r fig-label-structure-gap, out.width="0.70\\linewidth", fig.cap="API advantage in main F1 by effective number of labels. The dashed horizontal line marks equal performance; the solid line is a descriptive linear fit across tasks."}
 include_graphics("figures/fig-label-structure-gap.png")
 ```
 
@@ -121,7 +121,7 @@ include_graphics("figures/fig-label-structure-gap.png")
 
 Local inference speed varies sharply with model size, model design, and batching (Figure \ref{fig-speed}). On a typical 500-item task, median one-item-at-a-time runtimes range from about 5 minutes for Qwen3-30B-A3B and 7 minutes for Gemma 4 26B to about 29 minutes for Gemma 4 31B. Qwen3-30B-A3B is fastest because it is a sparse model that uses about three billion active parameters per call. Gemma 4 31B has the strongest local 34-task one-item-at-a-time F1, while Gemma 4 26B is much faster and remains close on average. Local inference is slow enough to plan around, but not slow enough to rule out ordinary validation and production coding.
 
-```{r fig-speed, out.width="0.72\\linewidth", fig.pos="!htbp", fig.cap="Mean F1 vs median runtime per item, for the five local models. Circles show one-at-a-time calls over the 34-task benchmark; triangles show calls with 10 items per prompt over the same task set. Lines connect the two call modes for the same model, and labels identify model pairs. API models are excluded because their per-call time mixes server load, queueing, and network delay and is not directly comparable to local inference time. \\label{fig-speed}"}
+```{r fig-speed, out.width="0.72\\linewidth", fig.pos="!htbp", fig.cap="Mean F1 vs median runtime per item, for the five local models. Circles show one-at-a-time calls over the 34-task benchmark; triangles show calls with 10 items per prompt over the same task set. Lines connect the two call modes for the same model, and labels identify model pairs. API models are excluded because their per-call time mixes server load, queueing, and network delay and is not directly comparable to local inference time."}
 include_graphics("figures/fig-speed.png")
 ```
 
@@ -194,7 +194,7 @@ include_table("tables/table-task-bootstrap-appendix.tex")
 
 Figure \ref{fig-local-runtime-per-1000} converts local median runtime per item into minutes per 1,000 items. The bars for 10 items per prompt use the full 34-task local batching grid, so they should be read alongside the response-format and label failure checks below.
 
-```{r fig-local-runtime-per-1000, out.width="0.82\\linewidth", fig.cap="Median local runtime per 1,000 items. One-at-a-time bars and bars for 10 items per prompt use the 34-task benchmark. Lower values are faster. Batching should be interpreted alongside response-format and label failure checks. \\label{fig-local-runtime-per-1000}"}
+```{r fig-local-runtime-per-1000, out.width="0.82\\linewidth", fig.cap="Median local runtime per 1,000 items. One-at-a-time bars and bars for 10 items per prompt use the 34-task benchmark. Lower values are faster. Batching should be interpreted alongside response-format and label failure checks."}
 include_graphics("figures/fig-local-runtime-per-1000.png")
 ```
 

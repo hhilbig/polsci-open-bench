@@ -27,6 +27,7 @@ output/*.fdb_latexmk
 output/*.fls
 output/*.synctex.gz
 output/*.tex
+output/arxiv/
 
 # Internal long-form HTML report (not part of the public release;
 # the public deliverable is output/report_pdf.pdf)
