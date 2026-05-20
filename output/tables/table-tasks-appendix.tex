@@ -1,12 +1,12 @@
 \begingroup\fontsize{8}{10}\selectfont
 
 \begin{longtable}[t]{l>{\raggedright\arraybackslash}p{18em}>{\raggedright\arraybackslash}p{7em}>{\raggedright\arraybackslash}p{8em}lll}
-\caption{Thirty-four tasks in the benchmark. 'Type' is the report grouping used in Figure \ref{fig-family}; it is a broad annotation type rather than a source-provided task family. 'Provenance': Verbatim = prompt unchanged from source paper, Verbatim-adapted = source content with format-only changes, Derived = our prompt based on a source codebook, public label definitions, or task description. 'Prompt': short (~15-35 lines) or long codebook (~47-126 lines). This is the trait that determines local batching feasibility. Source labels correspond to full entries in the references. The CMP task uses the Halterman \& Keith (2026) domain-collapsed 7-class version of the Manifesto Project (2025) CMP/MARPOR coding scheme, not the full CMP category set. \label{tab:tasks}}\\
+\caption{Thirty-four tasks in the benchmark. 'Type' is the report grouping used in Figure \ref{fig-family}; it is a broad annotation type rather than a source-provided task family. 'Provenance': Verbatim = prompt unchanged from source paper, Verbatim-adapted = source content with format-only changes, Derived = my prompt based on a source codebook, public label definitions, or task description. 'Prompt': short (~15-35 lines) or long codebook (~47-126 lines). This is the trait that determines local batching feasibility. Source labels correspond to full entries in the references. The CMP task uses the Halterman \& Keith (2026) domain-collapsed 7-class version of the Manifesto Project (2025) CMP/MARPOR coding scheme, not the full CMP category set. \label{tab:tasks}}\\
 \toprule
 Task & Description & Source & Type & Labels & Provenance & Prompt\\
 \midrule
 \endfirsthead
-\caption[]{Thirty-four tasks in the benchmark. 'Type' is the report grouping used in Figure \ref{fig-family}; it is a broad annotation type rather than a source-provided task family. 'Provenance': Verbatim = prompt unchanged from source paper, Verbatim-adapted = source content with format-only changes, Derived = our prompt based on a source codebook, public label definitions, or task description. 'Prompt': short (~15-35 lines) or long codebook (~47-126 lines). This is the trait that determines local batching feasibility. Source labels correspond to full entries in the references. The CMP task uses the Halterman \& Keith (2026) domain-collapsed 7-class version of the Manifesto Project (2025) CMP/MARPOR coding scheme, not the full CMP category set.  }\\
+\caption[]{Thirty-four tasks in the benchmark. 'Type' is the report grouping used in Figure \ref{fig-family}; it is a broad annotation type rather than a source-provided task family. 'Provenance': Verbatim = prompt unchanged from source paper, Verbatim-adapted = source content with format-only changes, Derived = my prompt based on a source codebook, public label definitions, or task description. 'Prompt': short (~15-35 lines) or long codebook (~47-126 lines). This is the trait that determines local batching feasibility. Source labels correspond to full entries in the references. The CMP task uses the Halterman \& Keith (2026) domain-collapsed 7-class version of the Manifesto Project (2025) CMP/MARPOR coding scheme, not the full CMP category set.  }\\
 \toprule
 Task & Description & Source & Type & Labels & Provenance & Prompt\\
 \midrule
@@ -49,9 +49,9 @@ Trump stance & Political statements, classified by stance toward Trump. & Burnha
 COVID threat minimization & Political text, classified for COVID threat minimization. & Burnham 2025 & Claims \& Relations & binary & Derived & short\\
 Kavanaugh stance & Tweets about Brett Kavanaugh, classified by stance. & Bestvater \& Monroe 2023 & Position \& Tone & binary & Derived & short\\
 ATI topics & Mexican access-to-information requests, classified by request topic. & Erlich et al. 2022 & Issues \& Topics & 7-label & Derived & long codebook\\
-CAP party platforms & Party-platform quasi-statements, classified by CAP major topic. & Comparative Agendas Project 2022 & Issues \& Topics & 21-class & Derived & long codebook\\
+CAP party platforms & Party-platform quasi-statements, classified by CAP major topic. & Policy Agendas Project 2025 & Issues \& Topics & 21-class & Derived & long codebook\\
 \addlinespace
-CAP CRS reports & Congressional Research Service titles and summaries, classified by CAP major topic. & Comparative Agendas Project 2022; CRS 2026 & Issues \& Topics & 21-class & Derived & long codebook\\
+CAP CRS reports & Congressional Research Service titles and summaries, classified by CAP major topic. & Policy Agendas Project 2025; CRS Products & Issues \& Topics & 21-class & Derived & long codebook\\
 PolitiCAUSE causal relation & Political sentences, classified for whether they express a causal relation. & Garcia Corral et al. 2024 & Claims \& Relations & binary & Derived & short\\
 Manifesto populism & Italian manifesto sentences, classified for populist rhetoric. & Di Cocco \& Monechi 2022 & Claims \& Relations & binary & Derived & short\\
 AgoraSpeech criticism/agenda & Greek campaign-speech paragraphs, classified as criticism or agenda setting. & Sermpezis et al. 2026 & Claims \& Relations & 2-class & Derived & short\\*

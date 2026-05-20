@@ -778,6 +778,29 @@ write_latex(
   "output/tables/table-task-bootstrap-appendix.tex"
 )
 
+# Table: models
+model_table <- tibble::tribble(
+  ~Model, ~Class, ~`Exact ID/tag`, ~`Size/quant.`, ~`Access/runtime`,
+  "Gemma 4 26B", "Local Ollama", "gemma4:26b", "26B, Ollama tag default", "Apple M2 Pro, 32 GB; Ollama 0.19.0; macOS 26.1",
+  "Gemma 4 31B", "Local Ollama", "gemma4:31b-it-q4_K_M", "31B, Q4_K_M", "Apple M2 Pro, 32 GB; Ollama 0.19.0; macOS 26.1",
+  "Qwen3 14B", "Local Ollama", "qwen3:14b-q4_K_M", "14B, Q4_K_M", "Apple M2 Pro, 32 GB; Ollama 0.19.0; macOS 26.1",
+  "Qwen3 30B-A3B", "Local Ollama", "qwen3:30b-a3b-q4_K_M", "30B MoE, Q4_K_M", "Apple M2 Pro, 32 GB; Ollama 0.19.0; macOS 26.1",
+  "Mistral Sm 24B", "Local Ollama", "mistral-small:24b-instruct-2501-q4_K_M", "24B, Q4_K_M", "Apple M2 Pro, 32 GB; Ollama 0.19.0; macOS 26.1",
+  "gpt-5.5", "API", "gpt-5.5", "provider model", "OpenAI, May 2026",
+  "gpt-5.4-nano", "API", "gpt-5.4-nano", "provider model", "OpenAI, May 2026",
+  "DeepSeek V4 Pro", "API", "deepseek-v4-pro", "provider model", "DeepSeek, May 2026",
+  "Claude Sonnet 4.6", "API", "claude-sonnet-4-6", "provider model", "Anthropic, May 2026"
+)
+
+write_latex(
+  kable(model_table, format = "latex", align = "lllll", booktabs = TRUE,
+        caption = "Models and runtime settings. The table reports exact local Ollama tags and API model IDs used in the benchmark. No context-window override was set; output caps and output constraints are described in the text. \\label{tab:models}") |>
+    kable_styling(font_size = 8, latex_options = c("HOLD_position", "scale_down")) |>
+    column_spec(3, width = "15em") |>
+    column_spec(5, width = "16em"),
+  "output/tables/table-models.tex"
+)
+
 # Table: tasks
 tasks_table <- tibble::tribble(
   ~Task, ~Description, ~Source, ~Type, ~Labels, ~Provenance, ~`Prompt`,
@@ -810,8 +833,8 @@ tasks_table <- tibble::tribble(
   "COVID threat minimization", "Political text, classified for COVID threat minimization.", "Burnham 2025", "Claims & Relations", "binary", "Derived", "short",
   "Kavanaugh stance", "Tweets about Brett Kavanaugh, classified by stance.", "Bestvater & Monroe 2023", "Position & Tone", "binary", "Derived", "short",
   "ATI topics", "Mexican access-to-information requests, classified by request topic.", "Erlich et al. 2022", "Issues & Topics", "7-label", "Derived", "long codebook",
-  "CAP party platforms", "Party-platform quasi-statements, classified by CAP major topic.", "Comparative Agendas Project 2022", "Issues & Topics", "21-class", "Derived", "long codebook",
-  "CAP CRS reports", "Congressional Research Service titles and summaries, classified by CAP major topic.", "Comparative Agendas Project 2022; CRS 2026", "Issues & Topics", "21-class", "Derived", "long codebook",
+  "CAP party platforms", "Party-platform quasi-statements, classified by CAP major topic.", "Policy Agendas Project 2025", "Issues & Topics", "21-class", "Derived", "long codebook",
+  "CAP CRS reports", "Congressional Research Service titles and summaries, classified by CAP major topic.", "Policy Agendas Project 2025; CRS Products", "Issues & Topics", "21-class", "Derived", "long codebook",
   "PolitiCAUSE causal relation", "Political sentences, classified for whether they express a causal relation.", "Garcia Corral et al. 2024", "Claims & Relations", "binary", "Derived", "short",
   "Manifesto populism", "Italian manifesto sentences, classified for populist rhetoric.", "Di Cocco & Monechi 2022", "Claims & Relations", "binary", "Derived", "short",
   "AgoraSpeech criticism/agenda", "Greek campaign-speech paragraphs, classified as criticism or agenda setting.", "Sermpezis et al. 2026", "Claims & Relations", "2-class", "Derived", "short"
@@ -820,7 +843,7 @@ tasks_table <- tibble::tribble(
 write_latex(
   kable(tasks_table, format = "latex", align = "lllllll", booktabs = TRUE,
         longtable = TRUE,
-        caption = "Thirty-four tasks in the benchmark. 'Type' is the report grouping used in Figure \\ref{fig-family}; it is a broad annotation type rather than a source-provided task family. 'Provenance': Verbatim = prompt unchanged from source paper, Verbatim-adapted = source content with format-only changes, Derived = our prompt based on a source codebook, public label definitions, or task description. 'Prompt': short (~15-35 lines) or long codebook (~47-126 lines). This is the trait that determines local batching feasibility. Source labels correspond to full entries in the references. The CMP task uses the Halterman \\& Keith (2026) domain-collapsed 7-class version of the Manifesto Project (2025) CMP/MARPOR coding scheme, not the full CMP category set. \\label{tab:tasks}") |>
+        caption = "Thirty-four tasks in the benchmark. 'Type' is the report grouping used in Figure \\ref{fig-family}; it is a broad annotation type rather than a source-provided task family. 'Provenance': Verbatim = prompt unchanged from source paper, Verbatim-adapted = source content with format-only changes, Derived = my prompt based on a source codebook, public label definitions, or task description. 'Prompt': short (~15-35 lines) or long codebook (~47-126 lines). This is the trait that determines local batching feasibility. Source labels correspond to full entries in the references. The CMP task uses the Halterman \\& Keith (2026) domain-collapsed 7-class version of the Manifesto Project (2025) CMP/MARPOR coding scheme, not the full CMP category set. \\label{tab:tasks}") |>
     kable_styling(font_size = 8, latex_options = c("repeat_header"),
                   repeat_header_text = "") |>
     column_spec(2, width = "18em") |>
@@ -895,6 +918,8 @@ altmet <- df |>
   group_by(model_short) |>
   summarise(`Observed tasks` = n_distinct(task),
             `Missing tasks` = total_task_count - `Observed tasks`,
+            `Accuracy tasks` = sum(!is.na(accuracy)),
+            `MCC tasks` = sum(!is.na(mcc)),
             `Mean F1` = if_else(`Observed tasks` == total_task_count,
                                       mean(headline_f1, na.rm = TRUE),
                                       NA_real_),
@@ -908,16 +933,17 @@ altmet <- df |>
   arrange(is.na(`Mean F1`), desc(`Mean F1`), desc(`Observed tasks`)) |>
   transmute(
     Model = as.character(model_short),
-    Coverage = paste0(`Observed tasks`, "/", total_task_count),
-    Missing = if_else(`Missing tasks` == 0, "", as.character(`Missing tasks`)),
+    `F1 tasks` = paste0(`Observed tasks`, "/", total_task_count),
+    `Accuracy tasks` = paste0(`Accuracy tasks`, "/", total_task_count),
+    `MCC tasks` = paste0(`MCC tasks`, "/", total_task_count),
     `Mean F1` = if_else(is.na(`Mean F1`), "", sprintf("%.3f", `Mean F1`)),
     `Mean accuracy` = if_else(is.na(`Mean accuracy`), "", sprintf("%.3f", `Mean accuracy`)),
     `Mean MCC` = if_else(is.na(`Mean MCC`), "", sprintf("%.3f", `Mean MCC`))
   )
 
 write_latex(
-  kable(altmet, format = "latex", align = "lrrrrr", booktabs = TRUE,
-        caption = "Unified 34-task model averages. Coverage is complete for all nine models in this version. The main F1 score is the task-specific summary metric; accuracy and MCC describe overall agreement. For imbalanced tasks, all three answer different questions. \\label{tab:altmetrics}") |>
+  kable(altmet, format = "latex", align = "lrrrrrr", booktabs = TRUE,
+        caption = "Unified 34-task model averages. F1 coverage is complete for all nine models. Accuracy and MCC are averaged over tasks where the metric is defined in the same way across outputs; the multi-binary ATI task is excluded from those two columns. The main F1 score is the task-specific summary metric. \\label{tab:altmetrics}") |>
     kable_styling(font_size = 9, latex_options = c("HOLD_position")),
   "output/tables/table-altmetrics-appendix.tex"
 )

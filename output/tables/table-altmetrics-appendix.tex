@@ -1,22 +1,22 @@
 \begin{table}[H]
 \centering
-\caption{Unified 34-task model averages. Coverage is complete for all nine models in this version. The main F1 score is the task-specific summary metric; accuracy and MCC describe overall agreement. For imbalanced tasks, all three answer different questions. \label{tab:altmetrics}}
+\caption{Unified 34-task model averages. F1 coverage is complete for all nine models. Accuracy and MCC are averaged over tasks where the metric is defined in the same way across outputs; the multi-binary ATI task is excluded from those two columns. The main F1 score is the task-specific summary metric. \label{tab:altmetrics}}
 \centering
 \fontsize{9}{11}\selectfont
-\begin{tabular}[t]{lrrrrr}
+\begin{tabular}[t]{lrrrrrr}
 \toprule
-Model & Coverage & Missing & Mean F1 & Mean accuracy & Mean MCC\\
+Model & F1 tasks & Accuracy tasks & MCC tasks & Mean F1 & Mean accuracy & Mean MCC\\
 \midrule
-Claude Sonnet 4.6 & 34/34 &  & 0.668 & 0.777 & 0.632\\
-gpt-5.5 & 34/34 &  & 0.660 & 0.775 & 0.627\\
-Gemma 4 31B & 34/34 &  & 0.648 & 0.770 & 0.615\\
-DeepSeek V4 Pro & 34/34 &  & 0.647 & 0.772 & 0.613\\
-Gemma 4 26B & 34/34 &  & 0.639 & 0.762 & 0.597\\
+Claude Sonnet 4.6 & 34/34 & 33/34 & 33/34 & 0.668 & 0.777 & 0.632\\
+gpt-5.5 & 34/34 & 33/34 & 33/34 & 0.660 & 0.775 & 0.627\\
+Gemma 4 31B & 34/34 & 33/34 & 33/34 & 0.648 & 0.770 & 0.615\\
+DeepSeek V4 Pro & 34/34 & 33/34 & 33/34 & 0.647 & 0.772 & 0.613\\
+Gemma 4 26B & 34/34 & 33/34 & 33/34 & 0.639 & 0.762 & 0.597\\
 \addlinespace
-gpt-5.4-nano & 34/34 &  & 0.632 & 0.748 & 0.591\\
-Mistral Sm 24B & 34/34 &  & 0.629 & 0.740 & 0.583\\
-Qwen3 14B & 34/34 &  & 0.608 & 0.749 & 0.570\\
-Qwen3 30B-A3B & 34/34 &  & 0.593 & 0.744 & 0.555\\
+gpt-5.4-nano & 34/34 & 33/34 & 33/34 & 0.632 & 0.748 & 0.591\\
+Mistral Sm 24B & 34/34 & 33/34 & 33/34 & 0.629 & 0.740 & 0.583\\
+Qwen3 14B & 34/34 & 33/34 & 33/34 & 0.608 & 0.749 & 0.570\\
+Qwen3 30B-A3B & 34/34 & 33/34 & 33/34 & 0.593 & 0.744 & 0.555\\
 \bottomrule
 \end{tabular}
 \end{table}

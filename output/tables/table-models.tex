@@ -1,0 +1,23 @@
+\begin{table}[H]
+\centering
+\caption{Models and runtime settings. The table reports exact local Ollama tags and API model IDs used in the benchmark. No context-window override was set; output caps and output constraints are described in the text. \label{tab:models}}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\fontsize{8}{10}\selectfont
+\begin{tabular}[t]{ll>{\raggedright\arraybackslash}p{15em}l>{\raggedright\arraybackslash}p{16em}}
+\toprule
+Model & Class & Exact ID/tag & Size/quant. & Access/runtime\\
+\midrule
+Gemma 4 26B & Local Ollama & gemma4:26b & 26B, Ollama tag default & Apple M2 Pro, 32 GB; Ollama 0.19.0; macOS 26.1\\
+Gemma 4 31B & Local Ollama & gemma4:31b-it-q4\_K\_M & 31B, Q4\_K\_M & Apple M2 Pro, 32 GB; Ollama 0.19.0; macOS 26.1\\
+Qwen3 14B & Local Ollama & qwen3:14b-q4\_K\_M & 14B, Q4\_K\_M & Apple M2 Pro, 32 GB; Ollama 0.19.0; macOS 26.1\\
+Qwen3 30B-A3B & Local Ollama & qwen3:30b-a3b-q4\_K\_M & 30B MoE, Q4\_K\_M & Apple M2 Pro, 32 GB; Ollama 0.19.0; macOS 26.1\\
+Mistral Sm 24B & Local Ollama & mistral-small:24b-instruct-2501-q4\_K\_M & 24B, Q4\_K\_M & Apple M2 Pro, 32 GB; Ollama 0.19.0; macOS 26.1\\
+\addlinespace
+gpt-5.5 & API & gpt-5.5 & provider model & OpenAI, May 2026\\
+gpt-5.4-nano & API & gpt-5.4-nano & provider model & OpenAI, May 2026\\
+DeepSeek V4 Pro & API & deepseek-v4-pro & provider model & DeepSeek, May 2026\\
+Claude Sonnet 4.6 & API & claude-sonnet-4-6 & provider model & Anthropic, May 2026\\
+\bottomrule
+\end{tabular}}
+\end{table}
