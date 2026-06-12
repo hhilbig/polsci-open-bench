@@ -121,6 +121,32 @@ def _strip_fences(content: str) -> str:
     return c
 
 
+def _decode_concatenated(content: str):
+    """Decode a sequence of concatenated JSON values, tolerating JSONL.
+
+    Some models (e.g. Qwen3.5) emit one JSON object per line (newline-delimited
+    JSON) instead of a single JSON array. This walks the string, raw-decoding
+    each value and skipping whitespace/comma separators between them, so JSONL
+    and whitespace-separated objects are recovered. Returns a list of decoded
+    values (possibly empty)."""
+    dec = json.JSONDecoder()
+    s = _strip_fences(content)
+    objs = []
+    idx, n = 0, len(s)
+    while idx < n:
+        while idx < n and s[idx] in " \t\r\n,":
+            idx += 1
+        if idx >= n:
+            break
+        try:
+            obj, end = dec.raw_decode(s, idx)
+        except Exception:
+            break
+        objs.append(obj)
+        idx = end
+    return objs
+
+
 def _empty_pred(task_def):
     kind = task_def["label_kind"]
     if kind == "multi_binary":
@@ -158,17 +184,26 @@ def parse_response(content: str, task_def, expected_n: int):
         return [(pred, err)]
 
     try:
-        arr, _ = json.JSONDecoder().raw_decode(_strip_fences(content))
+        decoded, _ = json.JSONDecoder().raw_decode(_strip_fences(content))
     except Exception:
-        return [(_empty_pred(task_def),
-                 f"batch_parse_fail: {content[:80]!r}")] * expected_n
+        decoded = None
 
     # OpenAI-wrapped array: {"results": [...]}
-    if isinstance(arr, dict) and "results" in arr and isinstance(arr["results"], list):
-        arr = arr["results"]
+    if isinstance(decoded, dict) and "results" in decoded and isinstance(decoded["results"], list):
+        arr = decoded["results"]
+    elif isinstance(decoded, list):
+        arr = decoded
+    else:
+        # Fallback: recover newline-delimited / concatenated JSON objects (JSONL)
+        # emitted instead of a single JSON array. Only triggers when the leading
+        # value is not already a usable array, so array-emitting models are
+        # unaffected.
+        objs = _decode_concatenated(content)
+        arr = objs if objs else None
 
     if not isinstance(arr, list):
-        return [(_empty_pred(task_def), "not_array")] * expected_n
+        label = "not_array" if decoded is not None else f"batch_parse_fail: {content[:80]!r}"
+        return [(_empty_pred(task_def), label)] * expected_n
 
     results = []
     for i in range(expected_n):
