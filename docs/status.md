@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-05-18
+Last updated: 2026-06-12
 
 ## Current Snapshot
 
@@ -40,6 +40,12 @@ Last updated: 2026-05-18
 - Serial outputs were written to [`output/predictions.csv`](../output/predictions.csv) and [`output/summary.csv`](../output/summary.csv).
 - The completed local 10-item prompt-batching results were merged into [`output/predictions_batched.csv`](../output/predictions_batched.csv).
 - The PDF report was rebuilt on 2026-05-18, and public docs now describe one 34-task benchmark.
+
+## Post-Release Changes
+
+- 2026-05-20: Report assets were rebuilt ([`code/build_report_assets.R`](../code/build_report_assets.R), figures, appendix tables, references, and [`output/report_pdf.pdf`](../output/report_pdf.pdf)). The two CAP task manifests had their `source:` citation strings corrected; data, labels, and prompts were unchanged, so no rerun was required.
+- 2026-06-06: Email addresses embedded in dataset text were replaced with `[EMAIL]` across the nine affected corpora (notably citizen emails in the Erlich ATI data). No raw email addresses remain in `data/`. The redacted text is otherwise unchanged.
+- Reproducibility note: the published predictions predate the 2026-06-06 redaction and were generated on the pre-redaction text, so the released corpora now differ from the exact inputs scored for a small number of items. The redacted tokens are incidental contact strings rather than classification signal, so the effect on F1, accuracy, and MCC is negligible. Predictions were not regenerated.
 
 ## Next Checks
 

@@ -1,6 +1,6 @@
 # Public Release Notes
 
-Last updated: 2026-05-18
+Last updated: 2026-06-12
 
 This note summarizes the current public release state. The report is the
 authoritative narrative artifact; the repository stores the data, prompts,
@@ -30,6 +30,25 @@ summaries, figures, and reproduction instructions that support it.
 - Task inventory: [`docs/task_inventory.md`](task_inventory.md)
 - Output schema: [`docs/schema.md`](schema.md)
 - Reproduction guide: [`docs/reproduce.md`](reproduce.md)
+
+## Maintenance Since The 34-Task Release
+
+The 34-task release itself is unchanged. Two maintenance commits landed after it:
+
+- 2026-05-20: Report assets were rebuilt (`code/build_report_assets.R`, figures,
+  appendix tables, references, and the report PDF). The two CAP task manifests
+  had their `source:` citation strings corrected. Data, labels, and prompts were
+  unchanged, so no rerun was required and results are unaffected.
+- 2026-06-06: Email addresses embedded in dataset text were replaced with
+  `[EMAIL]` across the nine affected corpora, removing personal contact
+  information (notably citizen emails in the Erlich ATI data). No raw email
+  addresses remain in `data/`; the text is otherwise unchanged.
+
+The published predictions predate the 2026-06-06 redaction and were generated on
+the pre-redaction text, so the released corpora now differ from the exact inputs
+scored for a small number of items. The redacted tokens are incidental contact
+strings rather than classification signal, so the effect on F1, accuracy, and
+MCC is negligible. Predictions were not regenerated.
 
 ## What Changed Since The Earlier Release
 
