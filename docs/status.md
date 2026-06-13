@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-06-12
+Last updated: 2026-06-13
 
 ## Current Snapshot
 
@@ -17,10 +17,10 @@ Last updated: 2026-06-12
 ## Benchmark Scope
 
 - 34 classification task manifests under [`tasks/`](../tasks)
-- 9 serial models: 5 local Ollama models and 4 commercial API models
-- 306 / 306 serial task-model pairs filled
-- 170 / 170 local 10-item prompt task-model pairs filled
-- 147,825 serial model-item classifications
+- 10 serial models: 6 local Ollama models and 4 commercial API models
+- 340 / 340 serial task-model pairs filled
+- 204 / 204 local 10-item prompt task-model pairs filled
+- 164,250 serial model-item classifications
 - 293 to 500 items per task, depending on cleaned data availability
 - Claude Sonnet 4.6 has one retained malformed output (`cap_crs_9818`), not a missing cell
 
@@ -45,6 +45,7 @@ Last updated: 2026-06-12
 
 - 2026-05-20: Report assets were rebuilt ([`code/build_report_assets.R`](../code/build_report_assets.R), figures, appendix tables, references, and [`output/report_pdf.pdf`](../output/report_pdf.pdf)). The two CAP task manifests had their `source:` citation strings corrected; data, labels, and prompts were unchanged, so no rerun was required.
 - 2026-06-06: Email addresses embedded in dataset text were replaced with `[EMAIL]` across the nine affected corpora (notably citizen emails in the Erlich ATI data). No raw email addresses remain in `data/`. The redacted text is otherwise unchanged.
+- 2026-06-13: Added Qwen3.5 35B-A3B as a sixth local model (serial + 10-item batched on all 34 tasks). The benchmark now covers ten models (six local, four API); Qwen3 30B-A3B is retained as a prior-generation reference. The batch parser was extended to accept newline-delimited JSON (JSONL) output, which Qwen3.5 emits for batched prompts. Summaries, figures, tables, and the report PDF were rebuilt.
 - Reproducibility note: the published predictions predate the 2026-06-06 redaction and were generated on the pre-redaction text, so the released corpora now differ from the exact inputs scored for a small number of items. The redacted tokens are incidental contact strings rather than classification signal, so the effect on F1, accuracy, and MCC is negligible. Predictions were not regenerated.
 
 ## Next Checks

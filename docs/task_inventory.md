@@ -33,11 +33,11 @@ These are source/task-manifest families. The report also groups tasks into five 
 
 | Artifact | Path | Tasks | Models | Cells | Rows | Batch sizes |
 | --- | --- | --- | --- | --- | --- | --- |
-| Serial predictions | `output/predictions.csv` | 34 | 9 | 306 | 147,825 |  |
-| Serial summary | `output/summary.csv` | 34 | 9 | 306 | 306 |  |
-| Prompt-batched predictions | `output/predictions_batched.csv` | 34 | 7 | 234 | 114,125 | 10, 20 |
-| Prompt-batched summary | `output/summary_batched.csv` | 34 | 9 | 540 | 540 | 1, 10, 20 |
-| Local 10-item comparison summary | `output/summary_batched_local_b10.csv` | 34 | 9 | 476 | 476 | 1, 10 |
+| Serial predictions | `output/predictions.csv` | 34 | 10 | 340 | 164,250 |  |
+| Serial summary | `output/summary.csv` | 34 | 10 | 340 | 340 |  |
+| Prompt-batched predictions | `output/predictions_batched.csv` | 34 | 8 | 268 | 130,550 | 10, 20 |
+| Prompt-batched summary | `output/summary_batched.csv` | 34 | 10 | 608 | 608 | 1, 10, 20 |
+| Local 10-item comparison summary | `output/summary_batched_local_b10.csv` | 34 | 10 | 544 | 544 | 1, 10 |
 
 ## Tasks
 

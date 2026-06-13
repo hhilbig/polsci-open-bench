@@ -108,7 +108,7 @@ long_codebook_tasks <- c(
   "cap_crs_policy_topic"
 )
 
-model_levels <- c("Gemma 4 26B","Gemma 4 31B","Qwen3 14B","Qwen3 30B-A3B","Mistral Sm 24B",
+model_levels <- c("Gemma 4 26B","Gemma 4 31B","Qwen3 14B","Qwen3 30B-A3B","Qwen3.5 35B-A3B","Mistral Sm 24B",
                   "gpt-5.5","gpt-5.4-nano","DeepSeek V4 Pro","Claude Sonnet 4.6")
 
 model_palette <- c(
@@ -116,6 +116,7 @@ model_palette <- c(
   "Gemma 4 31B"       = "#0072B2",
   "Qwen3 14B"         = "#d95f02",
   "Qwen3 30B-A3B"     = "#7570b3",
+  "Qwen3.5 35B-A3B"   = "#e6ab02",
   "Mistral Sm 24B"    = "#e7298a",
   "gpt-5.5"           = "#1f1f1f",
   "gpt-5.4-nano"      = "#8a8a8a",
@@ -131,6 +132,7 @@ label_models <- function(data) {
         "gemma4:26b"                               = "Gemma 4 26B",
         "qwen3:14b-q4_K_M"                         = "Qwen3 14B",
         "qwen3:30b-a3b-q4_K_M"                     = "Qwen3 30B-A3B",
+        "qwen3.5:35b-a3b-q4_K_M"                   = "Qwen3.5 35B-A3B",
         "mistral-small:24b-instruct-2501-q4_K_M"   = "Mistral Sm 24B",
         "gpt-5.5"                                  = "gpt-5.5",
         "gpt-5.4-nano"                             = "gpt-5.4-nano",
@@ -358,6 +360,7 @@ speed_label_df <- speed_df |>
       model_short == "Gemma 4 31B" ~ 3.10,
       model_short == "Qwen3 14B" ~ 0.94,
       model_short == "Qwen3 30B-A3B" ~ 0.41,
+      model_short == "Qwen3.5 35B-A3B" ~ 1.10,
       model_short == "Mistral Sm 24B" ~ 1.62,
       TRUE ~ label_x
     ),
@@ -366,6 +369,7 @@ speed_label_df <- speed_df |>
       model_short == "Gemma 4 31B" ~ 0.642,
       model_short == "Qwen3 14B" ~ 0.612,
       model_short == "Qwen3 30B-A3B" ~ 0.579,
+      model_short == "Qwen3.5 35B-A3B" ~ 0.658,
       model_short == "Mistral Sm 24B" ~ 0.622,
       TRUE ~ label_y
     )
@@ -908,7 +912,7 @@ malformed <- bind_rows(malformed_local, malformed_api) |>
 
 write_latex(
   kable(malformed, format = "latex", align = "llrlr", booktabs = TRUE,
-        caption = "Batched model-task pairs with response-format or label failure rates of at least 5 percent, not a complete list of all model-task pairs. Failures include responses that do not parse, responses with the wrong object or array shape, and responses that use labels outside the allowed label set. Local rows come from the full 34-task grid with 10 items per prompt for the five local models (170 pairs). OpenAI rows come from a separate 10-task prompt-batching diagnostic with 10 and 20 items per prompt (40 pairs); these rows do not enter the main one-item-at-a-time benchmark. Claude Sonnet and DeepSeek API prompt batching are not covered here. \\label{tab:malformed}") |>
+        caption = "Batched model-task pairs with response-format or label failure rates of at least 5 percent, not a complete list of all model-task pairs. Failures include responses that do not parse, responses with the wrong object or array shape, and responses that use labels outside the allowed label set. Local rows come from the full 34-task grid with 10 items per prompt for the six local models (204 pairs). OpenAI rows come from a separate 10-task prompt-batching diagnostic with 10 and 20 items per prompt (40 pairs); these rows do not enter the main one-item-at-a-time benchmark. Claude Sonnet and DeepSeek API prompt batching are not covered here. \\label{tab:malformed}") |>
     kable_styling(font_size = 8, latex_options = c("HOLD_position")),
   "output/tables/table-malformed-appendix.tex"
 )
@@ -943,7 +947,7 @@ altmet <- df |>
 
 write_latex(
   kable(altmet, format = "latex", align = "lrrrrrr", booktabs = TRUE,
-        caption = "Unified 34-task model averages. F1 coverage is complete for all nine models. Accuracy and MCC are averaged over tasks where the metric is defined in the same way across outputs; the multi-binary ATI task is excluded from those two columns. The main F1 score is the task-specific summary metric. \\label{tab:altmetrics}") |>
+        caption = "Unified 34-task model averages. F1 coverage is complete for all ten models. Accuracy and MCC are averaged over tasks where the metric is defined in the same way across outputs; the multi-binary ATI task is excluded from those two columns. The main F1 score is the task-specific summary metric. \\label{tab:altmetrics}") |>
     kable_styling(font_size = 9, latex_options = c("HOLD_position")),
   "output/tables/table-altmetrics-appendix.tex"
 )

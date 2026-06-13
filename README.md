@@ -3,7 +3,7 @@
 A benchmark of local open-weight and commercial API LLMs for political science
 text classification.
 
-The current release compares five local Ollama models with four commercial API
+The current release compares six local Ollama models with four commercial API
 models from OpenAI, Anthropic, and DeepSeek on 34 classification tasks from
 political science papers, public replication archives, and documented public
 datasets. The report is the
@@ -23,8 +23,8 @@ authoritative project summary.
 
 Local open-weight models are often competitive with commercial API models, but
 the benchmark does not support a single global model ranking. The best local
-model matches or exceeds the best API model on 9 of 34 tasks; on average, the
-best API model exceeds the best local model by 0.015 F1. API models have their
+model matches or exceeds the best API model on 10 of 34 tasks; on average, the
+best API model exceeds the best local model by 0.011 F1. API models have their
 clearest edge on complex tasks with many active labels, long codebooks, or
 multiple outputs per item.
 
@@ -37,10 +37,10 @@ not a supervised-learning baseline suite.
 ## Benchmark Scope
 
 - 34 task manifests in [`tasks/`](tasks)
-- 9 serial models: 5 local Ollama models and 4 commercial API models
-- 306 serial task-model comparisons
-- 147,825 serial model-item classifications
-- 170 local prompt-batched task-model comparisons with 10 items per prompt
+- 10 serial models: 6 local Ollama models and 4 commercial API models
+- 340 serial task-model comparisons
+- 164,250 serial model-item classifications
+- 204 local prompt-batched task-model comparisons with 10 items per prompt
 - 293 to 500 items per task
 - Metrics: main F1, accuracy, MCC, time per item, and unusable-output rate
 - Local hardware: Apple M2 Pro with 32 GB unified memory

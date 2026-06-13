@@ -1,7 +1,7 @@
 ---
 title: "Open-Weight LLMs Are Often Competitive with Commercial APIs for Political Science Text Classification"
 author: "Hanno Hilbig\\thanks{hhilbig@ucdavis.edu. Code and data: \\url{https://github.com/hhilbig/polsci-open-bench}.}"
-date: "2026-05-18"
+date: "2026-06-13"
 bibliography: references.bib
 link-citations: true
 nocite: |
@@ -41,7 +41,7 @@ include_table <- function(path) {
 
 ## Abstract {.unnumbered}
 
-Can researchers use local open-weight models instead of commercial APIs for LLM text classification? Local models avoid marginal API charges, keep data on the researcher's machine, and make exact model versions easier to preserve. I benchmark five local models against four commercial API models on 34 political science classification tasks. Local models are often competitive, especially on simpler tasks. In a task-specific oracle comparison, local models match or exceed API performance on 9 tasks; on average, the best API model exceeds the best local model by 0.015 F1. The four strongest observed model means fall within 0.021 F1. API models have their clearest edge on complex tasks with many labels or multiple outputs per item. Batching several items in one prompt usually reduces local runtime per item, but specific model-task pairs can return invalid response formats or labels. Taken together, the results make local open-weight models a practical candidate alternative for many political science classification tasks, provided researchers validate candidate models on task-specific labels and check batching reliability before scaling up.
+Can researchers use local open-weight models instead of commercial APIs for LLM text classification? Local models avoid marginal API charges, keep data on the researcher's machine, and make exact model versions easier to preserve. I benchmark six local models against four commercial API models on 34 political science classification tasks. Local models are often competitive, especially on simpler tasks. In a task-specific oracle comparison, local models match or exceed API performance on 10 tasks; on average, the best API model exceeds the best local model by 0.011 F1. The four strongest observed model means fall within 0.021 F1. API models have their clearest edge on complex tasks with many labels or multiple outputs per item. Batching several items in one prompt usually reduces local runtime per item, but specific model-task pairs can return invalid response formats or labels. Taken together, the results make local open-weight models a practical candidate alternative for many political science classification tasks, provided researchers validate candidate models on task-specific labels and check batching reliability before scaling up.
 
 # Motivation
 
@@ -53,11 +53,11 @@ The main result is practical rather than a single leaderboard. Local models are 
 
 # Design
 
-The benchmark has two parts. First, I run a one-item-at-a-time benchmark covering thirty-four classification tasks drawn from political science papers, public replication archives, and documented public datasets. I compare nine models: five local open-weight models and four commercial API models from OpenAI, Anthropic, and DeepSeek. This produces 306 model-task comparisons. Each model sees the same items within a task. Thirty-one tasks use 500 sampled items. Three tasks have fewer cleaned items available, so I use all available items: 320 for Brandt political relevance, 312 for PLOVER event coding, and 293 for COVID threat minimization. This is why task sizes range from 293 to 500 items.
+The benchmark has two parts. First, I run a one-item-at-a-time benchmark covering thirty-four classification tasks drawn from political science papers, public replication archives, and documented public datasets. I compare ten models: six local open-weight models and four commercial API models from OpenAI, Anthropic, and DeepSeek. This produces 340 model-task comparisons. Each model sees the same items within a task. Thirty-one tasks use 500 sampled items. Three tasks have fewer cleaned items available, so I use all available items: 320 for Brandt political relevance, 312 for PLOVER event coding, and 293 for COVID threat minimization. This is why task sizes range from 293 to 500 items.
 
 I report performance and reliability for each task and model. The main F1 score puts precision and recall on the same scale. For binary tasks, I use the F1 score for the positive class, the harmonic mean of precision and recall. For multi-binary tasks, I average the per-label F1 scores. For single-label categorical tasks, I use macro F1, which gives each observed class equal weight before averaging. Where a task has one output per item, I also report accuracy and Matthews correlation coefficient (MCC). The multi-binary ATI task is excluded from mean accuracy and MCC because exact-match accuracy and multilabel MCC would answer a different question. This metric choice matters because class imbalance is common: macro-style F1 highlights rare-class performance, accuracy gives the plain success rate, and MCC is less sensitive than accuracy to majority-class dominance.
 
-I also record time per item and the share of unusable responses. A response is unusable if it fails to parse, returns the wrong object shape, or uses a label outside the allowed label set. I compute performance metrics over usable outputs only, so failure rates need to be read alongside F1, accuracy, and MCC. In the one-item-at-a-time benchmark, 95 of 147,825 outputs are unusable (0.064%). The issue is therefore small for the main performance comparisons, but not zero.
+I also record time per item and the share of unusable responses. A response is unusable if it fails to parse, returns the wrong object shape, or uses a label outside the allowed label set. I compute performance metrics over usable outputs only, so failure rates need to be read alongside F1, accuracy, and MCC. In the one-item-at-a-time benchmark, 95 of 164,250 outputs are unusable (0.058%). The issue is therefore small for the main performance comparisons, but not zero.
 
 I evaluate each model-item pair once in the one-item-at-a-time benchmark. Table \ref{tab:models} reports the exact model IDs, local model tags, and runtime details. The local setup was a single Apple Silicon MacBook with 32 GB of unified memory running Ollama at temperature 0.1, `num_predict=1024`, and thinking disabled. Local calls used prompt-only JSON instructions, after which the runner parsed and validated labels against the task schema. Commercial API calls used provider-specific constrained-output settings. OpenAI tiers used `reasoning_effort=medium`, strict JSON schema, and `max_completion_tokens=2000`; DeepSeek used JSON object mode, disabled thinking, `max_tokens=1024`, and temperature 0.1; and Anthropic used forced tool use with `max_tokens=2000`. Other than provider SDK retries for transient request failures, I do not retry unusable outputs in the one-item-at-a-time benchmark. I use the source paper's coding instructions verbatim where possible; otherwise, I derive prompts from source codebooks, public label definitions, or task descriptions (see Table \ref{tab:tasks}). Source labels in the task table correspond to full bibliography entries.
 
@@ -65,7 +65,7 @@ I evaluate each model-item pair once in the one-item-at-a-time benchmark. Table 
 include_table("tables/table-models.tex")
 ```
 
-Second, I test whether prompt batching speeds up local inference. In the batching experiment, the model receives ten items in one prompt and returns ten labels in a single response. This tests whether batching reduces time per item without changing the classification task. The local grid with 10 items per prompt covers all thirty-four tasks and all five local models.
+Second, I test whether prompt batching speeds up local inference. In the batching experiment, the model receives ten items in one prompt and returns ten labels in a single response. This tests whether batching reduces time per item without changing the classification task. The local grid with 10 items per prompt covers all thirty-four tasks and all six local models.
 
 The one-item-at-a-time benchmark is the basis for all main performance comparisons. I treat prompt batching as a separate speed and reliability check because it changes the format of the model call and can change invalid-output rates. Separating the two designs keeps the performance comparison clean while still showing whether local use is practical at larger scale.
 
@@ -83,13 +83,13 @@ The task-level bootstrap gives the same result (Table \ref{tab:task-bootstrap}).
 include_graphics("figures/fig-mean-f1.png")
 ```
 
-The local/API comparison in Figure \ref{fig-best-local-api-gap} directly addresses the paper's main question. After selecting the best model within each class for each task, the best local model matches or exceeds the best API model on 9 of the 34 tasks. On average, the best API model exceeds the best local model by 0.015 F1, and the median API advantage is 0.019. Figure \ref{fig-best-local-api-gap} uses the same sign convention: values below zero favor local models and values above zero favor API models. This is not evidence that local models dominate API models. It shows that the API advantage is often small enough that local model calls are worth validating on the target task.
+The local/API comparison in Figure \ref{fig-best-local-api-gap} directly addresses the paper's main question. After selecting the best model within each class for each task, the best local model matches or exceeds the best API model on 10 of the 34 tasks. On average, the best API model exceeds the best local model by 0.011 F1, and the median API advantage is 0.017. Figure \ref{fig-best-local-api-gap} uses the same sign convention: values below zero favor local models and values above zero favor API models. This is not evidence that local models dominate API models. It shows that the API advantage is often small enough that local model calls are worth validating on the target task.
 
 ```{r fig-best-local-api-gap, out.width="0.74\\linewidth", fig.pos="!htbp", fig.cap="API advantage in main F1 by task. Values below zero favor the local model class; values above zero favor the API model class."}
 include_graphics("figures/fig-best-local-api-gap.png")
 ```
 
-Table \ref{tab:model-selection-value} reports how much performance would improve if researchers could choose the best model separately for each task. These upper bounds choose the best model after observing performance on each task. Allowing the local model to vary by task raises mean F1 from 0.648 for the best single local model to 0.673. Across all nine models, task-specific selection reaches 0.696, compared with 0.668 for the best single model. These values show why task-specific validation can be valuable, but they do not show how large a validation sample is needed to choose models reliably.
+Table \ref{tab:model-selection-value} reports how much performance would improve if researchers could choose the best model separately for each task. These upper bounds choose the best model after observing performance on each task. Allowing the local model to vary by task raises mean F1 from 0.648 for the best single local model to 0.677. Across all ten models, task-specific selection reaches 0.698, compared with 0.668 for the best single model. These values show why task-specific validation can be valuable, but they do not show how large a validation sample is needed to choose models reliably.
 
 The larger differences are across tasks. The paired-by-item intervals are wide enough that many task-level leader differences remain uncertain. I therefore do not read the benchmark primarily as a leaderboard: global rank is a weak decision rule for applied coding.
 
@@ -97,7 +97,7 @@ The larger differences are across tasks. The paired-by-item intervals are wide e
 
 Figure \ref{fig-family} groups the thirty-four tasks into five broad annotation types: relevance and harm, position and tone, events and actions, claims and relations, and issues and topics. These are my groupings, not source-provided task families, and I assign borderline cases by the prediction target. The full task list is in Table \ref{tab:tasks}. The type-level averages do not show a simple local versus API pattern.
 
-At the task level, the top point estimates are split across eight models (Table \ref{tab:winners}). gpt-5.5 leads on thirteen tasks, Claude Sonnet 4.6 leads on eight, Mistral Small leads on three, and five other models lead on two tasks each.
+At the task level, the top point estimates are split across eight models (Table \ref{tab:winners}). gpt-5.5 leads on thirteen tasks, Claude Sonnet 4.6 leads on eight, Mistral Small leads on three, four other models lead on two tasks each, and DeepSeek V4 Pro leads on one; one task has no single top model.
 
 The winner split matters because model strengths differ by task. Even models with lower average performance sometimes produce the best task-level point estimate. A model that is weaker on average can still be the best model for a specific task.
 
@@ -125,17 +125,17 @@ include_graphics("figures/fig-label-structure-gap.png")
 
 Local inference speed varies sharply with model size, model design, and batching (Figure \ref{fig-speed}). On a typical 500-item task, median one-item-at-a-time runtimes range from about 5 minutes for Qwen3-30B-A3B and 7 minutes for Gemma 4 26B to about 29 minutes for Gemma 4 31B. Qwen3-30B-A3B is fastest because it is a sparse model that uses about three billion active parameters per call. Gemma 4 31B has the strongest local 34-task one-item-at-a-time F1, while Gemma 4 26B is much faster and remains close on average. Local inference is slow enough to plan around, but not slow enough to rule out ordinary validation and production coding.
 
-```{r fig-speed, out.width="0.72\\linewidth", fig.pos="!htbp", fig.cap="Mean F1 vs median runtime per item, for the five local models. Circles show one-at-a-time calls over the 34-task benchmark; triangles show calls with 10 items per prompt over the same task set. Lines connect the two call modes for the same model, and labels identify model pairs. API models are excluded because their per-call time mixes server load, queueing, and network delay and is not directly comparable to local inference time."}
+```{r fig-speed, out.width="0.72\\linewidth", fig.pos="!htbp", fig.cap="Mean F1 vs median runtime per item, for the six local models. Circles show one-at-a-time calls over the 34-task benchmark; triangles show calls with 10 items per prompt over the same task set. Lines connect the two call modes for the same model, and labels identify model pairs. API models are excluded because their per-call time mixes server load, queueing, and network delay and is not directly comparable to local inference time."}
 include_graphics("figures/fig-speed.png")
 ```
 
-All five local models ran on a single 32 GB Apple Silicon MacBook; the largest, Gemma 4 31B, fit in unified memory. Appendix Figure \ref{fig-local-runtime-per-1000} translates the local runtimes into median minutes per 1,000 items for each model. For reference, the API tiers in this run took roughly 0.9 to 1.7 seconds per item end-to-end, but those numbers mix model speed with provider load, network delays, and queueing and are not shown in the figure.
+All six local models ran on a single 32 GB Apple Silicon MacBook; the largest, Gemma 4 31B, fit in unified memory. Appendix Figure \ref{fig-local-runtime-per-1000} translates the local runtimes into median minutes per 1,000 items for each model. For reference, the API tiers in this run took roughly 0.9 to 1.7 seconds per item end-to-end, but those numbers mix model speed with provider load, network delays, and queueing and are not shown in the figure.
 
 ## Batching speeds up local inference but can produce invalid output
 
 Prompt batching changes the prompt: the model receives several items at once and must return one label for each item. Provider Batch API mode is different. It changes how requests are queued and billed, but each item still appears in a separate request. I test prompt batching here. @pipal2026 show why this matters for labeling tasks: one-at-a-time classification repeats the same prompt and request setup for every item.
 
-Figure \ref{fig-speed} shows the main local result. Prompt batching reduces median runtime per item for every local model, with model-level median speedups from about 1.23× to 1.86×. Among usable outputs, average F1 changes range from -0.023 to +0.010. When I instead count unusable outputs as failures, model-level mean F1 changes range from -0.025 to +0.010 relative to one-item-at-a-time calls. Gemma 4 26B is the most useful fast batched option in these results: it remains close to Gemma 4 31B on average but classifies a typical 500-item task in about 4 minutes with 10 items per prompt, compared with about 21 minutes for Gemma 4 31B.
+Figure \ref{fig-speed} shows the main local result. Prompt batching reduces median runtime per item for every local model, with model-level median speedups from about 1.23× to 2.09×. Among usable outputs, average F1 changes range from -0.023 to +0.011. When I instead count unusable outputs as failures, model-level mean F1 changes range from -0.025 to +0.011 relative to one-item-at-a-time calls. Gemma 4 26B is the most useful fast batched option in these results: it remains close to Gemma 4 31B on average but classifies a typical 500-item task in about 4 minutes with 10 items per prompt, compared with about 21 minutes for Gemma 4 31B.
 
 Batching helps less when prompts are long. Short-prompt model-task pairs have a median local speedup of about 1.34× with 10 items per prompt, while long-codebook pairs have a median speedup of about 1.20×. The bigger problem is invalid output: some models return invalid JSON, the wrong object shape, or labels outside the allowed set. The largest failures are concentrated in specific model-task pairs. For example, Gemma 4 26B produces unusable responses for 72% of Erlich ATI items with 10 items per prompt, and Qwen3-30B-A3B produces unusable responses for 51% of Halterman CCC items with 10 items per prompt. In a separate 10-task prompt-batching diagnostic for OpenAI models, gpt-5.5 returned unusable output for 68% of Halterman CCC items. That OpenAI diagnostic does not enter the main one-item-at-a-time performance results. Table \ref{tab:malformed} lists the covered response-format and label failure rates above 5%.
 
@@ -151,11 +151,11 @@ The results suggest a simple validation step rather than a single best model. St
 
 Researchers should test batching on the same validation sample before production coding. In these results, 10 items per prompt usually reduces local runtime with little average performance loss, but the failure rate can be high for specific model-task pairs. For long, multi-class codebooks, researchers should not batch aggressively unless retries are built in.
 
-All five local models fit on a 32 GB Apple Silicon MacBook, so one laptop setup is enough hardware for the full benchmark. When paid API use is acceptable, cheap tiers should also be tested rather than dismissed: in this run, gpt-5.4-nano lost 0.028 mean F1 relative to gpt-5.5 and cost about $4 for the full 34-task benchmark.
+All six local models fit on a 32 GB Apple Silicon MacBook, so one laptop setup is enough hardware for the full benchmark. When paid API use is acceptable, cheap tiers should also be tested rather than dismissed: in this run, gpt-5.4-nano lost 0.028 mean F1 relative to gpt-5.5 and cost about $4 for the full 34-task benchmark.
 
 # Limitations and scope
 
-I stress three limitations. First, the model set reflects five specific local models that fit a 32 GB Apple Silicon setup, plus four commercial API tiers that include cheaper and flagship options. I did not optimize prompts separately per model. Some prompts use the source paper's wording; others come from source codebooks, public label definitions, or task descriptions.
+I stress three limitations. First, the model set reflects six specific local models that fit a 32 GB Apple Silicon setup, plus four commercial API tiers that include cheaper and flagship options. I did not optimize prompts separately per model. Some prompts use the source paper's wording; others come from source codebooks, public label definitions, or task descriptions.
 
 Second, each model-item pair is evaluated once. The uncertainty checks therefore capture item and task variation, not repeated-call variation, provider-side nondeterminism, or future API drift. API endpoints can change behavior between releases even when the model name is stable, while local open-weight models are easier to freeze exactly.
 
@@ -165,7 +165,7 @@ The benchmark studies prompt-based classification only. For large labeled datase
 
 # Conclusion
 
-Can researchers use local open-weight models instead of commercial APIs for applied text classification? The answer in this benchmark is often yes, but not by default. Local models match or exceed the best API model on 9 of 34 tasks in the task-specific oracle comparison, and the average best-API advantage is 0.015 F1. At the same time, API models retain their clearest edge on complex tasks with many labels or multiple outputs per item.
+Can researchers use local open-weight models instead of commercial APIs for applied text classification? The answer in this benchmark is often yes, but not by default. Local models match or exceed the best API model on 10 of 34 tasks in the task-specific oracle comparison, and the average best-API advantage is 0.011 F1. At the same time, API models retain their clearest edge on complex tasks with many labels or multiple outputs per item.
 
 Taken together, the results point to a validation-first workflow rather than a model ranking. Researchers should test candidate models on labeled examples from the target task, report both performance and unusable-output rates, and treat batching as a speed tool that requires its own reliability check.
 
@@ -220,7 +220,7 @@ Figure \ref{fig-best-local-api-gap} in the main text compares the best local mod
 include_table("tables/table-model-selection-value.tex")
 ```
 
-The best single model is Claude Sonnet 4.6, with a 34-task mean F1 of 0.668. The best single local model, Gemma 4 31B, reaches 0.648. If the local model can vary by task, the local task-specific upper bound rises to 0.673. The API upper bound reaches 0.688, and the all-model upper bound reaches 0.696. Because these rows choose after observing outcomes, they describe an upper bound on what validation can buy, not expected production performance.
+The best single model is Claude Sonnet 4.6, with a 34-task mean F1 of 0.668. The best single local model, Gemma 4 31B, reaches 0.648. If the local model can vary by task, the local task-specific upper bound rises to 0.677. The API upper bound reaches 0.688, and the all-model upper bound reaches 0.698. Because these rows choose after observing outcomes, they describe an upper bound on what validation can buy, not expected production performance.
 
 # Response-format or label failure rates above 5 percent {.unnumbered}
 
