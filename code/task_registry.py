@@ -181,9 +181,48 @@ def _build_item_id(row, id_spec, position):
     return str(row[id_spec["column"]])
 
 
+def _excluded_labels(gt_spec):
+    """Gold labels a task declares unscoreable and drops before sampling.
+
+    Used where a source label records coder uncertainty rather than a property of
+    the text, so no annotator could recover it from the benchmark input. The GTD
+    `Unknown` attack type is the motivating case: GTD assigns it when the source
+    report does not specify the method, but the benchmark item is the GTD summary,
+    which usually does describe the attack.
+
+    Dropping rows re-draws the sample from a smaller frame, so a manifest using
+    this is NOT item-paired with one that does not. Version the task rather than
+    editing a published manifest in place.
+    """
+    return [str(x) for x in (gt_spec.get("exclude_labels") or [])]
+
+
+def _label_map(gt_spec):
+    """Rename gold label values at load time.
+
+    Lets a task correct a label NAME without regenerating the cleaned CSV from a
+    source archive. The motivating case is the CAP major-topic list, where topic 5
+    carried the legacy name "Labor and Immigration" alongside a separate topic 9
+    "Immigration", giving the model two plausible buckets for the same content.
+
+    Renaming does not change which rows are sampled, so a manifest that only maps
+    labels stays item-paired with the manifest it supersedes.
+    """
+    return {str(k): str(v) for k, v in (gt_spec.get("label_map") or {}).items()}
+
+
 def _make_loader(data_path, id_spec, text_spec, gt_spec, label_kind, label_key, labels, sampling):
+    exclude = _excluded_labels(gt_spec)
+    label_map = _label_map(gt_spec)
+
     def loader():
         df = pd.read_csv(data_path, low_memory=False)
+        if label_map or exclude:
+            column = gt_spec["column"]
+            if label_map:
+                df[column] = df[column].astype(str).replace(label_map)
+            if exclude:
+                df = df[~df[column].astype(str).isin(exclude)].reset_index(drop=True)
         v1_idxs, v2_idxs = _v1_v2_indices(
             len(df),
             n_v1=sampling["n_v1"],
@@ -223,6 +262,38 @@ def load_task_definition(manifest_path: Path):
     label_kind = spec["label_kind"]
     label_key = spec.get("label_key")
     labels = list(spec.get("labels", []))
+
+    mapped = _label_map(spec["ground_truth"])
+    if mapped:
+        if label_kind != "categorical":
+            raise ValueError(
+                f"{manifest_path}: ground_truth.label_map is only supported for "
+                f"categorical tasks, not {label_kind}"
+            )
+        unknown = [v for v in mapped.values() if v not in [str(x) for x in labels]]
+        if unknown:
+            raise ValueError(
+                f"{manifest_path}: ground_truth.label_map maps onto labels that "
+                f"are not in the task's label list: {sorted(set(unknown))}"
+            )
+
+    excluded = _excluded_labels(spec["ground_truth"])
+    if excluded:
+        if label_kind != "categorical":
+            raise ValueError(
+                f"{manifest_path}: ground_truth.exclude_labels is only supported "
+                f"for categorical tasks, not {label_kind}"
+            )
+        unknown = [lbl for lbl in excluded if lbl not in [str(x) for x in labels]]
+        if unknown:
+            raise ValueError(
+                f"{manifest_path}: ground_truth.exclude_labels names labels that "
+                f"are not in the task's label list: {unknown}"
+            )
+        # Drop from the label list too, so the JSON schema and the macro average
+        # do not offer a class the sample can no longer contain.
+        labels = [lbl for lbl in labels if str(lbl) not in excluded]
+
     if label_kind == "binary":
         if not label_key:
             raise ValueError(f"{manifest_path} binary task missing label_key")

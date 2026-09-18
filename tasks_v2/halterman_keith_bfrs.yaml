@@ -1,0 +1,35 @@
+order: 8
+name: halterman_keith_bfrs
+version: 2
+supersedes: ../tasks/halterman_keith_bfrs.yaml
+family: Event coding
+source: Halterman and Keith 2026
+data_file: ../data/halterman_keith_bfrs.csv
+prompt_file: ../prompts_v2/halterman_keith_bfrs.txt
+label_kind: categorical
+label_key: event_type
+labels:
+  - ASSASSINATION
+  - DRONE_ASSASSINATION
+  - ATTACK_ON_STATE
+  - CONVENTIONAL_ATTACK_ON_GOV_FORCES
+  - GUERILLA_ATTACK_ON_GOV_FORCES
+  - GOV_ATTACK_ON_NONSTATE_COMBATANTS
+  - GOV_ATTACK_ON_CIVILIANS
+  - RIOT
+  - TERRORISM
+  - THREAT_OF_VIOLENCE
+  - VIOLENT_POLITICAL_DEMONSTRATION
+  - OTHER
+id:
+  kind: generated
+  prefix: halterman_keith_bfrs
+text:
+  template: |
+    News story from Pakistan:
+    {text}
+ground_truth:
+  column: gt_event_type
+# v2 changes the prompt only: the source codebook's contradictory
+# "Output Reminder" line was removed. Same data, same sampling, so this
+# task IS item-paired with v1.

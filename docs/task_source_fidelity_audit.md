@@ -100,3 +100,205 @@ A task is source-faithful for this benchmark if:
    `burnham_polnli_event_entailment` are source-faithful but related. This is
    acceptable if the benchmark treats them as two task variants, not independent
    source families.
+
+## Second Audit, 2026-09-18
+
+The first audit asked whether each task's gold label comes from its source. It
+does, almost everywhere, and that conclusion stands. This second pass asked a
+different question: whether the gold label is **recoverable from the text the
+model is actually shown**, and whether the harness scores every model on equal
+terms. Those are not the same question, which is why none of what follows was
+visible in the first pass.
+
+Four of these findings have been fixed under task versioning (see `tasks_v2/`).
+Two are recorded here without action, by decision on 2026-09-18.
+
+### Labels that are not recoverable from the item
+
+**What is compared:** for each task, the gold label of an item against the
+predictions all ten benchmarked models made for that same item. Where every
+model agrees on an answer that gold calls wrong, the likely cause is the task,
+not the models.
+
+- `osnabruegge_cross_domain_topic`. 123 of 500 items (25%) were answered
+  "No Topic" by at least eight of the ten models while gold is a substantive
+  domain. The items are mid-sentence fragments of parliamentary speech: *"No,
+  not all, but the more difficult and complex parts will be put into a Bill."*
+  is gold **Freedom and Democracy**, and *"On behalf of my constituent, Mr
+  Kelliher, I thank the committee for its deliberations. Motion agreed to."* is
+  gold **Fabric of Society**. The source annotators had the surrounding speech;
+  the benchmark item does not. This is the benchmark's lowest-scoring task
+  (mean headline F1 0.435 local, 0.476 API), so it sets the reported difficulty
+  floor on a task no annotator could do from the given input. **Unresolved** —
+  fixing it requires re-downloading the replication capsule to check whether
+  speech-level context can be recovered. No source URL is recorded anywhere in
+  the repo and `/tmp/cross_domain_capsule.zip` is long gone.
+- `brandt_gtd_attack_type`. 47 of 500 items carry gold `Unknown`, scored at
+  3.2% accuracy, with 414 of 470 model-item rows answering "Armed Assault". GTD
+  assigns `Unknown` when the underlying source report does not specify the
+  method. The benchmark input is the GTD event summary, which usually does
+  describe it: *"Assailants attacked an Iraqi Army barracks near Baiji... At
+  least four soldiers were killed."* The v1 prompt compounded this by defining
+  `Unknown` as "the summary does not provide enough information", which is a
+  different construct from the one GTD codes. **Fixed** in
+  `tasks_v2/brandt_gtd_attack_type.yaml` via `ground_truth.exclude_labels`.
+- `halterman_ccc_protest`. Gold contradicts the codebook printed in the task's
+  own prompt. Three of the first five sampled items are gold `PROTEST` while the
+  text matches the prompt's `MARCH` definition verbatim ("a 65-mile march from
+  Milwaukee to Madison"; "marched from Sample Gates to the Monroe County
+  Courthouse"). The dominant error across all models is PROTEST → MARCH / RALLY
+  / DEMONSTRATION, which is what a codebook-gold mismatch of this shape
+  predicts. **Unresolved** — there is no build script for this task and the
+  cleaned file has only `text,gt_protest_type`, so the source must be
+  re-obtained before the collapse rule can be checked. The likely cause to test
+  is that the source permits multiple event types per event and the import kept
+  one.
+
+**Implication for the main result:** none of these move the headline. Removing
+GTD `Unknown` and dropping osnabruegge entirely both leave the best-API-minus-
+best-local gap at +0.011 and local models ahead on 10 of 34 tasks, because the
+defects penalise every model equally. They matter for per-task numbers and for
+any claim about absolute task difficulty, not for the local-versus-API
+comparison.
+
+### Metric: labels with no gold support counted as zeros
+
+**What is compared:** the published per-task headline F1 against the same
+quantity computed over only those labels that actually occur in the sampled
+gold column.
+
+The categorical macro average ran over every label declared in the manifest.
+A label with no gold support in the sample can only score 0, so it entered the
+mean as a zero. `mellon_bes_mii_2024` declares 50 labels and 35 occur, so 30% of
+its denominator was structurally zero: it reported accuracy 0.936 alongside
+headline F1 0.505. Correcting it gives 0.781. `cap_crs_policy_topic` gains 0.037
+and `haunss_papea_claims` 0.036; the other 31 tasks are unaffected.
+
+**Implication:** the published cross-task comparisons were distorted in
+proportion to how much unused slack each manifest's label list carried, which is
+an artefact of manifest bookkeeping rather than anything about the tasks or the
+models. **Fixed** in `code/scoring.py`, which is now the single implementation
+for every summary and analysis script; `--legacy-all-labels` reproduces the
+published numbers.
+
+### Prompts that contradict themselves
+
+Four prompts carry a verbatim source-codebook header instructing the model to
+write the bare label "with no other text", followed by an appended block
+instructing it to output only a JSON object and explicitly *not* the bare label:
+`halterman_ccc_protest`, `halterman_keith_bfrs`, `halterman_keith_cmp`,
+`osnabruegge_cross_domain_topic`. A model that follows the first instruction is
+penalised by the parser. **Fixed** for `halterman_keith_bfrs` and
+`halterman_keith_cmp` in `prompts_v2/`; the other two wait on the source
+questions above.
+
+### Codebook depth is not comparable across tasks
+
+Prompt body length per label ranges from 24 characters (`haunss_papea_claims`,
+28 labels) to 1,130 (`halterman_keith_bfrs`, 12 labels). Four tasks give a bare
+list of labels with no definitions at all: `haunss_papea_claims`,
+`plover_cameo_event`, `cap_crs_policy_topic`, `cap_party_platform_policy_topic`,
+with `mellon_bes_mii_2024` borderline at 80. Measured task difficulty therefore
+confounds the task with how much of the source codebook happened to be included.
+The four bare-list tasks are also among the five largest API-over-local gaps.
+**Fixed** for the two CAP tasks in `prompts_v2/`, which now carry short CAP
+master-codebook definitions. `plover_cameo_event` and `haunss_papea_claims`
+remain bare lists and should either gain definitions or have the omission
+recorded as deliberate in `docs/prompts_provenance.md`.
+
+### CAP major topic 5 carried a name that collides with topic 9
+
+`code/cap_topic_labels.py` named topic 5 "Labor and Immigration" — the legacy
+name from before immigration was split into its own topic 9 — while also
+offering "Immigration". The label list therefore presented two plausible buckets
+for the same content. In the v1 run, gold "Labor and Immigration" drew 37
+"Social Welfare" and 10 "Civil Rights" predictions, and 5 gold "Immigration"
+items were answered "Labor and Immigration". **Fixed** in `tasks_v2/` via
+`ground_truth.label_map`, which renames gold values at load time and so leaves
+the sampled items identical to v1.
+
+### Recorded, not acted on
+
+**Duplicate items (pseudo-replication).** Decision on 2026-09-18 was to document
+and defer. Several tasks sample the same text many times over, because the
+underlying corpus repeats it:
+
+| Task | Duplicate share of 500 sampled items | Unique items | Most repeated text |
+|---|---|---|---|
+| `mellon_bes_mii_2024` | 56% | 222 | "Open-ended response: Covid" ×74 |
+| `haunss_papea_fgz_forms` | 50% | 249 | "Protest-related text span: Kundgebung" ×44 |
+| `bestvater_kavanaugh_stance` | 31% | 344 | ×14 |
+| `gilardi_stance` | 23% | 383 | ×9 |
+| `gilardi_relevance` | 10% | 448 | one tweet ×36 |
+
+Two consequences. First, `mellon_bes_mii_2024` and `haunss_papea_fgz_forms` are
+closer to string-lookup tasks than to text classification — the PAPEA items are
+frequently a single German word ("Kundgebung", "Demonstration", "Warnstreik") —
+and their near-ceiling accuracies (0.936 and 0.947) raise the benchmark's
+reported level. Second, the paired bootstrap in `code/build_summary.py` resamples
+by item, so 74 copies of one string count as 74 independent draws; the published
+confidence intervals are narrower than the effective sample supports. Fixing
+this means deduplicating, or clustering the bootstrap by text.
+
+**One contradictory gold pair.** `data/gilardi_relevance.csv` rows 242 and 1588
+hold identical tweet text with `gt_relevant` 1 and 0. This violates the entry
+rule in `TODO.md` that conflicting duplicate labels are removed. It is one pair
+out of 2,403 rows.
+
+### Harness asymmetry between local and API models
+
+**What is compared:** how the benchmark runner constrains output for local
+models versus API models, holding the task and prompt fixed.
+
+`code/benchmark.py` sends no `format` field to Ollama, so local models must
+produce valid JSON and a valid label string from the prompt alone. API models
+receive server-side enum enforcement (OpenAI strict `json_schema`, Anthropic
+tool `input_schema`). All 95 parse failures in the published run belong to local
+models, and they are mostly invalid label strings — "Intelligence Affairs",
+"Homeland Security", "Tax-Exempt Organizations" on the CAP tasks — that an enum
+schema makes impossible to emit.
+
+The API advantage is concentrated in the same large-label-space tasks where this
+bites: mean gap +0.045 across the seven tasks with local parse failures against
++0.002 across the other 27. But label-space size correlates with the gap at
+r = 0.39 on its own, and among the nine tasks with eight or more labels those
+*without* parse failures still show +0.027. Schema enforcement and task
+difficulty are collinear, so the observational split cannot separate them.
+
+**Implication:** this is the one finding that could change the headline, and it
+cannot be settled from the existing run. The planned test holds model, GPU,
+prompt and items fixed and varies only constrained decoding, by running each
+open-weight checkpoint on Hive twice — once with vLLM JSON-schema constrained
+decoding, once with plain prompting.
+
+### Reproducibility gaps found along the way
+
+- Eleven of 34 tasks have no `code/build_*_task.py`, so their cleaned CSVs
+  cannot be regenerated from source and their import cannot be verified at all:
+  `gilardi_relevance`, `ballard_incivility`, `gilardi_stance`,
+  `chae_semeval_stance`, `ornstein_scotus_sentiment`, `wesleyan_creative_ads_2022`,
+  `halterman_ccc_protest`, `halterman_keith_bfrs`, `halterman_keith_cmp`,
+  `mellon_bes_mii_2024`, `rheault_line_of_fire_incivility`. This is why the
+  `halterman_ccc_protest` and `osnabruegge_cross_domain_topic` questions above
+  are blocked rather than answered.
+- Where build scripts exist, only five record the source URL. Every new build
+  script should.
+- `data/halterman_ccc.csv` (50 rows) is referenced by no manifest.
+- 175 `item_id` values are reused across different tasks, so any join over
+  predictions must key on `(task, item_id)` rather than `item_id` alone.
+
+### Glossary
+
+- **Gold label**: the human-assigned label the benchmark scores predictions
+  against, taken from the source paper or dataset.
+- **Headline F1**: the benchmark's per-task metric. Positive-class F1 for binary
+  tasks, macro F1 across labels for categorical tasks, mean positive-class F1
+  across labels for multi-binary tasks.
+- **Item-paired**: two task versions draw exactly the same rows, so their results
+  can be compared item by item and bootstrapped in pairs. Versions that drop
+  rows are not item-paired.
+- **Constrained decoding / schema enforcement**: the inference backend restricts
+  the model's output tokens to those permitted by a JSON schema, so an invalid
+  label or malformed JSON cannot be produced.
+- **Pseudo-replication**: treating repeated copies of the same observation as
+  independent, which understates uncertainty.

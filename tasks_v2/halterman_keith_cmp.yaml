@@ -1,0 +1,30 @@
+order: 9
+name: halterman_keith_cmp
+version: 2
+supersedes: ../tasks/halterman_keith_cmp.yaml
+family: Policy-topic coding
+source: Halterman and Keith 2026 plus Manifesto Project 2025
+data_file: ../data/halterman_keith_cmp.csv
+prompt_file: ../prompts_v2/halterman_keith_cmp.txt
+label_kind: categorical
+label_key: policy_domain
+labels:
+  - External Relations
+  - Freedom and Democracy
+  - Political System
+  - Economy
+  - Welfare and Quality of Life
+  - Fabric of Society
+  - Social Groups
+id:
+  kind: generated
+  prefix: halterman_keith_cmp
+text:
+  template: |
+    Manifesto quasi-sentence:
+    {text}
+ground_truth:
+  column: gt_policy_domain
+# v2 changes the prompt only: the source codebook's contradictory
+# "Output Reminder" line was removed. Same data, same sampling, so this
+# task IS item-paired with v1.

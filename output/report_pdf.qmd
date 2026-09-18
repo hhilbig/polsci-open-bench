@@ -41,7 +41,7 @@ include_table <- function(path) {
 
 ## Abstract {.unnumbered}
 
-Can researchers use local open-weight models instead of commercial APIs for LLM text classification? Local models avoid marginal API charges, keep data on the researcher's machine, and make exact model versions easier to preserve. I benchmark six local models against four commercial API models on 34 political science classification tasks. Local models are often competitive, especially on simpler tasks. In a task-specific oracle comparison, local models match or exceed API performance on 10 tasks; on average, the best API model exceeds the best local model by 0.011 F1. The four strongest observed model means fall within 0.021 F1. API models have their clearest edge on complex tasks with many labels or multiple outputs per item. Batching several items in one prompt usually reduces local runtime per item, but specific model-task pairs can return invalid response formats or labels. Taken together, the results make local open-weight models a practical candidate alternative for many political science classification tasks, provided researchers validate candidate models on task-specific labels and check batching reliability before scaling up.
+Can researchers use local open-weight models instead of commercial APIs for LLM text classification? Local models avoid marginal API charges, keep data on the researcher's machine, and make exact model versions easier to preserve. I benchmark six local models against four commercial API models on 34 political science classification tasks. Local models are often competitive, especially on simpler tasks. In a task-specific oracle comparison, local models match or exceed API performance on 10 tasks; on average, the best API model exceeds the best local model by 0.011 F1. The four strongest observed model means fall within 0.022 F1. API models have their clearest edge on complex tasks with many labels or multiple outputs per item. Batching several items in one prompt usually reduces local runtime per item, but specific model-task pairs can return invalid response formats or labels. Taken together, the results make local open-weight models a practical candidate alternative for many political science classification tasks, provided researchers validate candidate models on task-specific labels and check batching reliability before scaling up.
 
 # Motivation
 
@@ -75,7 +75,7 @@ Finally, I use uncertainty checks to avoid overinterpreting small differences. W
 
 ## Average performance 
 
-Figure \ref{fig-mean-f1} shows the 34-task model averages and the spread of task-level performance within each model. Claude Sonnet 4.6 has the highest observed mean F1 (0.668), followed by gpt-5.5 (0.660), Gemma 4 31B (0.648), and DeepSeek V4 Pro (0.647). The four strongest observed model means fall within 0.021 F1. The same broad top group appears under mean accuracy and mean MCC where those metrics are defined (Table \ref{tab:altmetrics}), although the exact order changes slightly. Among the OpenAI tiers, gpt-5.4-nano remains the cost-efficient option, at 0.632 mean F1 compared with 0.660 for gpt-5.5.
+Figure \ref{fig-mean-f1} shows the 34-task model averages and the spread of task-level performance within each model. Claude Sonnet 4.6 has the highest observed mean F1 (0.677), followed by gpt-5.5 (0.669), Gemma 4 31B (0.656), and DeepSeek V4 Pro (0.655). The four strongest observed model means fall within 0.022 F1. The same broad top group appears under mean accuracy and mean MCC where those metrics are defined (Table \ref{tab:altmetrics}), although the exact order changes slightly. Among the OpenAI tiers, gpt-5.4-nano remains the cost-efficient option, at 0.640 mean F1 compared with 0.669 for gpt-5.5.
 
 The task-level bootstrap gives the same result (Table \ref{tab:task-bootstrap}). The Claude Sonnet 4.6 versus gpt-5.5 interval includes zero, Gemma 4 31B and DeepSeek V4 Pro are effectively tied, and the estimated Claude advantage over Gemma 4 31B and DeepSeek V4 Pro is about two F1 points. Many within-task leader differences are also too uncertain to treat as firm rankings. In practice, these small average gaps are not enough to rank the models reliably.
 
@@ -89,7 +89,7 @@ The local/API comparison in Figure \ref{fig-best-local-api-gap} directly address
 include_graphics("figures/fig-best-local-api-gap.png")
 ```
 
-Table \ref{tab:model-selection-value} reports how much performance would improve if researchers could choose the best model separately for each task. These upper bounds choose the best model after observing performance on each task. Allowing the local model to vary by task raises mean F1 from 0.648 for the best single local model to 0.677. Across all ten models, task-specific selection reaches 0.698, compared with 0.668 for the best single model. These values show why task-specific validation can be valuable, but they do not show how large a validation sample is needed to choose models reliably.
+Table \ref{tab:model-selection-value} reports how much performance would improve if researchers could choose the best model separately for each task. These upper bounds choose the best model after observing performance on each task. Allowing the local model to vary by task raises mean F1 from 0.656 for the best single local model to 0.686. Across all ten models, task-specific selection reaches 0.707, compared with 0.677 for the best single model. These values show why task-specific validation can be valuable, but they do not show how large a validation sample is needed to choose models reliably.
 
 The larger differences are across tasks. The paired-by-item intervals are wide enough that many task-level leader differences remain uncertain. I therefore do not read the benchmark primarily as a leaderboard: global rank is a weak decision rule for applied coding.
 
@@ -141,7 +141,7 @@ Batching helps less when prompts are long. Short-prompt model-task pairs have a 
 
 ## Cost
 
-The OpenAI portion of the 34-task one-item-at-a-time benchmark remains cheap enough for benchmarking on a validation sample, but the tiers differ sharply. At publicly listed prices, gpt-5.4-nano costs about $4 for the 16,425 predictions in the 34-task benchmark, while gpt-5.5 would cost about $71 under direct per-request pricing. In return, gpt-5.5 improves mean F1 from 0.632 to 0.660. The smaller tier is therefore worth testing before moving to a flagship API model.
+The OpenAI portion of the 34-task one-item-at-a-time benchmark remains cheap enough for benchmarking on a validation sample, but the tiers differ sharply. At publicly listed prices, gpt-5.4-nano costs about $4 for the 16,425 predictions in the 34-task benchmark, while gpt-5.5 would cost about $71 under direct per-request pricing. In return, gpt-5.5 improves mean F1 from 0.640 to 0.669. The smaller tier is therefore worth testing before moving to a flagship API model.
 
 Provider Batch API mode changes the cost calculation for flagship models. This is provider-side request processing, not prompt batching with several items in one prompt. For a 16-task subset, I ran gpt-5.5 through the OpenAI Batch API: 7,605 requests completed with 0 parse/API errors at an estimated batch-discounted cost of $14.13 under a $20 budget cap. I also ran Claude Sonnet 4.6 through provider Batch API mode for the same subset; 7,604 of 7,605 outputs parsed cleanly after retries. Local models avoid API charges, but the relevant cost becomes runtime, hardware availability, and energy use.
 
@@ -220,7 +220,7 @@ Figure \ref{fig-best-local-api-gap} in the main text compares the best local mod
 include_table("tables/table-model-selection-value.tex")
 ```
 
-The best single model is Claude Sonnet 4.6, with a 34-task mean F1 of 0.668. The best single local model, Gemma 4 31B, reaches 0.648. If the local model can vary by task, the local task-specific upper bound rises to 0.677. The API upper bound reaches 0.688, and the all-model upper bound reaches 0.698. Because these rows choose after observing outcomes, they describe an upper bound on what validation can buy, not expected production performance.
+The best single model is Claude Sonnet 4.6, with a 34-task mean F1 of 0.677. The best single local model, Gemma 4 31B, reaches 0.656. If the local model can vary by task, the local task-specific upper bound rises to 0.686. The API upper bound reaches 0.697, and the all-model upper bound reaches 0.707. Because these rows choose after observing outcomes, they describe an upper bound on what validation can buy, not expected production performance.
 
 # Response-format or label failure rates above 5 percent {.unnumbered}
 

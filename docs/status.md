@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-06-13
+Last updated: 2026-09-18
 
 ## Current Snapshot
 
@@ -42,6 +42,16 @@ Last updated: 2026-06-13
 - The PDF report was rebuilt on 2026-05-18, and public docs now describe one 34-task benchmark.
 
 ## Post-Release Changes
+
+- 2026-09-18: Second source-fidelity audit and its fixes. The categorical macro-F1
+  metric no longer counts labels with zero gold support as zeros, which changes
+  three tasks (`mellon_bes_mii_2024`, `cap_crs_policy_topic`,
+  `haunss_papea_claims`) and leaves the other 31 and every qualitative conclusion
+  unchanged. Corrected task definitions live in `tasks_v2/` and `prompts_v2/`;
+  v1 is untouched. The report PDF is NOT rebuilt: its prose quotes model means
+  that the metric correction moves, and those edits need approval. Full detail in
+  [`docs/post_release_changes.md`](post_release_changes.md) and
+  [`docs/task_source_fidelity_audit.md`](task_source_fidelity_audit.md).
 
 - 2026-05-20: Report assets were rebuilt ([`code/build_report_assets.R`](../code/build_report_assets.R), figures, appendix tables, references, and [`output/report_pdf.pdf`](../output/report_pdf.pdf)). The two CAP task manifests had their `source:` citation strings corrected; data, labels, and prompts were unchanged, so no rerun was required.
 - 2026-06-06: Email addresses embedded in dataset text were replaced with `[EMAIL]` across the nine affected corpora (notably citizen emails in the Erlich ATI data). No raw email addresses remain in `data/`. The redacted text is otherwise unchanged.
