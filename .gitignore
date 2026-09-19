@@ -88,3 +88,6 @@ output/archive/
 
 # Working research scratchbook (not part of the public repo)
 quality_reports/
+
+# Cached sentence embeddings for the supervised baseline (regenerable, ~1 GB)
+output/embeddings/

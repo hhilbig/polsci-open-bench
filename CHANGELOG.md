@@ -12,6 +12,75 @@ Two conventions hold throughout:
   reproduces it exactly.
 - **A change that moves a published number says so, with the number.**
 
+## 2026-09-19
+
+### Added
+
+- **Supervised baselines as a function of training-set size.** The paper
+  previously conceded in its limitations that supervised classifiers "may be
+  cheaper and more reliable" without testing it. `code/build_supervised_baseline.py`
+  now measures the crossover: how many hand-coded labels a classifier needs before
+  it matches zero-shot LLM coding.
+
+  Design. Each task's unsampled remainder is labelled training data and the test
+  set is the exact 500 items every LLM was scored on, rendered through the same
+  `task_registry` template, scored through `code/scoring.py` with the same
+  support-only rule and pinned label set. The supervised and LLM columns are
+  therefore on one metric over one test set. Two classifiers, both logistic
+  regression on identical training draws: TF-IDF features, and frozen
+  `intfloat/multilingual-e5-large` embeddings. Six of the tasks are not English,
+  which rules out English-only encoders. Training sizes 50 to 2,000 with five draws
+  each, over the 30 tasks with a remainder.
+
+  | Hand-coded labels | TF-IDF | E5 embeddings |
+  |---:|---:|---:|
+  | 50 | 0.327 | 0.447 |
+  | 250 | 0.435 | 0.595 |
+  | 1,000 | 0.519 | 0.660 |
+  | 2,000 | 0.549 | 0.672 |
+
+  Zero-shot reference on the same 30 tasks: 0.697 best local, 0.711 best API.
+
+  So zero-shot coding still wins at 2,000 labels per task. The embedding
+  classifier matches or beats the best local model on 10 of 30 tasks at that size
+  and on 13 of 30 at some size, with a median crossover near 1,000 labels;
+  bag-of-words manages four tasks at any size. Representation dominates the
+  classifier: E5 adds 0.14 mean F1 at every training size over the same logistic
+  regression, and on the Japanese task TF-IDF reaches 0.098 against 0.736, because
+  word-level features cannot segment Japanese.
+
+  The classifier wins where the label follows a corpus-specific convention
+  (Japanese policy areas, cross-domain topics, Spanish request topics, GTD attack
+  types) and loses on semantic judgment (entailment, stance, incivility). Three of
+  the tasks it wins were flagged in the source-fidelity audit for exactly that
+  property.
+
+  Reported in `output/report_pdf_v2.qmd` section 3.7 with
+  `output/figures/fig-supervised-curve.png`; per-task crossovers in
+  `output/supervised_crossover.csv`.
+
+- **Training pool capped at 3,000 rows per task** (`POOL_CAP`). The original design
+  embedded all 246,532 frame rows and evaluated a full-remainder point. That point
+  answered a question nobody asks, since no one hand-codes 36,838 examples, and it
+  was the expensive one: it required a 505 MB embedding cache on a disk with
+  118 MB free, and TF-IDF bigram fits over 36,838 documents inside a grid search
+  dominated the runtime. Capping cuts the cache to 192 MB, and has the side benefit
+  that both classifiers now train on identical draws, so the two curves differ only
+  by representation. The cost is that no supervised ceiling at full data is
+  reported, which the report states rather than implies.
+
+### Known issues
+
+- Multilingual-E5 truncates at 512 tokens while the LLM sees the whole item, so the
+  embedding classifier is understated on long-document tasks. The TF-IDF line has
+  no such limit and does not overtake it, which bounds the concern without removing
+  it.
+- A fine-tuned encoder is untested and would likely sit above the frozen-embedding
+  curve. These results locate the crossover for a cheap supervised pipeline, not a
+  ceiling for supervised methods.
+- `output/embeddings/` is gitignored and regenerable; rebuilding it takes roughly
+  an hour on an Apple Silicon GPU.
+
 ## 2026-09-18
 
 ### Changed
