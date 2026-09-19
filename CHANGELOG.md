@@ -90,6 +90,10 @@ Two conventions hold throughout:
 - A fine-tuned encoder is untested and would likely sit above the frozen-embedding
   curve. These results locate the crossover for a cheap supervised pipeline, not a
   ceiling for supervised methods.
+- `yan_bernhard_offensive` has open-weight Hive results only. It needs the four
+  commercial API models (paid inference, needs a cost estimate and approval) and
+  the remaining open-weight checkpoints before it can join the 33-task headline
+  panel. Until then it is an extension, reported separately.
 - `output/embeddings/` is gitignored and regenerable; rebuilding it takes roughly
   an hour on an Apple Silicon GPU.
 

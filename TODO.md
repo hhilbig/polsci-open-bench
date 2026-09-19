@@ -16,6 +16,30 @@
   [`output/run_registry.jsonl`](output/run_registry.jsonl), then refresh
   [`docs/run_status.md`](docs/run_status.md).
 
+## Open Decisions (recorded 2026-09-19)
+
+- **`yan_bernhard_offensive` needs API and Hive runs to join the headline panel.**
+  It currently has results from four Hive open-weight checkpoints only, so it
+  carries no local-versus-API comparison and sits in `tasks_ext/` rather than
+  `tasks/`. Completing it needs the four commercial API models, which is paid
+  inference and requires a cost estimate and approval first, plus the remaining
+  open-weight checkpoints on Hive, which is free. Until then it is reported as an
+  open-weight extension, not part of the 33-task headline.
+
+- **`halterman_ccc_protest` stays held out and the authors will not be contacted.**
+  The task cannot be rebuilt from public data because the pairing of Crowd
+  Counting Consortium events to news text is Halterman and Keith's own unpublished
+  work. Decision on 2026-09-19 was not to request it. The manifest keeps
+  `status: excluded` with the evidence, so the decision is reversible if the
+  pairing is ever published.
+
+- **The refresh configs pin `benchmark_commit: 3c7ad07`**, so
+  `tests/test_refresh_backfills.py::test_actual_refresh_harmony_run_and_resume`
+  fails against any newer HEAD. That is the pin working as designed: the refresh
+  panels genuinely cannot be reproduced from current HEAD now that the task set
+  and the metric have changed. Either re-pin the configs and rebuild those panels,
+  or declare the refresh track frozen at `3c7ad07`.
+
 ## Benchmark Extensions
 
 - Add more tasks only when they satisfy the hard entry threshold: public text
