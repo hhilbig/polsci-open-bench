@@ -1,0 +1,53 @@
+order: 33
+name: cap_crs_policy_topic
+version: 2
+supersedes: ../tasks/cap_crs_policy_topic.yaml
+family: Policy-topic coding
+source: Policy Agendas Project 2025 and Congressional Research Service products
+data_file: ../data/cap_crs_policy_topic.csv
+prompt_file: ../prompts_v2/cap_crs_policy_topic.txt
+label_kind: categorical
+label_key: policy_topic
+labels:
+  - Macroeconomics
+  - Civil Rights
+  - Health
+  - Agriculture
+  - Labor
+  - Education
+  - Environment
+  - Energy
+  - Immigration
+  - Transportation
+  - Law and Crime
+  - Social Welfare
+  - Housing
+  - Domestic Commerce
+  - Defense
+  - Technology
+  - Foreign Trade
+  - International Affairs
+  - Government Operations
+  - Public Lands
+  - Culture
+id:
+  kind: column
+  column: source_id
+text:
+  # v1 rendered "{title}" and "{summary}" as separate fields, so the 6,492 of
+  # 16,510 rows with no summary produced an empty "Summary:" heading -- 190 of the
+  # 500 sampled items. The build script already emits a `text` column that is the
+  # title alone when there is no summary and title + summary otherwise, so v2
+  # reads that instead. Same rows, same sample; only the rendering changes.
+  template: |
+    CRS report:
+    {text}
+  truncations:
+    text:
+      max_chars: 5000
+      suffix: "... [truncated at {max_chars} chars]"
+ground_truth:
+  column: gt_policy_topic
+  # CAP major topic 5 carried its pre-split legacy name. See code/cap_topic_labels.py.
+  label_map:
+    'Labor and Immigration': Labor

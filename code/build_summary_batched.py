@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import f1_score
 
+from scoring import headline_f1, per_class_f1, scored_labels
 from task_registry import add_task_loading_args, load_task_definitions_from_args
 
 HERE = Path(__file__).resolve().parent
@@ -29,7 +30,7 @@ REPO = HERE.parent
 OUT = REPO / "output"
 
 
-def _metrics_for_group(task_def, g):
+def _metrics_for_group(task_def, g, support_only=True, label_subset=None):
     kind = task_def["label_kind"]
     clean = g[g.parse_error.isna()]
     row = {
@@ -40,53 +41,30 @@ def _metrics_for_group(task_def, g):
         "median_latency_s": g.latency_s.median(),
         "median_batch_latency_s": g.batch_latency_s.median() if "batch_latency_s" in g else np.nan,
     }
-    labels = task_def["labels"]
+    f1_by_label = per_class_f1(
+        task_def, clean, support_only=support_only, label_subset=label_subset
+    )
+    row.update({f"f1_{lbl}": val for lbl, val in f1_by_label.items()})
+    row["headline_f1"] = headline_f1(
+        task_def, clean, support_only=support_only, label_subset=label_subset
+    )
 
     if kind == "multi_binary":
-        per_label_f1 = {}
-        for lbl in labels:
-            gt_col, pred_col = f"gt_{lbl}", f"pred_{lbl}"
-            sub = clean[[gt_col, pred_col]].dropna()
-            if len(sub) == 0:
-                per_label_f1[f"f1_{lbl}"] = np.nan
-                continue
-            per_label_f1[f"f1_{lbl}"] = f1_score(
-                sub[gt_col].astype(int), sub[pred_col].astype(int),
-                pos_label=1, zero_division=0,
-            )
-        row.update(per_label_f1)
-        vals = [v for v in per_label_f1.values() if not np.isnan(v)]
-        row["avg_f1"] = float(np.mean(vals)) if vals else np.nan
-        row["headline_f1"] = row["avg_f1"]
+        row["avg_f1"] = row["headline_f1"]
+        return row
 
-    elif kind == "binary":
+    if kind == "binary":
+        return row
+
+    if kind == "categorical":
         key = task_def["label_key"]
         gt_col, pred_col = f"gt_{key}", f"pred_{key}"
         sub = clean[[gt_col, pred_col]].dropna()
-        f1 = f1_score(sub[gt_col].astype(int), sub[pred_col].astype(int),
-                      pos_label=1, zero_division=0) if len(sub) else np.nan
-        row[f"f1_{key}"] = f1
-        row["headline_f1"] = f1
-
-    elif kind == "categorical":
-        key = task_def["label_key"]
-        gt_col, pred_col = f"gt_{key}", f"pred_{key}"
-        sub = clean[[gt_col, pred_col]].dropna()
-        per_class = {}
-        for lbl in labels:
-            per_class[f"f1_{lbl}"] = (
-                f1_score(sub[gt_col], sub[pred_col], labels=[lbl], average="macro", zero_division=0)
-                if len(sub) else np.nan
-            )
-        row.update(per_class)
-        vals = [v for v in per_class.values() if not np.isnan(v)]
-        row["avg_f1"] = float(np.mean(vals)) if vals else np.nan
+        row["avg_f1"] = row["headline_f1"]
         row["accuracy"] = (sub[pred_col] == sub[gt_col]).mean() if len(sub) else np.nan
-        row["headline_f1"] = row["avg_f1"]
+        return row
 
-    else:
-        raise ValueError(f"Unknown label_kind: {kind}")
-    return row
+    raise ValueError(f"Unknown label_kind: {kind}")
 
 
 def _compute_agreement(preds, task_def):
@@ -147,14 +125,25 @@ def main():
     ap.add_argument("--predictions", default=str(OUT / "predictions_batched.csv"))
     ap.add_argument("--serial-predictions", default=str(OUT / "predictions.csv"))
     ap.add_argument("--output", default=str(OUT / "summary_batched.csv"))
+    ap.add_argument(
+        "--legacy-all-labels",
+        action="store_true",
+        help=(
+            "Average macro F1 over every manifest label, including labels with no "
+            "gold support in the sample. Reproduces the published v1 summaries."
+        ),
+    )
     args = ap.parse_args()
+    support_only = not args.legacy_all_labels
 
     preds = pd.read_csv(args.predictions, low_memory=False)
     serial_b1 = _load_b1_from_serial(args.serial_predictions)
     if len(serial_b1):
         preds = pd.concat([preds, serial_b1], ignore_index=True, sort=False)
         print(f"[serial b=1] merged {len(serial_b1)} rows from predictions.csv into baseline")
-    task_defs = {t["name"]: t for t in load_task_definitions_from_args(args)}
+    # The current release view: the active benchmark, skipping held-out tasks.
+    # Frozen frontier and refresh panels deliberately keep the full set.
+    task_defs = {t["name"]: t for t in load_task_definitions_from_args(args, active_only=True)}
 
     # Agreement computed per task (needs access to the full task's prediction grid).
     per_task_agreement = {}
@@ -163,13 +152,23 @@ def main():
             continue
         per_task_agreement[task_name] = _compute_agreement(preds, task_def)
 
+    # Pin the scored label set per task from the full task frame, so every
+    # (model, batch_size) cell is averaged over the same classes.
+    label_subsets = {
+        task: scored_labels(task_defs[task], gtask, support_only=support_only)
+        for task, gtask in preds.groupby("task")
+        if task in task_defs
+    }
+
     rows = []
     for (task, model, b), g in preds.groupby(["task", "model", "batch_size"]):
         if task not in task_defs:
             print(f"[skip] unknown task in predictions: {task}")
             continue
         r = {"task": task, "model": model, "batch_size": int(b),
-             **_metrics_for_group(task_defs[task], g)}
+             **_metrics_for_group(task_defs[task], g,
+                                  support_only=support_only,
+                                  label_subset=label_subsets.get(task))}
         r["agreement_vs_b1"] = per_task_agreement.get(task, {}).get((model, int(b)), np.nan)
         rows.append(r)
     df = pd.DataFrame(rows).sort_values(["task", "model", "batch_size"]).reset_index(drop=True)

@@ -1,0 +1,37 @@
+order: 20
+name: brandt_gtd_attack_type
+version: 2
+supersedes: ../tasks/brandt_gtd_attack_type.yaml
+family: Event coding
+source: Brandt et al. 2025
+data_file: ../data/brandt_gtd_attack_type.csv
+prompt_file: ../prompts_v2/brandt_gtd_attack_type.txt
+label_kind: categorical
+label_key: attack_type
+labels:
+  - Assassination
+  - Armed Assault
+  - Bombing/Explosion
+  - Facility/Infrastructure Attack
+  - Hijacking
+  - Hostage Taking (Barricade Incident)
+  - Hostage Taking (Kidnapping)
+  - Unarmed Assault
+  - Unknown
+id:
+  kind: column
+  column: source_row
+text:
+  template: |
+    Event summary:
+    {text}
+ground_truth:
+  column: gt_attack_type
+  # GTD codes attacktype1 = Unknown when the underlying source report does not
+  # specify the method. The benchmark input is the GTD event summary, which
+  # usually does describe the attack, so the label records what the coder could
+  # not determine rather than a property of the text. In the v1 sample this was
+  # 47 of 500 items at 3.2% accuracy across all ten models, with 414 of 470
+  # model-item rows answering "Armed Assault".
+  exclude_labels:
+    - Unknown

@@ -96,3 +96,41 @@ Derived rather than verbatim:
 1. Prefer verbatim prompts from replication archives, supplemental material, or paper text.
 2. If you need to modify a verbatim prompt for machine-readable output, document the exact change here.
 3. If no prompt exists and you derive one from a codebook or paper description, mark it as derived here and note the source materials.
+
+## v2 prompts (2026-09-18)
+
+`prompts_v2/` holds corrected prompts for the tasks that the second source-fidelity
+audit found defective. The v1 files above are unchanged, so the published results
+stay reproducible; v2 manifests in `tasks_v2/` point at the v2 prompts. Every v2
+prompt carries a `Source:` footer stating exactly what changed relative to v1.
+
+| Task | v2 prompt | Change | Item-paired with v1 |
+|---|---|---|---|
+| `brandt_gtd_attack_type` | `prompts_v2/brandt_gtd_attack_type.txt` | Removed the `Unknown` label. The v1 prompt defined it as "the summary does not provide enough information", but GTD assigns it when the underlying *source report* did not specify the method, which the model cannot see. Rows are dropped via `ground_truth.exclude_labels`. | No, rows are dropped |
+| `cap_crs_policy_topic` | `prompts_v2/cap_crs_policy_topic.txt` | Renamed major topic 5 to `Labor`; added CAP master-codebook definitions; stopped promising a summary unconditionally (6,492 of 16,510 rows have none). | Yes |
+| `cap_party_platform_policy_topic` | `prompts_v2/cap_party_platform_policy_topic.txt` | Renamed major topic 5 to `Labor`; added CAP master-codebook definitions. | Yes |
+| `halterman_keith_bfrs` | `prompts_v2/halterman_keith_bfrs.txt` | Removed the source "Output Reminder" line, which told the model to write the bare label "with no other text" and contradicted the appended JSON-output block. | Yes |
+| `halterman_keith_cmp` | `prompts_v2/halterman_keith_cmp.txt` | Same "Output Reminder" removal. | Yes |
+
+### Open prompt issues, not yet fixed
+
+1. **CAP definitions need a source check.** The definitions added to the two CAP
+   v2 prompts were written from the CAP major-topic scheme, not transcribed from
+   a downloaded copy of the master codebook. They should be checked against the
+   codebook at <https://www.comparativeagendas.net/> before the v2 run is treated
+   as final. This is the same standard the policy below sets for derived prompts.
+2. **Two tasks remain bare label lists.** `plover_cameo_event` (18 labels, 26
+   characters of prompt per label) and `haunss_papea_claims` (28 labels, 24 per
+   label) give no definitions at all, against 1,130 per label for
+   `halterman_keith_bfrs`. Writing definitions for them requires the PLOVER event
+   ontology and the PAPEA claim codebook; neither is in the repo, and inventing
+   plausible-sounding definitions would be worse than leaving the list bare.
+   Until a codebook is obtained, treat the omission as a known limitation that
+   makes these two tasks harder than their label count alone implies.
+3. **Two prompts still contradict themselves.** `halterman_ccc_protest` and
+   `osnabruegge_cross_domain_topic` carry the same "Output Reminder" line removed
+   above. They were left alone because both tasks have unresolved gold-label
+   questions (see the second audit section of
+   [`docs/task_source_fidelity_audit.md`](task_source_fidelity_audit.md)), and
+   fixing the prompt before the label question is settled would mean running them
+   twice.

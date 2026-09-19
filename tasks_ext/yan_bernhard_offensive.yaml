@@ -1,0 +1,37 @@
+order: 35
+name: yan_bernhard_offensive
+# Lives in tasks_ext/, not tasks/, on purpose. Adding a manifest to tasks/ raises
+# the all-manifests count from 34 to 35 and breaks every frozen panel that pins
+# `expected_tasks: 34` (the Hive bake-off scope check, the full34 category
+# figure, the frontier builder). This task is an open-weight extension scored on
+# Hive and reported separately; it is not part of the 33-task local-vs-API
+# headline, because the six published Ollama models cannot currently be run.
+# Load it with --tasks-dir tasks_ext.
+family: Sentiment / Stance / Tone
+source: Yan and Bernhard 2024
+data_file: ../data/yan_bernhard_offensive.csv
+prompt_file: ../prompts/yan_bernhard_offensive.txt
+label_kind: binary
+label_key: offensive
+labels:
+  - offensive
+id:
+  kind: column
+  column: source_row_id
+text:
+  template: |
+    Reply to a canvassing text message:
+    {text}
+ground_truth:
+  column: gt_offensive
+sampling:
+  # Deviates from the benchmark's usual 250 + 250. The positive class is only
+  # 6.6 percent of the frame, so a 500-item draw yields about 33 offensive
+  # replies, which makes positive-class F1 unstable and the paired bootstrap
+  # very wide. Drawing 1,000 items gives roughly 66 positives. The task is
+  # scored on open-weight checkpoints on Hive where inference is free, so the
+  # larger draw costs nothing. Recorded here rather than left implicit because
+  # it makes per-item runtime for this task twice that of the others.
+  n_v1: 500
+  n_v2_new: 500
+  seed: 20260422

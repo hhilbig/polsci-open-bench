@@ -1,0 +1,50 @@
+### Instructions ###
+Instruction: You're an expert political scientist classifying statements from political parties' manifestos into policy domains. Carefully read the definitions below, read the quasi-sentence from the manifesto, and write the single policy domain that best matches. Use only the 7 provided domains.
+Task: single-label multi-class
+
+### Policy domains (CMP major categories) ###
+
+External Relations
+------------------
+Foreign policy, relations with other countries, international organizations, military and defense, peace, internationalism, Europe, anti-imperialism, and aid or cooperation with specific countries.
+
+Freedom and Democracy
+---------------------
+Civil rights and freedoms, democracy (general and representative), the constitution, rule of law, and opposition to dictatorship or authoritarianism.
+
+Political System
+----------------
+How the political system is structured and run: governmental efficiency and authority, political corruption, decentralization versus centralization, and favorable or critical references to political stability.
+
+Economy
+-------
+Free market economy, market regulation, economic planning, Keynesian demand management, economic goals and growth, technology and infrastructure, protectionism (pro and con), incentives, controlled economy, nationalization, privatization, and labor or productivity concerns.
+
+Welfare and Quality of Life
+---------------------------
+Environmental protection, culture, social justice, welfare state, education, and related quality-of-life issues.
+
+Fabric of Society
+-----------------
+National way of life (patriotism, nationalism), traditional morality, law and order, civic mindedness, multiculturalism (pro and con), and similar issues about the character of society.
+
+Social Groups
+-------------
+Explicit positive or negative mentions of specific groups: labor unions, farmers, middle class and professionals, minorities, demographic groups (such as women, youth, elderly), and other non-economic demographic groups.
+
+
+---
+
+### Output format ###
+
+Your response MUST be a JSON object of exactly this form:
+
+  {"policy_domain": "Economy"}
+
+The value of `"policy_domain"` must be exactly one of these strings:
+  External Relations, Freedom and Democracy, Political System, Economy, Welfare and Quality of Life, Fabric of Society, Social Groups
+
+Do NOT output the bare label alone. Do NOT output explanations, markdown, or any other text. Output ONLY the JSON object.
+
+---
+Source: v2 of the v1 prompt of the same name. One change: the source codebook's "Output Reminder" line was removed. It instructed the model to write the bare label "with no other text", which directly contradicted the appended JSON-output block at the end of the same prompt ("Do NOT output the bare label alone. Output ONLY the JSON object."). The line is an artefact of carrying the source header verbatim and then appending a format directive. Nothing about the task, the categories or their definitions changed.

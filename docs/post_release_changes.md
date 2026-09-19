@@ -1,6 +1,10 @@
 # Public Release Notes
 
-Last updated: 2026-06-13
+Last updated: 2026-09-18
+
+> Change history now lives in [`CHANGELOG.md`](../CHANGELOG.md), which is the
+> authoritative record of task-set, gold-label, prompt and metric changes.
+> This file describes the current release state; it is not a second log.
 
 This note summarizes the current public release state. The report is the
 authoritative narrative artifact; the repository stores the data, prompts,
@@ -107,3 +111,83 @@ promotes the expanded task and model set into one public 34-task benchmark.
 - [x] Output schema updated for all 34 tasks.
 - [x] Twitter/X thread draft saved in [`docs/twitter_thread.md`](twitter_thread.md).
 - [x] Appendix tables kept in the PDF.
+
+## 2026-09-18: Audit fixes
+
+A second source-fidelity audit (see
+[`docs/task_source_fidelity_audit.md`](task_source_fidelity_audit.md)) asked
+whether each gold label is recoverable from the text the model is shown, and
+whether the harness scores every model on equal terms. The first audit asked only
+whether labels come from their source, so none of this was visible there.
+
+### Metric correction (changes published numbers)
+
+Categorical macro F1 averaged over every label declared in a manifest, including
+labels with no gold support in the sample. Such a label can only score 0, so it
+entered the mean as a zero. `code/scoring.py` is now the single implementation
+and averages only over labels with gold support.
+
+Three tasks change; the other 31 are identical:
+
+| Task | Published | Corrected | Cause |
+|---|---|---|---|
+| `mellon_bes_mii_2024` | 0.505 | 0.721 | 15 of 50 declared labels have no gold support |
+| `cap_crs_policy_topic` | 0.669 | 0.702 | 1 of 21 |
+| `haunss_papea_claims` | 0.396 | 0.426 | 2 of 28 |
+
+(Values are means across the ten models; per-model figures are in
+`output/summary.csv`.)
+
+Every qualitative conclusion is unchanged. Model ordering is identical, the mean
+best-API-minus-best-local gap moves from +0.0108 to +0.0112, and local models
+still match or exceed API models on 10 of 34 tasks. All ten model means rise by
+roughly 0.009, because the correction removes a penalty that applied to every
+model equally.
+
+`output/summary.csv` and `output/summary_batched.csv` now hold the corrected
+metric. The published versions are preserved as
+`output/summary_legacy_all_labels.csv` and
+`output/summary_batched_legacy_all_labels.csv`, and
+`python3 code/build_summary.py --legacy-all-labels` reproduces them exactly.
+`code/build_frontier_2026.py` and `code/summarize_hive_bakeoff.py` are pinned to
+the legacy metric on purpose so the frozen frontier and refresh panels keep
+reproducing; migrating them is a separate step that requires rebuilding those
+panels. For the same reason, the 18-task frontier panel keeps its frozen
+calibration: the constants in `experiments/frontier_panel_18.yaml` were fitted on
+legacy-metric model means, and the correction moves the fitted intercept from
+0.05447 to 0.05167. `tests/test_frontier_builder.py` therefore reads
+`output/summary_legacy_all_labels.csv`. Recalibrating that panel against the
+corrected metric is a deliberate analysis decision, not a side effect of a
+scoring fix, and has not been made.
+
+**The report PDF has not been rebuilt.** Its prose quotes model means that the
+correction moves, and paper text is not edited without explicit approval. Figures
+and appendix tables in `output/figures/` and `output/tables/` have been rebuilt.
+
+### Task versioning
+
+Corrected task definitions live in `tasks_v2/` with prompts in `prompts_v2/`.
+The v1 manifests, prompts and predictions are untouched, so published results stay
+reproducible. Two loader mechanisms were added to `code/task_registry.py`:
+`ground_truth.exclude_labels` drops gold classes that record coder uncertainty
+rather than a property of the text, and `ground_truth.label_map` renames gold
+values at load time without regenerating a cleaned CSV from a source archive.
+
+| v2 task | Fix | Item-paired with v1 |
+|---|---|---|
+| `brandt_gtd_attack_type` | Drops the `Unknown` class: GTD assigns it when the source report did not specify the method, which the model cannot see. 47 of 500 items, 3.2% accuracy. | No, rows dropped |
+| `cap_crs_policy_topic` | Reads the prebuilt `text` column, so the 190 of 500 items with no summary stop rendering an empty `Summary:` heading. Topic 5 renamed to `Labor`. Codebook definitions added. | Yes |
+| `cap_party_platform_policy_topic` | Topic 5 renamed to `Labor`. Codebook definitions added. | Yes |
+| `halterman_keith_bfrs` | Removes the source header telling the model to write the bare label "with no other text", which contradicted the prompt's own JSON-output block. | Yes |
+| `halterman_keith_cmp` | Same header removal. | Yes |
+
+No v2 predictions have been generated yet.
+
+### Open
+
+- `osnabruegge_cross_domain_topic` and `halterman_ccc_protest` have gold-label
+  problems that cannot be fixed without re-obtaining their source archives.
+  Neither has a build script and no source URL is recorded.
+- The constrained-decoding experiment is configured
+  (`experiments/schema_parity_20260918_{guided,plain}.yaml`) but not run.
+- Deduplication is documented and deliberately deferred.

@@ -19,6 +19,7 @@ import pandas as pd
 from sklearn.metrics import f1_score, matthews_corrcoef
 
 from model_registry import add_model_loading_args, load_model_definitions_from_args
+from scoring import headline_f1, macro_f1_arrays, per_class_f1, scored_labels
 from task_registry import add_task_loading_args, load_task_definitions_from_args
 
 BOOTSTRAP_ITERS = 1000
@@ -30,7 +31,14 @@ REPO = HERE.parent
 OUT = REPO / "output"
 
 
-def _metrics_for_group(task_def, g):
+def _metrics_for_group(task_def, g, support_only=True, label_subset=None):
+    """Per-(task, model) metrics.
+
+    `support_only` restricts the macro average to labels with gold support; see
+    `code/scoring.py`. `label_subset` pins that set explicitly, so every model on
+    a task is scored over the same classes even if a model's own rows happen to
+    drop an item.
+    """
     kind = task_def["label_kind"]
     clean = g[g.parse_error.isna()]
     row = {
@@ -40,32 +48,24 @@ def _metrics_for_group(task_def, g):
         "mean_latency_s": g.latency_s.mean(),
         "median_latency_s": g.latency_s.median(),
     }
-    labels = task_def["labels"]
+
+    f1_by_label = per_class_f1(
+        task_def, clean, support_only=support_only, label_subset=label_subset
+    )
+    row.update({f"f1_{lbl}": val for lbl, val in f1_by_label.items()})
+    row["headline_f1"] = headline_f1(
+        task_def, clean, support_only=support_only, label_subset=label_subset
+    )
 
     if kind == "multi_binary":
-        per_label_f1 = {}
-        for lbl in labels:
-            gt_col, pred_col = f"gt_{lbl}", f"pred_{lbl}"
-            sub = clean[[gt_col, pred_col]].dropna()
-            if len(sub) == 0:
-                per_label_f1[f"f1_{lbl}"] = np.nan
-                continue
-            per_label_f1[f"f1_{lbl}"] = f1_score(
-                sub[gt_col].astype(int), sub[pred_col].astype(int),
-                pos_label=1, zero_division=0,
-            )
-        row.update(per_label_f1)
-        vals = [v for v in per_label_f1.values() if not np.isnan(v)]
-        row["avg_f1"] = float(np.mean(vals)) if vals else np.nan
-        row["headline_f1"] = row["avg_f1"]
+        row["avg_f1"] = row["headline_f1"]
+        return row
 
-    elif kind == "binary":
-        key = task_def["label_key"]
-        gt_col, pred_col = f"gt_{key}", f"pred_{key}"
-        sub = clean[[gt_col, pred_col]].dropna()
-        f1 = f1_score(sub[gt_col].astype(int), sub[pred_col].astype(int),
-                      pos_label=1, zero_division=0) if len(sub) else np.nan
-        row[f"f1_{key}"] = f1
+    key = task_def["label_key"]
+    gt_col, pred_col = f"gt_{key}", f"pred_{key}"
+    sub = clean[[gt_col, pred_col]].dropna()
+
+    if kind == "binary":
         # accuracy + MCC for binary tasks
         if len(sub):
             row["accuracy"] = (sub[pred_col].astype(int) == sub[gt_col].astype(int)).mean()
@@ -76,21 +76,10 @@ def _metrics_for_group(task_def, g):
         else:
             row["accuracy"] = np.nan
             row["mcc"] = np.nan
-        row["headline_f1"] = f1
+        return row
 
-    elif kind == "categorical":
-        key = task_def["label_key"]
-        gt_col, pred_col = f"gt_{key}", f"pred_{key}"
-        sub = clean[[gt_col, pred_col]].dropna()
-        per_class = {}
-        for lbl in labels:
-            per_class[f"f1_{lbl}"] = (
-                f1_score(sub[gt_col], sub[pred_col], labels=[lbl], average="macro", zero_division=0)
-                if len(sub) else np.nan
-            )
-        row.update(per_class)
-        vals = [v for v in per_class.values() if not np.isnan(v)]
-        row["avg_f1"] = float(np.mean(vals)) if vals else np.nan
+    if kind == "categorical":
+        row["avg_f1"] = row["headline_f1"]
         row["accuracy"] = (sub[pred_col] == sub[gt_col]).mean() if len(sub) else np.nan
         # MCC handles class imbalance better than macro F1; same data + mask as accuracy.
         try:
@@ -99,17 +88,24 @@ def _metrics_for_group(task_def, g):
             )
         except ValueError:
             row["mcc"] = np.nan
-        row["headline_f1"] = row["avg_f1"]
+        return row
 
-    else:
-        raise ValueError(f"Unknown label_kind: {kind}")
-    return row
+    raise ValueError(f"Unknown label_kind: {kind}")
 
 
-def _bootstrap_cis(preds, task_defs):
+def _bootstrap_cis(preds, task_defs, support_only=True, label_subsets=None):
     """Paired-by-item bootstrap on headline F1 per (task, model). Returns dict
     keyed by (task, model) -> (low, high). Optimized: pre-extract numpy arrays
-    once per cell, then index into them inside the bootstrap loop."""
+    once per cell, then index into them inside the bootstrap loop.
+
+    The scored label set is fixed once from the full sample and reused in every
+    replicate, so the CI is computed over the same classes as the point estimate
+    rather than a set that shifts with each resample.
+
+    Note: resampling is by item, and several tasks contain the same text many
+    times over (see docs/task_source_fidelity_audit.md), so repeated texts are
+    treated as independent draws and these intervals are narrower than the
+    effective sample supports."""
     rng = np.random.default_rng(BOOTSTRAP_SEED)
     out = {}
     for task, gtask in preds.groupby("task"):
@@ -117,7 +113,10 @@ def _bootstrap_cis(preds, task_defs):
             continue
         td = task_defs[task]
         kind = td["label_kind"]
-        labels = td["labels"]
+        if label_subsets is not None and task in label_subsets:
+            labels = list(label_subsets[task])
+        else:
+            labels = scored_labels(td, gtask, support_only=support_only)
         item_ids = sorted(gtask["item_id"].astype(str).unique())
         n = len(item_ids)
         if n == 0:
@@ -190,8 +189,7 @@ def _bootstrap_cis(preds, task_defs):
                         continue
                     sg = sub_gt[sub_mask]
                     sp = sub_pred[sub_mask]
-                    boot_f1[m][b] = f1_score(sg, sp, labels=labels,
-                                             average="macro", zero_division=0)
+                    boot_f1[m][b] = macro_f1_arrays(sg, sp, labels)
         for m, arr in boot_f1.items():
             arr = arr[~np.isnan(arr)]
             if len(arr) == 0:
@@ -212,23 +210,55 @@ def main():
     add_model_loading_args(ap)
     ap.add_argument("--predictions", default=str(OUT / "predictions.csv"))
     ap.add_argument("--output", default=str(OUT / "summary.csv"))
+    ap.add_argument(
+        "--legacy-all-labels",
+        action="store_true",
+        help=(
+            "Average macro F1 over every manifest label, including labels with no "
+            "gold support in the sample. This is how the published v1 summaries "
+            "were computed; kept only to reproduce them."
+        ),
+    )
     args = ap.parse_args()
+    support_only = not args.legacy_all_labels
 
     preds = pd.read_csv(args.predictions, low_memory=False)
-    task_defs = {t["name"]: t for t in load_task_definitions_from_args(args)}
+    # The current release view: the active benchmark, skipping held-out tasks.
+    # Frozen frontier and refresh panels deliberately keep the full set.
+    task_defs = {t["name"]: t for t in load_task_definitions_from_args(args, active_only=True)}
     model_lookup = _model_lookup(load_model_definitions_from_args(args))
+
+    # Fix the scored label set per task from the full sample, so every model on a
+    # task is averaged over the same classes and the bootstrap matches the point
+    # estimate.
+    label_subsets = {
+        task: scored_labels(task_defs[task], gtask, support_only=support_only)
+        for task, gtask in preds.groupby("task")
+        if task in task_defs
+    }
+
     rows = []
     for (task, model), g in preds.groupby(["task", "model"]):
         if task not in task_defs:
             print(f"[skip] unknown task in predictions: {task}")
             continue
-        r = {"task": task, "model": model, **_metrics_for_group(task_defs[task], g)}
+        r = {
+            "task": task,
+            "model": model,
+            **_metrics_for_group(
+                task_defs[task], g,
+                support_only=support_only,
+                label_subset=label_subsets.get(task),
+            ),
+        }
         rows.append(r)
     df = pd.DataFrame(rows).sort_values(["task", "model"]).reset_index(drop=True)
 
     # Bootstrap CIs (paired-by-item, 1000 iters, 95%)
     print(f"[bootstrap] computing {BOOTSTRAP_ITERS}-iter paired CIs ...")
-    cis = _bootstrap_cis(preds, task_defs)
+    cis = _bootstrap_cis(
+        preds, task_defs, support_only=support_only, label_subsets=label_subsets
+    )
     df["headline_f1_lo"] = df.apply(lambda r: cis.get((r["task"], r["model"]), (np.nan, np.nan))[0], axis=1)
     df["headline_f1_hi"] = df.apply(lambda r: cis.get((r["task"], r["model"]), (np.nan, np.nan))[1], axis=1)
 

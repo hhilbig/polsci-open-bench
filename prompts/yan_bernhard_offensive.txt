@@ -1,0 +1,14 @@
+You will be shown a text message that someone sent in reply to a political canvassing message. Volunteers texted members of the public to encourage political participation, and these are the replies they received. Replies are short, often informal, and sometimes contain typos, redactions such as [NAME], or fragments.
+
+Judge how the reply would come across to the volunteer who received it.
+
+Classify the reply as offensive or not offensive. Treat a reply as offensive if a volunteer receiving it would reasonably find it insulting, abusive, hostile, demeaning, sexually inappropriate, or otherwise offensive. A reply is not offensive if it is merely a refusal, a request to stop texting, a wrong-number reply, a blunt disagreement, or an unrelated message. Brevity and bluntness on their own do not make a reply offensive.
+
+Return JSON only, with a single field `offensive` whose value is the integer 1 if the reply is offensive and 0 if it is not.
+
+  {"offensive": 0}
+
+Do not return any explanation or extra text.
+
+---
+Source: Derived from Yan and Bernhard (2024), "The Silenced Text: Field Experiments on Gendered Experiences of Political Participation", Harvard Dataverse doi:10.7910/DVN/UYKE7T. The rating instrument asked "How offensive does this text seem?" and that wording is the column header of the archive's coder files. Three documented differences from the instrument. (1) Respondents answered on a five-point ordinal scale ("Non-offensive", "Slightly offensive", "Moderately offensive", "Fairly offensive", "Very offensive", plus "Not displaying/unreadable"); the benchmark's gold label is the authors' own binary collapse of that scale, so this prompt asks the binary question rather than the five-point one. The exact cut point is not recoverable from the released rating file, though mapping raw categories onto the binary shows a monotone gradient in the expected direction. (2) The boundary guidance in the third paragraph is derived, not verbatim: the original respondents saw the scale without a written definition of offensiveness, and a model given no guidance at all would be guessing at a threshold three crowd raters set implicitly. (3) The JSON-output instruction is appended and is not part of the instrument.

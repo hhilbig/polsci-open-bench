@@ -1,0 +1,36 @@
+You will be shown a quasi-statement from a U.S. party platform, with the party and year it comes from.
+
+Classify the main policy topic of the statement using exactly one Comparative Agendas Project major-topic label:
+
+- `Macroeconomics`: inflation, prices, interest rates, unemployment rate, monetary and fiscal policy, the national budget, taxation, and general industrial policy.
+- `Civil Rights`: discrimination on grounds of race, ethnicity, gender, age, disability or sexual orientation; voting rights; freedom of speech and religion; privacy; anti-government activity.
+- `Health`: health care organisation and financing, insurance, the drug industry and its regulation, medical facilities, disease prevention and treatment, mental health.
+- `Agriculture`: agricultural trade and subsidies, food inspection and safety, agricultural research and extension, animal and crop disease, fisheries.
+- `Labor`: worker safety, employment and training programmes, employee benefits and pensions, labour unions and collective bargaining, parental leave, seasonal and agricultural labour. Immigration belongs under `Immigration`, not here.
+- `Education`: schooling at all levels, school funding, special and vocational education, higher education, education research.
+- `Environment`: drinking water, waste and hazardous-waste disposal, air and water pollution, recycling, species and habitat protection, conservation.
+- `Energy`: nuclear power, electricity, natural gas and oil, coal, alternative and renewable energy, energy conservation.
+- `Immigration`: immigration policy, border control, refugees and asylum, naturalisation and citizenship.
+- `Transportation`: mass transit, highways, air travel, railroads, maritime transport, and related public works.
+- `Law and Crime`: law enforcement agencies, white-collar and organised crime, illegal drugs, courts, prisons and sentencing, juvenile crime, family and child-protection law.
+- `Social Welfare`: food and poverty assistance, social security and elderly assistance, disability assistance, child care, volunteer and charitable associations.
+- `Housing`: housing and community development, urban and rural housing, homelessness, housing assistance for elderly and disabled people.
+- `Domestic Commerce`: banking, finance and securities regulation, consumer finance, insurance regulation, bankruptcy, corporate governance, small business, copyright and patents, disaster relief, tourism.
+- `Defense`: defence alliances, military intelligence and readiness, nuclear arms and arms control, military aid, military personnel and veterans' service matters, weapons procurement, defence contractors, civil defence, the conduct of war.
+- `Technology`: space, civilian science and technology research, telecommunications and broadcasting, weather forecasting, computing.
+- `Foreign Trade`: trade agreements and negotiations, exports and export promotion, private investment abroad, competitiveness, tariffs and non-tariff barriers, exchange rates.
+- `International Affairs`: foreign aid, developing countries, international finance and organisations, diplomacy and diplomats, human rights abroad, international terrorism, relations with specific regions.
+- `Government Operations`: intergovernmental relations, government efficiency and bureaucratic oversight, the postal service, government employees and appointments, currency, procurement and contracting, government property, the census, regulation of political campaigns.
+- `Public Lands`: national parks and forests, indigenous affairs, public land and water management, territorial and dependency issues.
+- `Culture`: cultural policy where no other topic applies.
+
+Choose the topic that best captures the main substantive policy content of the statement.
+
+Return JSON only, with exactly one field:
+
+  {"policy_topic": "Health"}
+
+Do not return any explanation or extra text.
+
+---
+Source: v2 of prompts/cap_party_platform_policy_topic.txt. Two documented changes. (1) Major topic 5 is renamed from the legacy "Labor and Immigration" to "Labor", because the v1 list carried it alongside a separate topic 9 "Immigration"; the rename is applied to gold values through ground_truth.label_map. (2) Short definitions from the CAP master codebook were added; the v1 prompt listed the 21 labels with no definitions at all (36 characters per label). Because these changes ship together, a v1-to-v2 difference cannot be attributed to either alone.

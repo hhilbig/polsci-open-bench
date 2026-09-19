@@ -34,6 +34,30 @@ def add_task_loading_args(parser: argparse.ArgumentParser) -> None:
         "--tasks-dir",
         help="Path to a directory of task manifest YAML files.",
     )
+    parser.add_argument(
+        "--active-only",
+        action="store_true",
+        help=(
+            "Load only the active benchmark, skipping manifests marked "
+            "`status: excluded`. Frozen panels keep the full manifest set."
+        ),
+    )
+
+
+def is_excluded(spec: dict) -> bool:
+    """Whether a manifest is currently held out of the active benchmark.
+
+    An excluded task keeps its manifest, prompt, data and past predictions, so the
+    decision is reversible and the historical record stays intact. Set
+    `status: excluded` plus `excluded_reason` in the manifest.
+
+    Loading returns EVERY manifest by default, because most consumers in this repo
+    are frozen panels whose scope is fixed by a config or a published artifact and
+    which must keep resolving to the task set they were built on. Only the current
+    release view -- the benchmark runners, the summary builders and the task
+    inventory -- passes active_only=True.
+    """
+    return str(spec.get("status", "")).strip().lower() == "excluded"
 
 
 def _resolve_manifest_paths(task_manifest=None, task_dir=None, tasks_dir=None):
@@ -181,9 +205,48 @@ def _build_item_id(row, id_spec, position):
     return str(row[id_spec["column"]])
 
 
+def _excluded_labels(gt_spec):
+    """Gold labels a task declares unscoreable and drops before sampling.
+
+    Used where a source label records coder uncertainty rather than a property of
+    the text, so no annotator could recover it from the benchmark input. The GTD
+    `Unknown` attack type is the motivating case: GTD assigns it when the source
+    report does not specify the method, but the benchmark item is the GTD summary,
+    which usually does describe the attack.
+
+    Dropping rows re-draws the sample from a smaller frame, so a manifest using
+    this is NOT item-paired with one that does not. Version the task rather than
+    editing a published manifest in place.
+    """
+    return [str(x) for x in (gt_spec.get("exclude_labels") or [])]
+
+
+def _label_map(gt_spec):
+    """Rename gold label values at load time.
+
+    Lets a task correct a label NAME without regenerating the cleaned CSV from a
+    source archive. The motivating case is the CAP major-topic list, where topic 5
+    carried the legacy name "Labor and Immigration" alongside a separate topic 9
+    "Immigration", giving the model two plausible buckets for the same content.
+
+    Renaming does not change which rows are sampled, so a manifest that only maps
+    labels stays item-paired with the manifest it supersedes.
+    """
+    return {str(k): str(v) for k, v in (gt_spec.get("label_map") or {}).items()}
+
+
 def _make_loader(data_path, id_spec, text_spec, gt_spec, label_kind, label_key, labels, sampling):
+    exclude = _excluded_labels(gt_spec)
+    label_map = _label_map(gt_spec)
+
     def loader():
         df = pd.read_csv(data_path, low_memory=False)
+        if label_map or exclude:
+            column = gt_spec["column"]
+            if label_map:
+                df[column] = df[column].astype(str).replace(label_map)
+            if exclude:
+                df = df[~df[column].astype(str).isin(exclude)].reset_index(drop=True)
         v1_idxs, v2_idxs = _v1_v2_indices(
             len(df),
             n_v1=sampling["n_v1"],
@@ -223,6 +286,38 @@ def load_task_definition(manifest_path: Path):
     label_kind = spec["label_kind"]
     label_key = spec.get("label_key")
     labels = list(spec.get("labels", []))
+
+    mapped = _label_map(spec["ground_truth"])
+    if mapped:
+        if label_kind != "categorical":
+            raise ValueError(
+                f"{manifest_path}: ground_truth.label_map is only supported for "
+                f"categorical tasks, not {label_kind}"
+            )
+        unknown = [v for v in mapped.values() if v not in [str(x) for x in labels]]
+        if unknown:
+            raise ValueError(
+                f"{manifest_path}: ground_truth.label_map maps onto labels that "
+                f"are not in the task's label list: {sorted(set(unknown))}"
+            )
+
+    excluded = _excluded_labels(spec["ground_truth"])
+    if excluded:
+        if label_kind != "categorical":
+            raise ValueError(
+                f"{manifest_path}: ground_truth.exclude_labels is only supported "
+                f"for categorical tasks, not {label_kind}"
+            )
+        unknown = [lbl for lbl in excluded if lbl not in [str(x) for x in labels]]
+        if unknown:
+            raise ValueError(
+                f"{manifest_path}: ground_truth.exclude_labels names labels that "
+                f"are not in the task's label list: {unknown}"
+            )
+        # Drop from the label list too, so the JSON schema and the macro average
+        # do not offer a class the sample can no longer contain.
+        labels = [lbl for lbl in labels if str(lbl) not in excluded]
+
     if label_kind == "binary":
         if not label_key:
             raise ValueError(f"{manifest_path} binary task missing label_key")
@@ -268,15 +363,26 @@ def load_task_definition(manifest_path: Path):
     return task
 
 
-def load_task_definitions(task_manifest=None, task_dir=None, tasks_dir=None):
+def load_task_definitions(task_manifest=None, task_dir=None, tasks_dir=None, active_only=False):
     manifests = _resolve_manifest_paths(task_manifest=task_manifest, task_dir=task_dir, tasks_dir=tasks_dir)
+    # Exclusions apply when scanning a directory. A manifest named explicitly is
+    # always honoured, because silently returning nothing would look like a
+    # missing file rather than a policy decision.
+    named_explicitly = bool(task_manifest or task_dir)
+    if active_only and not named_explicitly:
+        manifests = [
+            path
+            for path in manifests
+            if not is_excluded(yaml.safe_load(path.read_text()) or {})
+        ]
     tasks = [load_task_definition(path) for path in manifests]
     return sorted(tasks, key=lambda t: (t["order"], t["name"]))
 
 
-def load_task_definitions_from_args(args):
+def load_task_definitions_from_args(args, active_only=False):
     return load_task_definitions(
         task_manifest=getattr(args, "task_manifest", None),
         task_dir=getattr(args, "task_dir", None),
         tasks_dir=getattr(args, "tasks_dir", None),
+        active_only=active_only or getattr(args, "active_only", False),
     )

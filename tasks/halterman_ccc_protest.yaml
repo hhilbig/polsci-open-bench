@@ -1,3 +1,19 @@
+status: excluded
+excluded_on: 2026-09-18
+excluded_reason: >-
+  Held out pending the source pairing file. CCC's `type` field is a free-text,
+  semicolon-separated descriptor rather than a mutually exclusive category: 6.8
+  percent of the 72,181 events in the public release carry several types at once
+  (`protest; march`, `rally; march`), and among the 2,883 events whose type
+  includes "march", 1,546 (54 percent) list `protest` or `rally` first. A
+  first-listed-type collapse therefore labels a march as PROTEST about half the
+  time, which is what the gold labels do and what contradicts the codebook
+  printed in this task's own prompt. The prompt is faithful to Halterman and
+  Keith and the labels are faithful to CCC; the two are not the same construct.
+  The task cannot be rebuilt from public data because the pairing of CCC events
+  to news-story text is the authors' own work and is not published with the
+  paper. See docs/task_source_fidelity_audit.md. Reversible: delete these
+  `status`/`excluded_*` keys, or load with --include-excluded.
 order: 7
 name: halterman_ccc_protest
 family: Event coding
