@@ -244,8 +244,21 @@ class LabelMapTests(unittest.TestCase):
 
 
 class TaskVersionIsolationTests(unittest.TestCase):
-    def test_v1_directory_still_holds_exactly_the_published_task_set(self):
-        self.assertEqual(len(task_registry.load_task_definitions()), 34)
+    def test_active_task_set_excludes_held_out_tasks(self):
+        """33 active tasks; halterman_ccc_protest is held out (see CHANGELOG)."""
+        active = task_registry.load_task_definitions(active_only=True)
+        everything = task_registry.load_task_definitions()
+        self.assertEqual(len(active), 33)
+        self.assertEqual(len(everything), 34)
+        self.assertNotIn("halterman_ccc_protest", {t["name"] for t in active})
+        self.assertIn("halterman_ccc_protest", {t["name"] for t in everything})
+
+    def test_an_excluded_manifest_is_still_loadable_when_named(self):
+        """Naming it explicitly must work, or it looks like a missing file."""
+        got = task_registry.load_task_definitions(
+            task_manifest=REPO / "tasks" / "halterman_ccc_protest.yaml"
+        )
+        self.assertEqual([t["name"] for t in got], ["halterman_ccc_protest"])
 
     def test_v2_manifests_are_not_visible_from_the_v1_directory(self):
         v1_names = {t["name"] for t in task_registry.load_task_definitions()}
@@ -257,7 +270,7 @@ class TaskVersionIsolationTests(unittest.TestCase):
         # The isolation that matters is that loading tasks/ does not pick up
         # tasks_v2/ and end up with duplicate or extra tasks.
         self.assertTrue(v2_names <= v1_names)
-        self.assertEqual(len(v1_names), 34)
+        self.assertEqual(len(v1_names), 34)  # includes the held-out task
 
     def test_every_v2_manifest_declares_what_it_supersedes(self):
         import yaml

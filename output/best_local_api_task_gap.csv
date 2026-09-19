@@ -2,7 +2,6 @@ task,task_short,family,model_short_API,model_short_Local,headline_f1_API,headlin
 dicocco_manifesto_populism,Manifesto populism,Claims & Relations,Claude Sonnet 4.6,Mistral Sm 24B,0.3606557377049181,0.4545454545454546,0.09388971684053649,-0.09388971684053649,Local ahead
 burnham_covid_threat_minimization,COVID threat minimization,Claims & Relations,gpt-5.4-nano,Mistral Sm 24B,0.5378151260504201,0.6015037593984962,0.06368863334807606,-0.06368863334807606,Local ahead
 rheault_line_of_fire_incivility,Line of Fire incivility,Relevance & Harm,DeepSeek V4 Pro,Qwen3.5 35B-A3B,0.6068965517241379,0.6611570247933884,0.054260473069250525,-0.054260473069250525,Local ahead
-halterman_ccc_protest,CCC protest type,Events & Actions,gpt-5.5,Qwen3 14B,0.453165087274399,0.49881503776753905,0.045649950493140024,-0.045649950493140024,Local ahead
 douglass_icbe_sentence_event_type,ICBe event type (5 classes),Events & Actions,DeepSeek V4 Pro,Gemma 4 26B,0.5055795347230292,0.5296694213046859,0.024089886581656672,-0.024089886581656672,Local ahead
 brandt_political_relevance,Brandt relevance,Relevance & Harm,Claude Sonnet 4.6,Qwen3 14B,0.726027397260274,0.7391304347826086,0.01310303752233466,-0.01310303752233466,Local ahead
 twitcivility_impoliteness,TwitCivility impoliteness,Relevance & Harm,gpt-5.4-nano,Gemma 4 31B,0.6217228464419475,0.6308243727598566,0.009101526317909059,-0.009101526317909059,Local ahead

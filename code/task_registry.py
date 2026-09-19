@@ -34,6 +34,30 @@ def add_task_loading_args(parser: argparse.ArgumentParser) -> None:
         "--tasks-dir",
         help="Path to a directory of task manifest YAML files.",
     )
+    parser.add_argument(
+        "--active-only",
+        action="store_true",
+        help=(
+            "Load only the active benchmark, skipping manifests marked "
+            "`status: excluded`. Frozen panels keep the full manifest set."
+        ),
+    )
+
+
+def is_excluded(spec: dict) -> bool:
+    """Whether a manifest is currently held out of the active benchmark.
+
+    An excluded task keeps its manifest, prompt, data and past predictions, so the
+    decision is reversible and the historical record stays intact. Set
+    `status: excluded` plus `excluded_reason` in the manifest.
+
+    Loading returns EVERY manifest by default, because most consumers in this repo
+    are frozen panels whose scope is fixed by a config or a published artifact and
+    which must keep resolving to the task set they were built on. Only the current
+    release view -- the benchmark runners, the summary builders and the task
+    inventory -- passes active_only=True.
+    """
+    return str(spec.get("status", "")).strip().lower() == "excluded"
 
 
 def _resolve_manifest_paths(task_manifest=None, task_dir=None, tasks_dir=None):
@@ -339,15 +363,26 @@ def load_task_definition(manifest_path: Path):
     return task
 
 
-def load_task_definitions(task_manifest=None, task_dir=None, tasks_dir=None):
+def load_task_definitions(task_manifest=None, task_dir=None, tasks_dir=None, active_only=False):
     manifests = _resolve_manifest_paths(task_manifest=task_manifest, task_dir=task_dir, tasks_dir=tasks_dir)
+    # Exclusions apply when scanning a directory. A manifest named explicitly is
+    # always honoured, because silently returning nothing would look like a
+    # missing file rather than a policy decision.
+    named_explicitly = bool(task_manifest or task_dir)
+    if active_only and not named_explicitly:
+        manifests = [
+            path
+            for path in manifests
+            if not is_excluded(yaml.safe_load(path.read_text()) or {})
+        ]
     tasks = [load_task_definition(path) for path in manifests]
     return sorted(tasks, key=lambda t: (t["order"], t["name"]))
 
 
-def load_task_definitions_from_args(args):
+def load_task_definitions_from_args(args, active_only=False):
     return load_task_definitions(
         task_manifest=getattr(args, "task_manifest", None),
         task_dir=getattr(args, "task_dir", None),
         tasks_dir=getattr(args, "tasks_dir", None),
+        active_only=active_only or getattr(args, "active_only", False),
     )

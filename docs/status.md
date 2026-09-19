@@ -16,9 +16,9 @@ Last updated: 2026-09-18
 
 ## Benchmark Scope
 
-- 34 classification task manifests under [`tasks/`](../tasks)
+- 33 active classification task manifests under [`tasks/`](../tasks); `halterman_ccc_protest` is held out via `status: excluded` (see [`CHANGELOG.md`](../CHANGELOG.md))
 - 10 serial models: 6 local Ollama models and 4 commercial API models
-- 340 / 340 serial task-model pairs filled
+- 330 / 330 active serial task-model pairs filled
 - 204 / 204 local 10-item prompt task-model pairs filled
 - 164,250 serial model-item classifications
 - 293 to 500 items per task, depending on cleaned data availability
@@ -36,14 +36,17 @@ Last updated: 2026-09-18
 
 ## Latest Update
 
-- The 34-task set is the current public benchmark in `tasks/`.
+- The active benchmark is 33 tasks in `tasks/`; one is held out.
 - Serial outputs were written to [`output/predictions.csv`](../output/predictions.csv) and [`output/summary.csv`](../output/summary.csv).
 - The completed local 10-item prompt-batching results were merged into [`output/predictions_batched.csv`](../output/predictions_batched.csv).
 - The PDF report was rebuilt on 2026-05-18, and public docs now describe one 34-task benchmark.
 
 ## Post-Release Changes
 
-- 2026-09-18: Second source-fidelity audit and its fixes. The categorical macro-F1
+- 2026-09-18: Second source-fidelity audit and its fixes, plus the exclusion of
+  `halterman_ccc_protest`. Headline moves from 10 of 34 to 9 of 33 tasks where
+  local matches or beats API, and the mean gap from +0.011 to +0.013. Full
+  detail in [`CHANGELOG.md`](../CHANGELOG.md). Second source-fidelity audit: The categorical macro-F1
   metric no longer counts labels with zero gold support as zeros, which changes
   three tasks (`mellon_bes_mii_2024`, `cap_crs_policy_topic`,
   `haunss_papea_claims`) and leaves the other 31 and every qualitative conclusion

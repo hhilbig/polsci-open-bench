@@ -17,6 +17,11 @@ import pandas as pd
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
 
+# Harvard Dataverse, doi:10.7910/DVN/CHTWUB, file "capsule-9e05a29c-...zip" (336 MB).
+# Direct: https://dataverse.harvard.edu/api/access/datafile/4882383
+# Recorded here because the original download left no URL anywhere in the repo,
+# which blocked the 2026-09-18 audit from checking this task's construction.
+SOURCE_URL = "https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/CHTWUB"
 DEFAULT_INPUT_ZIP = Path("/tmp/cross_domain_capsule.zip")
 DEFAULT_OUTPUT = REPO / "data" / "osnabruegge_cross_domain_topic.csv"
 
@@ -66,6 +71,17 @@ def build_cross_domain_task(input_zip: Path) -> pd.DataFrame:
             "source_topic_8": target["topic_8"].astype(str),
             "source_topic_44": target["topic_44"].astype(str),
             "gt_policy_domain": target["topic_8"].map(LABEL_MAP),
+            # Three independent validation coders, present on 250 of 4,165 rows.
+            # Retained because they establish this task's human ceiling: coders
+            # reading the same excerpt match the published topic_8 label only
+            # 61.6 / 65.2 / 65.2 percent of the time, and all three agree with
+            # each other on 54.8 percent of items (Cohen kappa 0.57-0.65). The
+            # archive carries no speech, debate, date or speaker column, so the
+            # coders saw exactly what the model is shown. The task is therefore
+            # genuinely under-determined by its input rather than missing context.
+            "coder1_topic_8": target["topic_8_r1"].map(LABEL_MAP),
+            "coder2_topic_8": target["topic_8_r2"].map(LABEL_MAP),
+            "coder3_topic_8": target["topic_8_r3"].map(LABEL_MAP),
         }
     )
 
@@ -89,7 +105,9 @@ def main():
     if not input_zip.exists():
         raise FileNotFoundError(
             f"Input archive not found: {input_zip}. "
-            "Download the replication ZIP first and pass it via --input-zip."
+            f"Download the replication capsule from {SOURCE_URL} "
+            "(file capsule-9e05a29c-4b3d-457e-a53a-90f4601cda2f.zip) and pass it "
+            "via --input-zip."
         )
 
     output_path = Path(args.output)

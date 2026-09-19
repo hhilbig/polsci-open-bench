@@ -141,7 +141,9 @@ def main():
     if len(serial_b1):
         preds = pd.concat([preds, serial_b1], ignore_index=True, sort=False)
         print(f"[serial b=1] merged {len(serial_b1)} rows from predictions.csv into baseline")
-    task_defs = {t["name"]: t for t in load_task_definitions_from_args(args)}
+    # The current release view: the active benchmark, skipping held-out tasks.
+    # Frozen frontier and refresh panels deliberately keep the full set.
+    task_defs = {t["name"]: t for t in load_task_definitions_from_args(args, active_only=True)}
 
     # Agreement computed per task (needs access to the full task's prediction grid).
     per_task_agreement = {}

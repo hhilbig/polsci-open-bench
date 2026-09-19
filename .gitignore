@@ -49,6 +49,7 @@ output/rerun.log
 # API batch ids, and cost notes from private development runs.
 output/run_registry.jsonl
 docs/run_status.md
+.openrouter_api_key
 
 # Mid-flight benchmark working dir (overwritten by run scripts)
 output/tmp/

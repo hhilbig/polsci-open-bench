@@ -2,6 +2,10 @@
 
 Last updated: 2026-09-18
 
+> Change history now lives in [`CHANGELOG.md`](../CHANGELOG.md), which is the
+> authoritative record of task-set, gold-label, prompt and metric changes.
+> This file describes the current release state; it is not a second log.
+
 This note summarizes the current public release state. The report is the
 authoritative narrative artifact; the repository stores the data, prompts,
 summaries, figures, and reproduction instructions that support it.

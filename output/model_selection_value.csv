@@ -1,7 +1,7 @@
 selection_rule,mean_f1,detail,rule_type
-Best single model,0.6765299536765892,Claude Sonnet 4.6,Single model
-Best single local model,0.6555756664297664,Gemma 4 31B,Single model
-Best single API model,0.6765299536765892,Claude Sonnet 4.6,Single model
-Oracle task-specific local choice,0.6860664702353729,Best local per task,Task-specific upper bound
-Oracle task-specific API choice,0.697293836830887,Best API per task,Task-specific upper bound
-Oracle task-specific all-model choice,0.7066481498282813,Best model per task,Task-specific upper bound
+Best single model,0.684853699099802,Claude Sonnet 4.6,Single model
+Best single local model,0.6617509977487464,Gemma 4 31B,Single model
+Best single API model,0.684853699099802,Claude Sonnet 4.6,Single model
+Oracle task-specific local choice,0.6917407560677316,Best local per task,Task-specific upper bound
+Oracle task-specific API choice,0.7046916777265381,Best API per task,Task-specific upper bound
+Oracle task-specific all-model choice,0.7129461229210311,Best model per task,Task-specific upper bound

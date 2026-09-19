@@ -120,19 +120,47 @@ predictions all ten benchmarked models made for that same item. Where every
 model agrees on an answer that gold calls wrong, the likely cause is the task,
 not the models.
 
-- `osnabruegge_cross_domain_topic`. 123 of 500 items (25%) were answered
-  "No Topic" by at least eight of the ten models while gold is a substantive
-  domain. The items are mid-sentence fragments of parliamentary speech: *"No,
-  not all, but the more difficult and complex parts will be put into a Bill."*
-  is gold **Freedom and Democracy**, and *"On behalf of my constituent, Mr
-  Kelliher, I thank the committee for its deliberations. Motion agreed to."* is
-  gold **Fabric of Society**. The source annotators had the surrounding speech;
-  the benchmark item does not. This is the benchmark's lowest-scoring task
-  (mean headline F1 0.435 local, 0.476 API), so it sets the reported difficulty
-  floor on a task no annotator could do from the given input. **Unresolved** —
-  fixing it requires re-downloading the replication capsule to check whether
-  speech-level context can be recovered. No source URL is recorded anywhere in
-  the repo and `/tmp/cross_domain_capsule.zip` is long gone.
+- `osnabruegge_cross_domain_topic`. **Resolved 2026-09-18, and my first reading
+  of it was wrong.** 123 of 500 items (25%) were answered "No Topic" by at least
+  eight of the ten models while gold is a substantive domain, on mid-sentence
+  fragments such as *"No, not all, but the more difficult and complex parts will
+  be put into a Bill."* (gold **Freedom and Democracy**) and *"On behalf of my
+  constituent, Mr Kelliher, I thank the committee for its deliberations. Motion
+  agreed to."* (gold **Fabric of Society**). I inferred from this that the source
+  annotators had the surrounding speech and the benchmark item did not.
+
+  The replication capsule (Harvard Dataverse, doi:10.7910/DVN/CHTWUB) says
+  otherwise. `target_corpus.csv` has nine columns and **none of them carry
+  context** — no speech, debate, bill, date, speaker or position field. The
+  coders saw exactly what the model is shown. Re-running the build script against
+  the capsule reproduces `data/osnabruegge_cross_domain_topic.csv` byte for byte,
+  so the import was correct all along.
+
+  What the capsule does add is three independent validation coders on 250 of the
+  4,165 rows. They establish a human ceiling:
+
+  | Measure | Value |
+  |---|---|
+  | Coder 1 / 2 / 3 vs the published `topic_8` label | 0.616 / 0.652 / 0.652 |
+  | All three coders agree with each other | 0.548 |
+  | Pairwise coder agreement | 0.648 - 0.712 |
+  | Cohen's kappa between coders | 0.572 - 0.649 |
+
+  So this task is not broken and not mis-imported. It is genuinely
+  under-determined by its input: expert coders reading the same excerpt reproduce
+  the published label about two times in three. Model accuracy of 0.453 should be
+  read against a ceiling near 0.65, not against 1.0. On the 23 sampled items that
+  fall in the human-coded subset, model accuracy tracks human agreement
+  monotonically (0.171 where no coder matched gold, 0.443 where all three did),
+  which is consistent with the same explanation, though 23 items is too few to
+  rest anything on.
+
+  **Implication:** keep the task, and report its human ceiling alongside the
+  model scores. Treating 1.0 as attainable here overstates how far models are
+  from competent human coding, and dropping the task would discard the
+  benchmark's only measured example of an irreducibly subjective coding problem.
+  The build script now records the source URL and carries the three coder columns
+  into `data/osnabruegge_cross_domain_topic.csv` so the ceiling is recomputable.
 - `brandt_gtd_attack_type`. 47 of 500 items carry gold `Unknown`, scored at
   3.2% accuracy, with 414 of 470 model-item rows answering "Armed Assault". GTD
   assigns `Unknown` when the underlying source report does not specify the
@@ -148,11 +176,39 @@ not the models.
   Milwaukee to Madison"; "marched from Sample Gates to the Monroe County
   Courthouse"). The dominant error across all models is PROTEST → MARCH / RALLY
   / DEMONSTRATION, which is what a codebook-gold mismatch of this shape
-  predicts. **Unresolved** — there is no build script for this task and the
-  cleaned file has only `text,gt_protest_type`, so the source must be
-  re-obtained before the collapse rule can be checked. The likely cause to test
-  is that the source permits multiple event types per event and the import kept
-  one.
+  predicts. **Cause established 2026-09-18; the task still cannot be rebuilt.**
+
+  The upstream Crowd Counting Consortium release (Harvard Dataverse,
+  doi:10.7910/DVN/6OPP7H, 72,181 events) confirms the mechanism. CCC's `type`
+  field is a free-text, semicolon-separated descriptor, not a mutually exclusive
+  category: 4,910 events (6.8%) carry several types at once, such as
+  `protest; march`, `rally; march` and `march; rally`. Among the 2,883 events
+  whose type includes "march", **1,546 (54%) list `protest` or `rally` first**.
+  An import that collapses the field to its first listed value therefore labels a
+  march as PROTEST about half the time, which is precisely the error the models
+  make and precisely the mismatch against the codebook printed in the prompt.
+  `protest` also functions as CCC's generic default, covering 34% of all events
+  on its own.
+
+  So the prompt is faithful to the source codebook (its PROTEST definition is
+  verbatim from Halterman and Keith) and the gold labels are faithful to CCC. The
+  two are simply not the same construct: the prompt supplies crisp, mutually
+  exclusive definitions for a field that CCC populates as a loose multi-label
+  descriptor. This is the failure mode the source paper is itself about.
+
+  The task cannot be rebuilt from public data. CCC's compiled file carries only
+  terse curator `notes` ("White House Peace Vigil continuous since June 3, 1981"),
+  not the news-story prose the benchmark uses; none of the benchmark texts appear
+  in it. The pairing of CCC events to retrieved news articles is Halterman and
+  Keith's own work and is not published with the paper (no code or data URL
+  appears on the ACL page or the arXiv HTML). Obtaining their file requires
+  contacting the authors.
+
+  **Implication:** treat this task's gold as a first-listed-type collapse of a
+  multi-label field, and say so wherever the task is reported, rather than
+  presenting it as four mutually exclusive protest forms. Until the authors'
+  pairing file is available, do not rebuild it, and do not read its low scores as
+  a model capability result.
 
 **Implication for the main result:** none of these move the headline. Removing
 GTD `Unknown` and dropping osnabruegge entirely both leave the best-API-minus-

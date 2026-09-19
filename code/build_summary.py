@@ -223,7 +223,9 @@ def main():
     support_only = not args.legacy_all_labels
 
     preds = pd.read_csv(args.predictions, low_memory=False)
-    task_defs = {t["name"]: t for t in load_task_definitions_from_args(args)}
+    # The current release view: the active benchmark, skipping held-out tasks.
+    # Frozen frontier and refresh panels deliberately keep the full set.
+    task_defs = {t["name"]: t for t in load_task_definitions_from_args(args, active_only=True)}
     model_lookup = _model_lookup(load_model_definitions_from_args(args))
 
     # Fix the scored label set per task from the full sample, so every model on a
