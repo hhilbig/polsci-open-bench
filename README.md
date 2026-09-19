@@ -4,7 +4,7 @@ A benchmark of local open-weight and commercial API LLMs for political science
 text classification.
 
 The current release compares six local Ollama models with four commercial API
-models from OpenAI, Anthropic, and DeepSeek on 34 classification tasks from
+models from OpenAI, Anthropic, and DeepSeek on 33 classification tasks from
 political science papers, public replication archives, and documented public
 datasets. The report is the
 authoritative project summary.
@@ -23,8 +23,8 @@ authoritative project summary.
 
 Local open-weight models are often competitive with commercial API models, but
 the benchmark does not support a single global model ranking. The best local
-model matches or exceeds the best API model on 10 of 34 tasks; on average, the
-best API model exceeds the best local model by 0.011 F1. API models have their
+model matches or exceeds the best API model on 9 of 33 tasks; on average, the
+best API model exceeds the best local model by 0.013 F1. API models have their
 clearest edge on complex tasks with many active labels, long codebooks, or
 multiple outputs per item.
 
@@ -36,9 +36,10 @@ not a supervised-learning baseline suite.
 
 ## Benchmark Scope
 
-- 34 task manifests in [`tasks/`](tasks)
+- 33 active task manifests in [`tasks/`](tasks), plus one held out (see
+  [`CHANGELOG.md`](CHANGELOG.md))
 - 10 serial models: 6 local Ollama models and 4 commercial API models
-- 340 serial task-model comparisons
+- 330 serial task-model comparisons
 - 164,250 serial model-item classifications
 - 204 local prompt-batched task-model comparisons with 10 items per prompt
 - 293 to 500 items per task
@@ -81,7 +82,8 @@ tasks, custom models, cost notes, and full rerun commands.
 - [`docs/reproduce.md`](docs/reproduce.md): setup and rerun instructions
 - [`docs/schema.md`](docs/schema.md): output schema
 - [`docs/prompts_provenance.md`](docs/prompts_provenance.md): prompt and task provenance
-- [`docs/task_source_fidelity_audit.md`](docs/task_source_fidelity_audit.md): source-fidelity audit for the 34 tasks
+- [`CHANGELOG.md`](CHANGELOG.md): task-set, gold-label, prompt and metric changes
+- [`docs/task_source_fidelity_audit.md`](docs/task_source_fidelity_audit.md): source-fidelity audit
 - [`docs/custom_tasks.md`](docs/custom_tasks.md): custom task manifests
 - [`docs/custom_models.md`](docs/custom_models.md): custom model manifests
 - [`docs/release_workflow.md`](docs/release_workflow.md): release and arXiv workflow

@@ -69,6 +69,18 @@ Two conventions hold throughout:
   by representation. The cost is that no supervised ceiling at full data is
   reported, which the report states rather than implies.
 
+### Changed
+
+- **`output/report_pdf.qmd` and the PDF are now the revised report.** The 33-task
+  set, the corrected metric, the constrained-decoding experiment and the supervised
+  baseline are all in the canonical report rather than a parallel v2 file. The
+  previous version remains in git history. New prose was revised against
+  `hanno-voice`, `clarity-reviewer` and `avoid-ai-writing`: a bootstrap interval
+  whose sign convention was unreadable now states its direction in words, a
+  paragraph carrying five decimals was split into claim and detail, two rhetorical
+  contrasts were replaced with plain statements, and a reference to tasks "flagged
+  earlier in this paper or its companion audit" now names which tasks and why.
+
 ### Known issues
 
 - Multilingual-E5 truncates at 512 tokens while the LLM sees the whole item, so the
