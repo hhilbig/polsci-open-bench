@@ -58,6 +58,43 @@ labeled examples from the target task and report both performance and unusable
 output rates. Prompt batching can make local models faster, but it needs
 task-specific reliability checks.
 
+## API Model Comparison, September 2026
+
+A separate panel re-runs 11 commercial API models on the same 33 tasks, 100
+frozen items each, and adds the two axes the main benchmark does not measure:
+what a model costs and how long a request takes.
+
+![Cost and latency against accuracy](output/figures/fig-jev-cost-latency.png)
+
+**Cheap and fast does not mean competitive, but the gap is small.** Mean task F1
+runs from 0.661 for Jev 1.13 to 0.714 for Claude Opus 5. Six of the ten
+comparisons against Jev clear zero on a paired task bootstrap: both Claude
+models, both Gemini Flash models, and two GPT-5.6 models. The other four are not
+distinguishable from it.
+
+**The cheapest model that clearly beats Jev is Gemini 3.1 Flash-Lite**, at $0.14
+per 1,000 items against Jev's $0.036, for +0.021 F1. Jev remains the cheapest and
+fastest model on the panel, at 0.27s median per request against Flash-Lite's
+0.54s.
+
+![Real-time against batch pricing](output/figures/fig-cost-realtime-batch.png)
+
+**Batch pricing halves the gap.** OpenAI, Anthropic and Google all discount batch
+work by 50%; DeepSeek and Jev have no batch endpoint, so their price does not
+move. At batch rates Flash-Lite costs about twice Jev rather than four times.
+
+**Prompt optimisation does not close the gap for Jev.** Running GEPA on 30 tasks,
+optimising on rows the benchmark never sampled and scoring on the untouched
+frozen items, moves held-out F1 by +0.011 with a paired interval that contains
+zero. The same prompts gained +0.048 on the rows used to select them, so 78% of
+the apparent improvement was selection optimism rather than transferable gain.
+
+Cost figures differ in how much they can be trusted. The four OpenAI models,
+both DeepSeek models and Jev carry provider billing records; Gemini and Anthropic
+are token counts times published prices and are drawn hollow on the figures. See
+[`output/sidecar/jev_sidecar/summary.json`](output/sidecar/jev_sidecar/summary.json)
+for the per-model basis.
+
 ## Benchmark Scope
 
 - 33 active task manifests in [`tasks/`](tasks), plus one held out (see
@@ -115,19 +152,32 @@ tasks, custom models, cost notes, and full rerun commands.
 - [`docs/custom_tasks.md`](docs/custom_tasks.md): custom task manifests
 - [`docs/custom_models.md`](docs/custom_models.md): custom model manifests
 - [`docs/release_workflow.md`](docs/release_workflow.md): release and arXiv workflow
+- [`output/sidecar/jev_sidecar/`](output/sidecar/jev_sidecar): cost, latency and
+  task-demeaned tables behind the API-comparison figures
+- [`output/sidecar/gepa_jev_20260920/`](output/sidecar/gepa_jev_20260920): GEPA
+  per-task results, including each optimised prompt
 
 ## Repo Layout
 
 ```text
-code/      benchmark runners and report builders
-data/      cleaned task files
-models/    model manifests
-tasks/     task manifests
-prompts/   task prompts
-output/    predictions, summaries, figures, tables, reports
-docs/      documentation
-examples/  minimal custom-task and custom-model examples
+code/         benchmark runners, analysis scripts and report builders
+data/         cleaned task files
+models/       model manifests
+tasks/        task manifests for the current release
+tasks_v2/     corrected manifests that supersede a v1 task (see CHANGELOG.md)
+tasks_ext/    candidate tasks not yet in the headline panel
+prompts/      task prompts
+prompts_v2/   prompts belonging to the v2 manifests
+experiments/  run configurations for the side experiments
+output/       predictions, summaries, figures, tables, reports
+docs/         documentation
+examples/     minimal custom-task and custom-model examples
+tests/        unit tests
 ```
+
+Raw per-request responses live under `output/sidecar/` and are not tracked:
+they run to tens of thousands of files. The small derived tables the figure
+scripts read are tracked, so the figures rebuild from a clone.
 
 ## Citation
 

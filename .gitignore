@@ -57,7 +57,19 @@ output/tmp/
 
 # Development run/import scratch. Public release files live directly under
 # output/ and are the benchmark outputs used by the report.
-output/sidecar/
+#
+# The sidecar holds raw per-request responses, which run to tens of thousands
+# of files, so it stays out of the repo. The small derived tables underneath it
+# are the exception: the figure scripts read them, so a clone cannot rebuild a
+# figure without them.
+output/sidecar/*
+!output/sidecar/jev_sidecar/
+!output/sidecar/gepa_jev_20260920/
+!output/sidecar/refresh_20260910_release_33/
+!output/sidecar/latency_sample/
+!output/sidecar/refresh_gemini_20260920/
+output/sidecar/refresh_gemini_20260920/*
+!output/sidecar/refresh_gemini_20260920/*.csv
 output/openai_batch/
 output/anthropic_batch/
 
@@ -92,3 +104,7 @@ quality_reports/
 
 # Cached sentence embeddings for the supervised baseline (regenerable, ~1 GB)
 output/embeddings/
+
+# Browser-automation scratch and preview screenshots (8.7 MB, regenerable)
+.playwright-cli/
+output/playwright/

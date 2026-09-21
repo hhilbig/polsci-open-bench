@@ -12,6 +12,26 @@ Two conventions hold throughout:
   reproduces it exactly.
 - **A change that moves a published number says so, with the number.**
 
+## 2026-09-21 API panel extended to Gemini, plus cost, latency and GEPA
+
+- Added `gemini-3.8-flash` and `gemini-3.1-flash-lite` to the September API
+  panel on the frozen 33-task, 100-item sample, through the same request builder
+  the OpenAI and DeepSeek runs used. Gemini thinks by default and those tokens
+  are billed while counting against `max_tokens`; left on, they truncated 10.4%
+  of responses mid-JSON. The scored run sets `reasoning_effort: "none"`, which is
+  the configuration the rest of the panel ran under.
+- Measured per-request latency for all 11 API models with one sequential,
+  unbatched sample of 99 stratified items each. The panel itself cannot supply
+  this, because its original models went through batch endpoints.
+- Put every cost figure on one basis: standard, non-batch, sequential rates.
+  Anthropic's estimate had been priced at batch rates, which made it look about
+  half as expensive as a like-for-like comparison supports. Cost evidence is now
+  labelled per model, from provider billing records down to token estimates.
+- Ran GEPA prompt optimisation on Jev over 30 tasks, optimising on rows the
+  benchmark never sampled and scoring on the untouched frozen items. Held-out
+  gain is +0.011 F1 with a paired interval containing zero, against +0.048 on the
+  rows used to select the prompts.
+
 ## 2026-09-19
 
 ### Added
