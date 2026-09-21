@@ -279,8 +279,11 @@ def build(source=SOURCE, output=OUTPUT, open_manifest=None, iterations=2000,
         provenance[name]['settings'] = public_settings(provenance[name]['settings'] or {})
         provenance[name]['settings']['structured_output'] = 'tool_use' if 'tools' in request['params'] else request['params'].get('response_format', {}).get('type', 'json_prompt')
     api_addition_cost = 0.0
-    if api_manifest:
-        additions = json.loads(Path(api_manifest).read_text()).get('models')
+    # One manifest per API run (Jev, Gemini); a single path is still accepted.
+    api_manifests = ([] if not api_manifest else
+                     [api_manifest] if isinstance(api_manifest, (str, Path)) else list(api_manifest))
+    for manifest_path in api_manifests:
+        additions = json.loads(Path(manifest_path).read_text()).get('models')
         if not isinstance(additions, list) or not additions:
             raise ValueError('API addition manifest requires a nonempty models list')
         for entry in additions:
@@ -323,6 +326,8 @@ def build(source=SOURCE, output=OUTPUT, open_manifest=None, iterations=2000,
             frame = pd.read_csv(entry['predictions'], dtype={'item_id':str}, low_memory=False)
             if set(frame.model) != {name}:
                 raise ValueError('Open model name mismatch')
+            if active_only:
+                frame = frame[frame.task.isin(task_defs)].reset_index(drop=True)
             frames.append(frame)
             provenance[name] = {k:entry[k] for k in ['model','revision','quantization','hardware','hardware_tier','settings','run_dates']}
             for field in ['model_id','compatibility_group','throughput_note','prediction_sha256',
@@ -369,7 +374,8 @@ def build(source=SOURCE, output=OUTPUT, open_manifest=None, iterations=2000,
                               prediction_sha256=sha(source/'comparison_predictions.csv'), taxonomy_sha256=sha(TAXONOMY),
                               generator_sha256=sha(__file__),
                               open_manifest_sha256=sha(open_manifest) if open_manifest else None,
-                              api_manifest_sha256=sha(api_manifest) if api_manifest else None,
+                              api_manifest_sha256=(None if not api_manifests else sha(api_manifests[0])
+                                  if len(api_manifests) == 1 else [sha(p) for p in api_manifests]),
                               historical_exclusions_sha256=(sha(exclusions_path)
                                   if historical_exclusions else None),
                               scorer_sha256=sha(Path(__file__).with_name('build_summary.py')),
@@ -401,7 +407,8 @@ if __name__ == '__main__':
     parser.add_argument('--source', type=Path, default=SOURCE)
     parser.add_argument('--output', type=Path, default=OUTPUT)
     parser.add_argument('--open-manifest', type=Path)
-    parser.add_argument('--api-manifest', type=Path)
+    parser.add_argument('--api-manifest', type=Path, action='append',
+                        help='Audited API addition manifest; repeat for several runs.')
     parser.add_argument('--active-only', action='store_true',
                         help='Score the panel on the active task set and the '
                              'support-only metric, matching the current benchmark.')

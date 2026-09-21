@@ -138,11 +138,24 @@ def ledger_cost_per_1k(paths=LEDGERS, items=LATENCY_ITEMS):
     return costs, caveats, peak
 
 
+def api_model_names(release=RELEASE):
+    models = pd.read_csv(Path(release) / "models.csv")
+    if "access" not in models:
+        return set(models.model)
+    return set(models.model[models.access == "api"])
+
+
 def panel_task_f1(release=RELEASE):
     """Per-task F1 for every model on the panel, Gemini included."""
-    frames = [pd.read_csv(Path(release) / "tasks.csv")[["model", "task", "headline_f1"]]]
+    # The release also carries the open-weight checkpoints; this sidecar is the
+    # API panel only. Once Gemini is in the release it is read from there, so it
+    # is scored under the release rule (malformed rows count as incorrect)
+    # rather than the Gemini run's own summary, which dropped them.
+    tasks = pd.read_csv(Path(release) / "tasks.csv")
+    tasks = tasks[tasks.model.isin(api_model_names(release))]
+    frames = [tasks[["model", "task", "headline_f1"]]]
     extra = Path(GEMINI) / "tasks.csv"
-    if extra.exists():
+    if extra.exists() and not tasks.model.str.startswith("gemini").any():
         frames.append(pd.read_csv(extra)[["model", "task", "headline_f1"]])
     combined = pd.concat(frames, ignore_index=True)
     return combined.pivot(index="task", columns="model", values="headline_f1").dropna()
@@ -289,7 +302,8 @@ def gemini_models(release=RELEASE, draws=20000, seed=20260919):
 
 def build(release=RELEASE, out=OUT, latency=LATENCY):
     models = pd.read_csv(Path(release) / "models.csv")
-    extra = gemini_models(release)
+    models = models[models.model.isin(api_model_names(release))].reset_index(drop=True)
+    extra = pd.DataFrame() if models.model.str.startswith("gemini").any() else gemini_models(release)
     if not extra.empty:
         models = pd.concat([models, extra], ignore_index=True)
     timing = pd.read_csv(latency) if Path(latency).exists() else None

@@ -20,10 +20,12 @@ Usage:
   python3 code/refresh_gemini.py plan
   python3 code/refresh_gemini.py run --model gemini-3.8-flash
   python3 code/refresh_gemini.py collect
+  python3 code/refresh_gemini.py manifest
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -306,9 +308,62 @@ def collect() -> None:
     print(f"\nwrote {ROOT}/predictions.csv and run_summary.csv")
 
 
+def manifest() -> None:
+    """Write the audited provenance manifest build_refresh_release.py reads.
+
+    The release builder takes one prediction file per API addition, so each
+    model's rows are split out of the combined predictions.csv. Coverage is
+    checked against the frozen panel before anything is written.
+    """
+    panel = json.loads(PANEL.read_text())
+    panel_sha = hashlib.sha256(json.dumps(panel, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+    report = json.loads((SOURCE / "comparison_report.json").read_text())
+    if report["panel_sha256"] != panel_sha:
+        raise ValueError("Frozen panel hash does not match the comparison report")
+    expected = {(r["task"], str(r["item"]["item_id"])) for r in panel["rows"]}
+    frame = pd.read_csv(ROOT / "predictions.csv", dtype={"item_id": str}, low_memory=False)
+    entries = []
+    for model, (request_id, _, _) in MODELS.items():
+        rows = frame[frame.model == model].sort_values(["task", "item_id"])
+        if (len(rows) != len(expected) or rows.duplicated(["task", "item_id"]).any()
+                or set(zip(rows.task, rows.item_id)) != expected):
+            raise ValueError(f"{model} predictions do not exactly cover the frozen panel")
+        if not rows.usage_present.all():
+            raise ValueError(f"{model} has responses without usage")
+        out = ROOT / model / "predictions.csv"
+        rows.to_csv(out, index=False)
+        saved = sorted((ROOT / model / "responses").glob("*/*.json"))
+        dates = sorted({json.loads(p.read_text()).get("captured", "")[:10] for p in saved} - {""})
+        entries.append({
+            "model": model,
+            "model_id": request_id,
+            "provider": "google",
+            "predictions": str(out),
+            "panel_sha256": panel_sha,
+            "prediction_sha256": hashlib.sha256(out.read_bytes()).hexdigest(),
+            "revision": model,
+            "hardware_tier": "api",
+            "settings": {"model": request_id, "max_tokens": 256, "reasoning_effort": "none",
+                         "structured_output": "json_object",
+                         "native_interface": "Gemini OpenAI-compatible chat completions"},
+            "run_dates": dates,
+            "input_tokens": int(rows.input_tokens.sum()),
+            "output_tokens": int(rows.output_tokens.sum()),
+            "cost_usd_upper": float(rows.cost_usd_upper.sum()),
+            "malformed": int(rows.parse_error.notna().sum()),
+            "truncated": int(rows.truncated.sum()),
+            "returned_models": sorted(set(rows.returned_model.dropna())),
+            "documented_versions": [model],
+            "cost_note": "Token counts times the published standard rate, not a provider invoice.",
+            "provenance_validated": True,
+        })
+    (ROOT / "api_manifest.json").write_text(json.dumps({"models": entries}, indent=2) + "\n")
+    print(json.dumps(entries, indent=2))
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("command", choices=["plan", "run", "collect"])
+    ap.add_argument("command", choices=["plan", "run", "collect", "manifest"])
     ap.add_argument("--model", choices=list(MODELS))
     args = ap.parse_args()
     if args.command == "plan":
@@ -317,6 +372,8 @@ def main() -> None:
         if not args.model:
             raise SystemExit("--model is required for run")
         run(args.model)
+    elif args.command == "manifest":
+        manifest()
     else:
         collect()
 
