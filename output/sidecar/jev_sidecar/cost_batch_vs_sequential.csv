@@ -1,0 +1,12 @@
+model,mean_task_f1,sequential,basis,provider,batch,has_batch_endpoint
+claude-opus-5,0.714381605724,,token_estimate,anthropic,,True
+claude-sonnet-5,0.696928669775,,token_estimate,anthropic,,True
+gpt-5.6-sol,0.692400162094,2.1323232323232326,provider_ledger,openai,1.0661616161616163,True
+gemini-3.8-flash,0.6921476629037092,0.5303273529411764,provider_invoice,google,0.2651636764705882,True
+gpt-5.6-terra,0.682707622943,1.0636363636363635,provider_ledger,openai,0.5318181818181817,True
+gemini-3.1-flash-lite,0.6815039653916306,0.13947647058823529,provider_invoice,google,0.06973823529411764,True
+gpt-6-astra,0.678588293787,4.436363636363636,provider_ledger,openai,2.218181818181818,True
+gpt-5.6-luna,0.669937930148,0.1626262626262626,provider_ledger,openai,0.0813131313131313,True
+deepseek-v4-flash,0.665093148484,0.202020202020202,provider_ledger,deepseek,,False
+deepseek-v4-pro,0.662608508697,0.8080808080808081,provider_ledger,deepseek,,False
+jev-1.13.0,0.6606504671,0.0360253270588235,provider_reported,openrouter,,False

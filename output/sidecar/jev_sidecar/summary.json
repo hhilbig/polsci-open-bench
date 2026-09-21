@@ -1,0 +1,79 @@
+{
+  "focus": "jev-1.13.0",
+  "panel": "refresh_20260910, 33 tasks x 100 items, corrected metric",
+  "items_per_model": 3400,
+  "jev_mean_task_f1": 0.6606504671,
+  "jev_cost_per_1k_items_usd": 0.036025327058823525,
+  "cost_basis_counts": {
+    "provider_ledger": 6,
+    "token_estimate": 2,
+    "provider_tokens": 2,
+    "provider_reported": 1
+  },
+  "cost_note": "cost_per_1k_items uses the best evidence per model: provider_ledger is the provider's own billing record for the sequential timed run (OpenAI's costs endpoint, DeepSeek's usage console), provider_reported is OpenRouter's per-request usage.cost summed over Jev's own run, and token_estimate is tokens times published price from the panel's batch run. The estimate does not err in one direction: against OpenAI's ledger it understates sequential cost by 1.2 to 2.3 times, while against DeepSeek's it overstates by roughly half, because the DeepSeek run fell on a weekend and was billed at off-peak rates. The two Anthropic models remain estimates: their cost data had not appeared in the Claude Console for the run day at the time of writing, and the Admin API that would return it programmatically is unavailable for individual accounts.",
+  "estimate_to_actual_ratio_by_model": {
+    "gpt-5.6-sol": 1.52,
+    "gemini-3.8-flash": 1.0,
+    "gpt-5.6-terra": 1.487,
+    "gemini-3.1-flash-lite": 1.0,
+    "gpt-6-astra": 1.214,
+    "gpt-5.6-luna": 2.273,
+    "deepseek-v4-flash": 0.415,
+    "deepseek-v4-pro": 0.567,
+    "jev-1.13.0": 1.0
+  },
+  "cost_caveats": {
+    "claude-opus-5": "batch-rate token estimate rescaled to standard rates by the published 50% batch discount; never invoiced",
+    "claude-sonnet-5": "batch-rate token estimate rescaled to standard rates by the published 50% batch discount; never invoiced",
+    "gemini-3.8-flash": "published price times provider-reported tokens; no invoice was read for this provider",
+    "gemini-3.1-flash-lite": "published price times provider-reported tokens; no invoice was read for this provider",
+    "deepseek-v4-flash": "The console reports whole cents, so a $0.01 figure carries +/- half a cent, i.e. +/- 50 percent.; The run landed on a weekend, and the console states weekends are billed at off-peak rates. These are discounted prices, not standard weekday rates.",
+    "deepseek-v4-pro": "The console reports whole cents, so a $0.01 figure carries +/- half a cent, i.e. +/- 50 percent.; The run landed on a weekend, and the console states weekends are billed at off-peak rates. These are discounted prices, not standard weekday rates."
+  },
+  "jev_rank_by_f1": 11,
+  "jev_is_cheapest": true,
+  "cheapest_alternative_above_jev_f1": [
+    {
+      "model": "deepseek-v4-flash",
+      "cost_per_1k_items": 0.10101010101010101,
+      "mean_task_f1": 0.665093148484
+    }
+  ],
+  "cost_performance_frontier": [
+    "claude-opus-5",
+    "claude-sonnet-5",
+    "gpt-5.6-sol",
+    "gemini-3.8-flash",
+    "gemini-3.1-flash-lite",
+    "deepseek-v4-flash",
+    "jev-1.13.0"
+  ],
+  "cost_performance_frontier_at_peak_rates": [
+    "claude-opus-5",
+    "claude-sonnet-5",
+    "gpt-5.6-sol",
+    "gemini-3.8-flash",
+    "gemini-3.1-flash-lite",
+    "jev-1.13.0"
+  ],
+  "peak_rate_note": "The DeepSeek run was billed at off-peak rates. DeepSeek's published off-peak price is exactly half its peak price in every token category, so the standard-rate figure is the invoiced one doubled. The peak window is 01:00-04:00 and 06:00-10:00 UTC on weekdays, so a rerun would have to be scheduled inside it to be billed at the higher rate.",
+  "dominated_on_cost_and_performance": [
+    "gpt-5.6-terra",
+    "gpt-6-astra",
+    "gpt-5.6-luna",
+    "deepseek-v4-pro"
+  ],
+  "three_way_frontier": [
+    "claude-opus-5",
+    "claude-sonnet-5",
+    "gpt-5.6-sol",
+    "gemini-3.8-flash",
+    "gpt-5.6-terra",
+    "gemini-3.1-flash-lite",
+    "deepseek-v4-flash",
+    "jev-1.13.0"
+  ],
+  "jev_median_latency_s": 0.2740268329944229,
+  "jev_is_fastest": true,
+  "speed_axis": "median per-request latency over 99 stratified panel items, every model called sequentially and unbatched. Measured separately from the panel because the eight original models ran through provider batch endpoints and no per-request latency was recorded for them. One sample, one machine, one moment: good for ordering and magnitude, not a reproducible benchmark."
+}

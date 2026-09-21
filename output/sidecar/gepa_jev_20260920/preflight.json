@@ -1,0 +1,26 @@
+{
+  "task": "gilardi_stance",
+  "budget": 150,
+  "record": {
+    "task": "gilardi_stance",
+    "status": "ok",
+    "selection_score_seed": 0.55,
+    "selection_score_best": 0.85,
+    "panel_f1_seed": 0.5220929771465402,
+    "panel_f1_seed_replicate": 0.5272575765934753,
+    "same_prompt_delta": 0.0051645994469350365,
+    "panel_f1_gepa": 0.7166611051972037,
+    "panel_f1_delta": 0.19456812805066348,
+    "candidates": 4,
+    "usd": 0.1044,
+    "prompt_chars_seed": 2627,
+    "prompt_chars_gepa": 3094,
+    "best_prompt": "You are annotating tweets for stance toward U.S. Section 230 in the context of content moderation.\n\nSection 230 is a U.S. law that generally protects online platforms from legal liability for user-generated content. It also allows platforms to moderate content under their own policies. The task is to identify the tweet author\u2019s expressed stance toward Section 230 itself\u2014not merely their stance toward censorship, Big Tech, free speech, particular platforms, or political content moderation.\n\nInput format:\n- You will receive a field such as `text_to_code` containing one tweet, usually introduced by `Tweet:`.\n\nOutput format:\n- Return JSON only.\n- Use exactly one field, `stance`.\n- Its value must be exactly one of: `\"pro\"`, `\"contra\"`, or `\"neutral\"`.\n- Do not include explanations, Markdown, or any other fields.\n\nLabel definitions:\n\n1. `\"pro\"` \u2014 The tweet clearly supports retaining, defending, preserving, protecting, or maintaining Section 230 or its liability protections.\n   Examples of pro signals:\n   - Explicitly says Section 230 should remain, be protected, or not be repealed.\n   - Defends Section 230 immunity/liability protections.\n   - Clearly argues against ending or weakening Section 230.\n\n2. `\"contra\"` \u2014 The tweet clearly opposes Section 230, calls for its repeal, abolition, removal, reform, limitation, or ending of its immunity/protections.\n   Examples of contra signals:\n   - \u201cSection 230 must be repealed.\u201d\n   - \u201cEnd Section 230 immunity.\u201d\n   - Calls to strip platforms of Section 230 protections because of alleged censorship, bias, or other conduct.\n   - Explicit support for revoking, weakening, or changing Section 230 to hold platforms liable.\n\n3. `\"neutral\"` \u2014 The tweet does not clearly express support for or opposition to Section 230.\n   Use neutral for:\n   - Purely factual, descriptive, reporting, or informational references to Section 230.\n   - Questions that do not clearly endorse one side.\n   - Tweets about censorship, free speech, platform moderation, political bias, or Big Tech that do not take a clear position on Section 230.\n   - Ambiguous, sarcastic, rhetorical, hypothetical, or conditional statements where the author\u2019s own stance toward Section 230 is not explicit.\n   - Statements predicting consequences of repeal/abolition without clearly saying that repeal should or should not happen.\n\nImportant disambiguation:\n- Do not infer a pro stance merely because a tweet says that abolishing Section 230 would cause more censorship or other undesirable consequences. For example, \u201cIf Section 230 is abolished, Twitter will have to censor your lies. Is that what you want?\u201d is `\"neutral\"` because it is a conditional rhetorical statement and does not explicitly advocate preserving Section 230.\n- Likewise, criticism of Twitter, Facebook, \u201cBig Tech,\u201d or content moderation is not automatically contra Section 230. Assign `\"contra\"` only when the tweet clearly targets Section 230 or its protections.\n- Prioritize the author\u2019s explicit expressed position. When the tweet is ambiguous, choose `\"neutral\"`.\n\nReturn only the required JSON object."
+  },
+  "jev_calls": 1681,
+  "jev_usd": 0.07134909600000001,
+  "reflection_calls": 3,
+  "reflection_usd": 0.033021999999999996,
+  "usable_tasks": 30,
+  "projected_full_run_usd": 3.1311328800000005
+}

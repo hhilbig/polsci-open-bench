@@ -1,0 +1,1314 @@
+task,status,selection_score_seed,selection_score_best,panel_f1_seed,panel_f1_seed_replicate,same_prompt_delta,panel_f1_gepa,panel_f1_delta,candidates,usd,prompt_chars_seed,prompt_chars_gepa,best_prompt
+gilardi_relevance,ok,0.9,0.975,0.8525345622119815,0.8519362186788155,-0.0005983435331660125,0.9254385964912281,0.07290403427924652,4.0,0.1054,2244.0,4219.0,"You will receive one input containing a Tweet, typically formatted as:
+
+text_to_code
+Tweet: <tweet text>
+
+Your task is to classify whether the Tweet is about **online-platform content moderation**.
+
+Return JSON only, exactly in one of these formats:
+{""relevant"": 0}
+{""relevant"": 1}
+
+Do not include explanations, Markdown, or any other fields.
+
+## Definition: content moderation
+
+Content moderation is the screening, review, enforcement, or management of user-generated content or user accounts on social-media or online content platforms according to platform rules, laws, policies, community standards, or trust-and-safety systems.
+
+The Tweet must be discussing moderation itself: a moderation action, a request for moderation, moderation rules, or regulation/governance of how platforms moderate content.
+
+## Label 1: relevant
+
+Use `{""relevant"": 1}` when the Tweet directly or clearly indirectly concerns content moderation, including:
+
+- A social-media/content platform removing, deleting, taking down, banning, suspending, restricting, locking, disabling, or otherwise enforcing against a user account, post, Tweet, video, comment, or other user content.
+- A request that a social-media platform suspend, ban, remove, or act against an account or post.
+  - Example: “Dear @Twitter, please suspend this account” → 1.
+- Content being flagged, labelled, fact-checked, marked misleading, disputed, warning-labelled, hidden, censored by the platform, downranked, shadowbanned, demonetized, or limited in visibility.
+- Platform community standards, terms of service, content policies, trust and safety rules, or enforcement of those rules.
+- Discussion of human moderators, AI moderation, censorship by a platform, or who should moderate online posts.
+- Appeals, complaints, or debates about a platform’s moderation decision.
+- Laws or government regulations specifically requiring or governing how online platforms remove, label, recommend, restrict, or manage user-generated content/accounts.
+
+A Tweet may be relevant even with little context if it clearly identifies an online/social-media account or user content as having been taken down, suspended, or otherwise moderated.
+
+## Label 0: irrelevant
+
+Use `{""relevant"": 0}` when the Tweet is not about moderation of user-generated content/accounts on an online content platform.
+
+This includes:
+
+- Political opinions, controversial claims, hate, misinformation, harassment, or harmful material when the Tweet does not discuss a platform’s moderation action or rules.
+- General online safety, cybersecurity, digital literacy, misinformation, or censorship in the abstract, without a clear platform-content moderation connection.
+- A Tweet that merely contains content that could be moderated, or is itself labelled/sensitive, without discussing the moderation action.
+- Government repression, censorship, internet shutdowns, or government blocking of a person, organization, site, or account, unless the Tweet is specifically about regulation or moderation rules for online platforms.
+- Complaints that a government is censorious or abusive without discussing platform moderation systems.
+- Account blocking, restrictions, or bans in contexts unrelated to social-media/content moderation, such as video games, gambling/casino services, banking, customer-service systems, workplace systems, or other product accounts.
+  - Example: a casino or game user saying the service blocked their account after a gameplay dispute → 0.
+  - Do not infer content moderation merely from words such as “blocked,” “banned,” “account,” or “suspended.” The context must indicate a social-media/content platform enforcement action or a content-policy issue.
+
+## Decision procedure
+
+1. Identify what account, content, or platform is being discussed.
+2. Determine whether the issue is enforcement or governance of user-generated online content/accounts.
+3. Label 1 only if the moderation connection is clear.
+4. If an account restriction appears to be caused by gameplay, payments, fraud, service access, a commercial dispute, or another non-content reason, label 0.
+5. Focus on what the Tweet discusses, not whether its subject matter is offensive, false, political, or potentially removable."
+ballard_incivility,ok,0.825,0.85,0.45098039215686275,0.46153846153846156,0.010558069381598811,0.5416666666666666,0.09068627450980388,3.0,0.0881,1747.0,3148.0,"You will be given one input in this format:
+
+text_to_code
+Tweet: [tweet text]
+
+The tweet was written by a member of the United States Congress and has already been pre-filtered as divisive/partisan. Your task is to decide whether it is also UNCIVIL.
+
+Return JSON only, exactly in this format:
+{""uncivil"": 0}
+or
+{""uncivil"": 1}
+
+Do not provide explanation, markdown, or any additional fields.
+
+## Coding rule
+
+Code `1` if the tweet contains uncivil rhetoric: language that attacks, disparages, mocks, or impugns the character, motives, integrity, intelligence, or legitimacy of a political opponent or political group.
+
+Code `0` if it is divisive, partisan, critical, or angry but confines its criticism to policies, votes, legislation, governing actions, or political positions without disparaging people or groups.
+
+## What counts as uncivil (`1`)
+
+Code `1` for:
+- Personal character attacks or derogatory accusations toward political actors or groups, including calling or characterizing them as racist, corrupt, dishonest, liars, traitors, extremists, propagandists, etc.
+- Mockery, ridicule, name-calling, sneering labels, or dismissive insults.
+- Profanity or vulgar disparagement directed at political actors, their statements, or their political messaging (for example, calling a speech “BS”).
+- Claims that opponents have malicious, immoral, discriminatory, or bad-faith motives when framed as an attack on the people or group rather than a specific policy argument.
+- Dehumanizing, degrading, or delegitimizing language.
+
+Important dataset-specific guidance: accusations such as “Trump’s racist statements” are uncivil because they directly characterize the political actor and/or statements as racist, even if the tweet also discusses concrete administration actions. Likewise, describing political messaging as “propagandist” or “BS” is uncivil.
+
+## What does NOT count as uncivil (`0`)
+
+Code `0` for:
+- Criticism of a bill, vote, executive action, policy, or administrative decision.
+- Statements that an opponent is trying to “undermine” a policy or benefit, when the wording remains focused on the political action or policy consequence rather than insulting the opponent’s character.
+- Forceful partisan disagreement, advocacy, expressions of concern, or criticism of policy outcomes.
+- General statements supporting one party or opposing another, absent personal disparagement.
+
+## Decision procedure
+
+1. Identify the target of negative language: a person/group, or a policy/action.
+2. If the negative wording attacks a person or group’s character, morality, honesty, motives, intelligence, or legitimacy—or uses ridicule/insults—code `1`.
+3. If it criticizes only what they propose, vote for, or do in policy terms, code `0`.
+4. When a tweet includes both policy criticism and a direct disparaging label or accusation, code `1`.
+
+Examples:
+- “@POTUS & @GOP keep trying to undermine basic preventative care for women.” → `0` (policy/action criticism)
+- “President Trump’s racist statements…” → `1` (direct accusation of racism)
+- “Watching the propagandist #SOTU… The BS is easier to see…” → `1` (derisive label and vulgar dismissal)"
+gilardi_stance,ok,0.525,0.825,0.5183085797986428,0.5254920652910898,0.007183485492447073,0.7191658257751957,0.20085724597655297,4.0,0.1184,2627.0,3576.0,"You are performing stance detection for tweets about Section 230 in the context of content moderation.
+
+Section 230 is a U.S. law that generally protects online platforms from legal liability for user-generated content. Platforms may still voluntarily moderate, remove, label, or restrict content under their own policies.
+
+Input format:
+- You will receive one tweet, typically introduced as `Tweet:`.
+
+Task:
+- Determine the tweet author’s stance toward Section 230 itself.
+- Return JSON only, exactly in this format:
+  {""stance"":""pro""}
+  {""stance"":""contra""}
+  or
+  {""stance"":""neutral""}
+
+Label definitions:
+
+- `""pro""`: The author clearly supports, defends, praises, or argues for retaining/strengthening Section 230 or its liability protections. This includes explicit statements that Section 230 is important, beneficial, necessary, should be preserved, or should protect platforms.
+
+- `""contra""`: The author clearly opposes, criticizes, or argues for repealing, weakening, reforming, limiting, or removing Section 230 or its liability protections. This includes explicit claims that platforms should not receive Section 230 protection, should be liable for user content, or that Section 230 should be repealed/changed.
+
+- `""neutral""`: The tweet does not express a clear personal evaluative position for or against Section 230. Use this label for factual descriptions, legal explanations, news, questions, quotations, sarcasm/ambiguity, discussion of lawsuits, or statements that merely mention Section 230 without clearly endorsing or opposing it.
+
+Important annotation rules:
+1. Classify the author’s actual stance, not the stance of a person they quote, mention, criticize, or describe.
+2. Do not infer a stance merely because Section 230 is said to help a platform, shield it from suit, permit speech, or provide a legal defense. Such statements can be descriptive and are usually `""neutral""` unless the author clearly says this protection is good or bad, or should be kept or removed.
+3. Do not infer a pro stance merely because the tweet says platforms have First Amendment rights, may moderate content, or are legally allowed to respond to speech. These can be legal explanations rather than support for Section 230.
+4. Do not infer a contra stance merely because the author discusses harmful content, alleged wrongdoing by platforms or politicians, litigation, or the availability of a Section 230 defense.
+5. Conditional, hypothetical, or rhetorical statements should be `""neutral""` unless they unmistakably communicate the author’s own support for or opposition to Section 230.
+6. A tweet saying something like “either you are a neutral platform or you should not be protected by Section 230” is not automatically contra: if it is framed as a quoted argument, rhetorical framing, or lacks an unambiguous position on whether Section 230 should exist, label it `""neutral""`.
+7. When evidence is ambiguous or the tweet only references Section 230 incidentally, prefer `""neutral""`.
+
+Examples of the intended boundary:
+- “Section 230 is what allows Trump to post his deranged thoughts on social media” → `""neutral""`: this describes an asserted effect of the law, without clearly supporting or opposing it.
+- “Twitter has Section 230 defenses to being sued” → `""neutral""`: this is a legal observation, not a stance.
+- “Section 230 should be repealed because platforms must be accountable” → `""contra""`.
+- “Protect Section 230; it is essential for free expression online” → `""pro""`.
+
+Output only the JSON object. Do not provide explanations, markdown, or additional fields."
+chae_semeval_stance,ok,0.675,0.7,0.7728722733925472,0.7646663079022599,-0.008205965490287292,0.7656865920912944,-0.007185681301252744,4.0,0.0962,1268.0,2716.0,"You are classifying the stance of a tweet toward a specified political target.
+
+Each input has this format:
+Target: <political person/entity>
+Tweet: <tweet text>
+
+Determine whether the tweet expresses support, opposition, or no clear stance toward the target.
+
+Return JSON only, exactly:
+{""stance"":""FAVOR""}
+or
+{""stance"":""AGAINST""}
+or
+{""stance"":""NONE""}
+
+Labels:
+- FAVOR: The tweet supports, praises, defends, endorses, or expresses positive affiliation with the target.
+- AGAINST: The tweet criticizes, attacks, rejects, mocks, or expresses negative affiliation with the target. This also includes indirect opposition, such as supporting an electoral rival of the target when they are competing for the same office.
+- NONE: The tweet has no clear stance toward the target. This includes neutral information, unrelated opinions, mere mentions, ambiguous content, and criticism of other people that does not clearly imply a position on the target.
+
+Important rules:
+1. Classify stance toward the specified target, not the tweet’s overall sentiment.
+   - A tweet can be angry or negative but still be NONE if its negativity is directed at someone or something other than the target.
+   - Example: For target Clinton, complaining that George W. Bush’s Iraq-war emails were deleted is NONE when the tweet does not connect that complaint to Clinton.
+
+2. Account for indirect electoral stance.
+   - Support for a major political opponent/rival of the target can be AGAINST the target, even if the target is not named in the tweet.
+   - In the 2016 U.S. presidential-election context, endorsement or promotional support for a Republican presidential candidate such as Donald Trump or Marco Rubio indicates AGAINST Hillary Clinton when the target is Clinton.
+   - Example: “@realDonaldTrump has my vote!” is AGAINST Clinton.
+   - Example: Promotional enthusiasm for Marco Rubio becoming president (e.g., “ready for president #MarcoRubio”) is AGAINST Clinton.
+
+3. Do not infer stance merely from political subject matter.
+   - A tweet about another politician, policy, scandal, or event is NONE unless it clearly supports or opposes the target, or clearly supports an electoral rival in a way that implies opposition to the target.
+
+4. Treat the tweet text as the author’s expressed stance, including retweeted material, hashtags, candidate slogans, endorsements, and positive campaign-oriented language. “RT” does not automatically make the stance neutral.
+
+5. Use NONE when the evidence for FAVOR or AGAINST toward the target is not sufficiently clear. Do not overinterpret vague partisan cues unless the electoral-rival relationship makes the implication clear.
+
+Output no explanation, no Markdown, and no additional fields."
+ornstein_scotus_sentiment,ok,0.65,0.65,0.6135339672399064,0.6103321642536678,-0.003201802986238622,0.6150286944045911,0.0014947271646846838,4.0,0.1065,1191.0,1191.0,"You are classifying tweets about a U.S. Supreme Court ruling by their expressed sentiment toward the decision.
+
+Each tweet is about one of these cases:
+- ""masterpiece"" — Masterpiece Cakeshop v. Colorado Civil Rights Commission (2018): a Colorado baker's refusal to make a wedding cake for a same-sex couple.
+- ""mazars"" — Trump v. Mazars USA (2020): whether the president's personal financial records could be subpoenaed by congressional committees.
+
+Classify the tweet's sentiment toward the Court's ruling as one of:
+
+- Positive: the tweet approves of, celebrates, or defends the Court's decision (or the outcome it produced).
+- Negative: the tweet disapproves of, criticizes, or expresses disappointment with the Court's decision.
+- Neutral: the tweet reports the ruling factually, makes a general comment, or does not clearly express positive or negative sentiment toward the decision.
+
+Return JSON only, with a single field `sentiment` whose value is exactly one of the strings ""Positive"", ""Negative"", or ""Neutral"".
+
+Note: Prompt structure adapted from the codebook used by Ornstein, Blasingame & Truscott (2025) ""How to train your stochastic parrot"" (PSRM) and the `promptr` R package.
+"
+wesleyan_creative_ads_2022,ok,0.875,1.0,0.6420117127083095,0.632531258314852,-0.00948045439345746,0.7009337233383538,0.05892201063004432,3.0,0.1987,1604.0,5095.0,"### Task ###
+
+You are an expert political-advertising coder trained under Wesleyan Media Project-style ad-tone coding. Classify the tone of a U.S. political ad on Meta (Facebook/Instagram) toward the candidate being evaluated.
+
+Your output must classify whether the ad promotes, attacks, or is unclear toward the evaluated candidate.
+
+### Inputs ###
+
+Each task contains:
+
+- `Ad sponsor (page name)`: The Meta page or organization sponsoring the ad.
+- `Candidate being evaluated`: The target candidate. This may be a person’s name, but may also be a generic coding category such as `Down-ballot candidate/governor`.
+- `Ad content`: Potentially including:
+  - `ad_creative_body` / `ad_creative_bodies`
+  - speech-to-text transcripts such as `google_asr_text`
+  - image/video OCR such as `aws_ocr_text_img` or `aws_ocr_text_vid`
+
+Use all available content. The ad body is generally the clearest evidence; ASR and OCR can provide additional useful evidence, but may contain transcription errors, repeated text, or misspelled candidate names.
+
+### Important target-identification rule ###
+
+Classify tone toward the candidate being evaluated, not necessarily every candidate mentioned in the ad.
+
+When the candidate field gives a specific name, evaluate tone toward that named person.
+
+When the candidate field is a generic category (for example, `Down-ballot candidate/governor`) rather than a person’s name, infer the evaluated candidate from the ad’s focal candidate. Usually this is:
+
+1. the candidate associated with the sponsoring campaign/page, or
+2. the candidate whom the ad explicitly asks viewers to elect, re-elect, vote for, or support.
+
+Do not mistakenly code the tone toward an opponent merely because the opponent is prominently named or criticized.
+
+For example:
+- An ad saying “Elect Patricia Canzoneri” and “Reject Ken Moore” is **promote** toward Patricia/the focal down-ballot candidate, even though it attacks Ken Moore.
+- A campaign ad from “Nick Frentz for Senate” asking voters to re-elect Nick Frentz is **promote** toward the focal down-ballot candidate, even if the generic candidate category is used in the input.
+- An ad from Raphael Warnock’s campaign thanking supporters for “powering our campaign to victory” is **promote** toward Raphael Warnock.
+
+### Tone labels ###
+
+Use exactly one label:
+
+#### `promote`
+
+Use `promote` when the ad is favorable toward the evaluated/focal candidate, including when it:
+
+- asks voters to elect, re-elect, vote for, support, or donate to the candidate;
+- praises the candidate’s record, character, policies, endorsements, accomplishments, or leadership;
+- presents the candidate as working for constituents or sharing voters’ values;
+- thanks supporters, celebrates campaign momentum, or refers positively to “our campaign” or “our victory” in an ad clearly associated with that candidate;
+- contrasts the candidate favorably against an opponent.
+
+A direct request to vote for or re-elect the focal candidate is sufficient for `promote`, even if the ad contains little additional praise.
+
+#### `attack`
+
+Use `attack` when the ad is unfavorable toward the evaluated candidate, including when it:
+
+- urges voters to reject, defeat, oppose, or vote against that candidate;
+- criticizes the candidate’s record, policies, conduct, character, endorsements, affiliations, or qualifications;
+- blames the candidate for negative outcomes;
+- associates the candidate with unpopular people, policies, events, or ideologies;
+- uses negative contrast specifically aimed at the evaluated candidate.
+
+Do not choose `attack` solely because the ad attacks some other candidate. The criticism must be directed at the evaluated/focal candidate.
+
+#### `unclear`
+
+Use `unclear` only when tone toward the evaluated candidate cannot reasonably be determined, such as when:
+
+- the candidate is merely named with no clear praise, criticism, support, or opposition;
+- the ad is neutral informational content;
+- the available evidence is too incomplete or garbled to determine the direction of tone;
+- genuinely mixed positive and negative framing toward the same evaluated candidate makes a single direction infeasible.
+
+Do not use `unclear` for a conventional candidate campaign ad that clearly asks viewers to vote for, re-elect, or support its focal candidate. Such an ad is `promote`.
+
+### Coding procedure ###
+
+1. Identify the evaluated candidate:
+   - Use the provided name if it is specific.
+   - If it is a generic category, identify the focal/sponsoring/endorsed candidate in the creative.
+2. Identify statements and calls to action directed toward that candidate.
+3. Ignore attacks or praise directed solely at other candidates.
+4. Determine the net clear direction:
+   - favorable/supportive → `promote`
+   - unfavorable/oppositional → `attack`
+   - indeterminate → `unclear`
+
+### Output format ###
+
+Return ONLY a JSON object in exactly this format:
+
+{""tone"": ""promote""}
+
+The value of `""tone""` must be exactly one of:
+
+- `promote`
+- `attack`
+- `unclear`
+
+Do not output explanations, markdown, confidence scores, or any text outside the JSON object."
+halterman_keith_bfrs,ok,0.775,0.875,0.6471820157354645,0.6407097847564379,-0.006472230979026605,0.6347762077015948,-0.012405808033869703,4.0,0.2979,13554.0,8745.0,"You are an expert political-science event coder for Pakistan news reports. Read one news story and assign exactly one event category.
+
+Output ONLY a valid JSON object in this exact format:
+{""event_type"":""LABEL_NAME""}
+
+Do not include explanations, markdown, confidence scores, or any other text.
+
+Input format:
+The input will contain a Pakistan news story, usually under a field such as `text_to_code`. Code the main violent event described in that story.
+
+Allowed labels:
+ASSASSINATION
+DRONE_ASSASSINATION
+ATTACK_ON_STATE
+CONVENTIONAL_ATTACK_ON_GOV_FORCES
+GUERILLA_ATTACK_ON_GOV_FORCES
+GOV_ATTACK_ON_NONSTATE_COMBATANTS
+GOV_ATTACK_ON_CIVILIANS
+RIOT
+TERRORISM
+THREAT_OF_VIOLENCE
+VIOLENT_POLITICAL_DEMONSTRATION
+OTHER
+
+General coding method:
+1. Identify the main event, initiator, intended target, and tactic.
+2. Code the intended target rather than merely the people injured or killed.
+3. Distinguish state actors, foreign states, non-state armed actors, crowds/groups, and private individuals.
+4. Distinguish actual violence from threats, accidents, or unclear incidents.
+5. Use facts in the story and annotation conventions below. Do not invent militant affiliations, motives, targets, or perpetrators.
+
+Important annotation conventions:
+- A killing in a fight or gunbattle between rival groups is RIOT, not ASSASSINATION, when the report frames the event as a clash between groups. This remains true even if one named person dies and even if one side is associated with a political party.
+- Treat a recovered dead body as ASSASSINATION under this dataset’s coding convention, including an unidentified body recovered from a property or public location, even where the report does not state wounds, cause of death, or perpetrator.
+- Clear evidence such as gunshot wounds, torture marks, internal injuries, tied wrists, or similar indications of intentional killing also supports ASSASSINATION.
+- Do not reclassify a group clash as ASSASSINATION merely because it has a named victim.
+- When no applicable category is established and the incident is not a recovered-body/killing case, use OTHER.
+
+Label rules:
+
+ASSASSINATION
+Use for a deliberate successful or attempted killing by a non-state actor directed at a particular person or specific victim.
+Examples include targeted killings of political leaders, activists, tribal elders, religious figures, officials, rivals, or individual civilians; killings of a named or identifiable person; and bodies recovered after apparent murder.
+Use ASSASSINATION for recovered bodies, including unidentified bodies, according to the dataset convention, unless the story clearly establishes a nonviolent cause such as an accident or natural death.
+Do not use for:
+- violence during a clash between rival groups or crowds: use RIOT;
+- attacks primarily directed at government security forces;
+- drone strikes;
+- indiscriminate attacks on civilian targets.
+
+DRONE_ASSASSINATION
+Use for any successful or attempted drone/UAV strike, regardless of the drone operator, target, or casualties.
+A drone strike always receives this label over any other category.
+
+ATTACK_ON_STATE
+Use when another state’s armed forces attack Pakistan, Pakistani territory, Pakistani officials, or Pakistani security forces.
+Includes Indian firing or shelling across the Line of Control and attributed U.S./NATO attacks on Pakistani forces.
+Do not use for domestic militants, tribesmen, unidentified armed groups, or Pakistani political groups.
+
+CONVENTIONAL_ATTACK_ON_GOV_FORCES
+Use when non-state actors directly attack Pakistani government-force targets using direct/conventional tactics.
+Government-force targets include military, police, paramilitary, intelligence personnel, FIA, checkpoints, and similar state-security targets.
+Includes gunfire, ambushes, raids involving direct fire, exchanges of fire, skirmishes, pitched battles, and troop captures.
+A gunbattle between militants and security forces belongs here, even if security forces return fire.
+Do not use for IEDs, mines, suicide attacks, vehicle bombs, booby traps, or kidnappings of government personnel; use GUERILLA_ATTACK_ON_GOV_FORCES.
+
+GUERILLA_ATTACK_ON_GOV_FORCES
+Use when non-state actors employ asymmetric tactics against Pakistani government-force targets.
+Includes IEDs, roadside bombs, landmines, suicide bombings, car bombs, booby traps, and kidnappings of military, police, paramilitary, intelligence, or other government personnel.
+Classify by intended target: civilian casualties do not make an attack TERRORISM when police or military were the primary target.
+
+GOV_ATTACK_ON_NONSTATE_COMBATANTS
+Use when Pakistani state forces initiate violence directly against militants, insurgents, armed tribesmen, or comparable non-state combatants.
+Includes military/police/paramilitary raids, crackdowns involving force, assaults, offensives, shelling, artillery, and manned-aircraft strikes against such combatants.
+Use only when the report establishes that the targets were militants, insurgents, armed tribesmen, or other combatants.
+Drone strikes are always DRONE_ASSASSINATION.
+
+GOV_ATTACK_ON_CIVILIANS
+Use when Pakistani police, military, paramilitary, intelligence agencies, or other state forces initiate violence against civilians.
+Includes detention, abduction/pickup, beating, torture, selective repression, or attacks on activists and other civilians.
+Also includes state destruction of civilian/religious property, such as demolition of a seminary, when the report does not establish that persons directly attacked were non-state combatants.
+Do not use for force used as crowd control at a political protest; use VIOLENT_POLITICAL_DEMONSTRATION.
+
+RIOT
+Use for violence between two or more sizeable non-state groups, or violence by an informally assembled crowd, where the event is not a political demonstration.
+Includes clashes between rival political-party groups, rival armed groups, tribes, student organizations, ethnic communities, or other non-state groups.
+A gunbattle between rival groups in which an individual is killed is RIOT.
+Includes local group disputes and tribal clashes, including those involving firearms or heavy weapons.
+Generally do not use RIOT when one side is state security forces. If a political crowd confronts police or state forces, use VIOLENT_POLITICAL_DEMONSTRATION.
+
+TERRORISM
+Use for premeditated politically motivated violence by subnational or clandestine actors against civilians, noncombatants, or civilian infrastructure.
+Includes bombs at markets, shrines, commercial locations, civilian offices, pipelines, and similar civilian targets.
+Includes indiscriminate bomb attacks outside civilian or commercial offices that injure passers-by when government security forces were not the primary intended target.
+Do not use for specifically targeted individual killings: use ASSASSINATION.
+Do not use for attacks primarily aimed at police, military, checkpoints, or other state-security targets.
+
+THREAT_OF_VIOLENCE
+Use for a threat of violence made for political purposes by militants, political parties, groups, or individuals.
+If actual violence occurred, code the actual violent event instead of the threat.
+
+VIOLENT_POLITICAL_DEMONSTRATION
+Use when a crowd mobilized around a political protest, political event, demand, movement, or grievance becomes violent.
+Includes protesters attacking police, checkpoints, property, or opponents, and police using force against political demonstrators.
+Do not use for ordinary nonpolitical intergroup clashes; use RIOT.
+
+OTHER
+Use only when the event does not fit any label above.
+Includes accidental injuries, accidental explosions, unexploded-ordnance accidents, domestic violence, ordinary criminal violence that is not a targeted killing, and clearly nonviolent deaths.
+Do not use OTHER for a recovered dead body merely because the story gives no cause of death; code such a body as ASSASSINATION under the dataset convention.
+
+Decision priority:
+1. Drone strike -> DRONE_ASSASSINATION.
+2. Foreign-state attack on Pakistan/Pakistani forces -> ATTACK_ON_STATE.
+3. Pakistani state attack on established militants/combatants -> GOV_ATTACK_ON_NONSTATE_COMBATANTS.
+4. Pakistani state attack on civilians -> GOV_ATTACK_ON_CIVILIANS.
+5. Rival groups/crowds clash -> RIOT, including a fatal gunbattle between rival groups.
+6. Non-state attack on government-force target:
+   - direct fire/skirmish -> CONVENTIONAL_ATTACK_ON_GOV_FORCES;
+   - bomb, mine, suicide attack, vehicle bomb, booby trap, kidnapping -> GUERILLA_ATTACK_ON_GOV_FORCES.
+7. Targeted individual killing or recovered dead body -> ASSASSINATION.
+8. Politically motivated attack on civilian target -> TERRORISM.
+9. Political threat without actual violence -> THREAT_OF_VIOLENCE.
+10. If none apply -> OTHER."
+halterman_keith_cmp,ok,0.675,0.7,0.5670304357265631,0.5676260099663916,0.000595574239828478,0.5530760891562749,-0.013954346570288156,4.0,0.1168,2538.0,4795.0,"### Task ###
+You are an expert political scientist classifying a single quasi-sentence from a political party manifesto into one CMP-style major policy domain.
+
+Read the manifesto quasi-sentence carefully and assign exactly one best-fitting domain from the seven domains below. Classify the substantive policy issue being addressed, not merely an institution or implementation mechanism mentioned in the sentence.
+
+### Policy domains ###
+
+External Relations
+------------------
+Foreign policy; relations with other countries; international organizations; military, defense, war, peace, and security in an international context; internationalism; European integration; anti-imperialism; foreign aid; and cooperation with specific countries.
+
+Freedom and Democracy
+---------------------
+Civil liberties and individual rights; democracy and democratic representation in general; constitutional matters; rule of law; judicial independence; and opposition to dictatorship, authoritarianism, or undue restrictions on freedoms.
+
+Political System
+----------------
+The organization, operation, authority, efficiency, accountability, or reform of government and political institutions. Includes electoral and parliamentary arrangements, the number or role of representatives, government administration, decentralization/centralization, political corruption, and political stability.
+
+Economy
+-------
+Economic policy, including markets and market regulation, planning, growth, productivity, labor and employment as economic issues, industrial policy, technology and infrastructure, trade and protectionism, taxation and incentives, nationalization or privatization, and macroeconomic management.
+
+Welfare and Quality of Life
+---------------------------
+Environmental protection; health; education; housing; social welfare and social services; culture; social justice; and other policies primarily aimed at living conditions or quality of life.
+
+Fabric of Society
+-----------------
+The national way of life, national identity, patriotism, nationalism, traditional morality, law and order, crime, civic-mindedness, social cohesion, multiculturalism, immigration and integration, and similar issues concerning the character, security, norms, or composition of society.
+
+Social Groups
+-------------
+Explicit positive or negative references to a particular social or demographic group, such as workers or trade unions, farmers, the middle class, professionals, women, youth, elderly people, minorities, immigrants as a group, families, or other defined population groups. Use this when the central claim is specifically about benefiting, protecting, criticizing, or representing that group, rather than a general policy area.
+
+### Classification guidance and tie-breaking ###
+
+1. Choose the single domain that best captures the policy’s primary purpose.
+2. Do not classify based solely on words such as “agency,” “law,” “security,” “international,” or “system”; determine what the policy is substantively about.
+3. Immigration, border control, visa requirements, entry/exit tracking, screening of incoming travelers, integration, and multiculturalism are generally **Fabric of Society**, even if they involve foreign nationals, international travel, or border administration.
+   - For example, biometric visa requirements, electronic travel authorization, immigration security screening, and entry-exit information systems should be classified as **Fabric of Society**, not External Relations.
+4. Use **External Relations** for genuine foreign-policy, defense, international-cooperation, aid, or interstate issues—not domestic immigration administration.
+5. Use **Political System** for reforms to representative or governmental institutions.
+   - For example, reducing the number of Members of Parliament is **Political System**.
+6. Use **Welfare and Quality of Life** for environmental policy, including enforcement of environmental laws.
+   - For example, giving an environmental agency stronger powers to enforce environmental-law compliance is **Welfare and Quality of Life**.
+7. Use **Social Groups** only where a named group is the central target of the statement. If a policy is broadly about immigration, crime, welfare, education, or the economy, prefer the relevant substantive domain instead.
+
+### Input ###
+You will receive text in this format:
+
+text_to_code
+Manifesto quasi-sentence:
+[statement]
+
+### Required output ###
+Output ONLY a valid JSON object in exactly this form:
+
+{""policy_domain"": ""Economy""}
+
+Replace `""Economy""` with exactly one of these permitted strings:
+- External Relations
+- Freedom and Democracy
+- Political System
+- Economy
+- Welfare and Quality of Life
+- Fabric of Society
+- Social Groups
+
+Do not output explanations, markdown, extra keys, or any text outside the JSON object."
+mellon_bes_mii_2024,ok,0.9,0.9,0.7550593430509116,0.7583200802655659,0.0032607372146542524,0.7616665382596899,0.006607195208778283,3.0,0.1636,3999.0,3999.0,"You are coding open-ended responses from the British Election Study to the question ""what is the most important issue facing the country?"". Assign exactly one of the following category labels to the response. Use only the labels listed below and always code the response.
+
+### Categories ###
+
+health: include NHS but DO NOT include covid-related responses
+education
+election outcome
+pol-neg: complaints about politics, the system, the media, corruption where no politician or party is mentioned
+partisan-neg: negative statements about a party or politician
+societal divides
+morals: including abortion, complaints about religiosity and society's character
+nat ident, goals-loss: ethnonationalism, national identity concerns
+racism/discrimination
+welfare
+terrorism
+immigration: include overpopulation. do not include refugees
+asylum: asylum seekers/refugees
+crime
+europe: including Brexit
+constitutional: UK constitutional issues except brexit, devolution and scottish independence. Include electoral system here.
+constitution
+international trade
+devolution
+scot-ind: Scottish independence
+foreign affairs: not including war
+war: including Ukraine, Russia and Syria; include desire for peace
+defence
+foreign emergency: short-term not including war
+domestic emergency: short-term e.g. flooding, storms and Grenfell Tower but not COVID
+economy-general
+economy-personal: personal finances
+unemployment
+taxation
+debt/deficit: national/government debt not personal debt
+inflation: price rises
+living costs: including energy crisis
+poverty
+austerity: cuts and lack of spending on services
+inequality
+housing: including homelessness
+social care: including care for elderly, adults, disabled and children
+pensions/ageing
+transport/infrastructure: including HS2
+environment
+pol value-auth: pro-authoritarian responses or anti-socially-liberal responses that don't fit better elsewhere (e.g., complaints about political correctness, LGBT people, wokeness)
+pol values-liberal: pro-socially-liberal or anti-authoritarian responses that don't fit better elsewhere (e.g., responses pro women's rights, LGBT people, free speech, minorities, or concerned about authoritarian groups)
+pol values-right: pro-economic-right or anti-left responses that don't fit better elsewhere
+pol values-left: pro-economic-left or anti-right responses that don't fit better elsewhere
+Referendum unspecified: where you cannot tell whether the response is about Brexit or the Scottish independence referendum
+Coronavirus: COVID, but not its economic impacts (use this in preference to health where possible)
+COVID-economy: economic impacts of COVID
+BLM and responses: Black Lives Matter and backlash to it
+other: for responses that do not fit any other category
+uncoded: for responses that cannot be reliably assigned to a category
+
+For context, Russia invaded Ukraine prior to the fieldwork for this survey, so references to Ukraine or Russia are about war.
+
+If multiple issues are mentioned, use the label for the first issue mentioned.
+
+---
+
+### Output format ###
+
+Your response MUST be a JSON object of exactly this form:
+
+  {""issue"": ""Coronavirus""}
+
+The value of `""issue""` must be exactly one of these strings:
+  Referendum unspecified, Coronavirus, COVID-economy, BLM and responses, health, education, election outcome, pol-neg, partisan-neg, societal divides, morals, nat ident, goals-loss, racism/discrimination, welfare, terrorism, immigration, asylum, crime, europe, constitutional, international trade, devolution, scot-ind, constitution, foreign affairs, war, defence, foreign emergency, domestic emergency, economy-general, economy-personal, unemployment, taxation, debt/deficit, inflation, living costs, poverty, austerity, inequality, housing, social care, pensions/ageing, transport/infrastructure, environment, pol value-auth, pol values-liberal, pol values-right, pol values-left, other, uncoded
+
+Do NOT output the bare label alone. Do NOT output explanations, markdown, or any other text. Output ONLY the JSON object.
+"
+osnabruegge_cross_domain_topic,ok,0.5,0.6,0.43737012470428116,0.431713843937145,-0.005656280767136146,0.432781576706904,-0.004588547997377179,4.0,0.1454,2603.0,5853.0,"You are an expert political scientist classifying parliamentary speech excerpts into broad policy domains.
+
+INPUT FORMAT
+You will receive an input containing a parliamentary speech excerpt, typically in this form:
+
+text_to_code
+Parliamentary speech excerpt:
+[excerpt]
+
+TASK
+Read the excerpt and assign exactly one policy domain. Select the domain that best captures the dominant substantive issue actually being discussed, argued, questioned, or criticized.
+
+OUTPUT FORMAT
+Return ONLY a JSON object in exactly this format:
+
+{""policy_domain"": ""Economy""}
+
+The value of ""policy_domain"" must be exactly one of:
+- External Relations
+- Freedom and Democracy
+- Political System
+- Economy
+- Welfare and Quality of Life
+- Fabric of Society
+- Social Groups
+- No Topic
+
+Do not provide explanations, markdown, confidence scores, or any other text.
+
+POLICY-DOMAIN DEFINITIONS
+
+1. External Relations
+Foreign policy; relations with other countries or international organizations; international cooperation, aid, treaties, diplomacy, military affairs, defense, war, peace, Europe, imperialism, or anti-imperialism.
+
+2. Freedom and Democracy
+Civil liberties; democracy; constitutional government; parliamentary accountability; ministerial responsibility to Parliament; rule of law; legal or constitutional rights and duties; limits on government power; opposition to authoritarianism or dictatorship.
+
+A point of order or request for a Speaker’s ruling is not automatically No Topic. Use Freedom and Democracy where its substantive concern is parliamentary rights, whether Ministers must answer Parliament, constitutional accountability, members’ rights to information, legal rights, or rule-of-law principles.
+
+3. Political System
+The organization, operation, effectiveness, authority, stability, centralization or decentralization of political institutions or government; government administration and management; political corruption; party politics; political strategy or conduct by political parties.
+
+Use Political System when an excerpt is substantively about parties, political actors, parliamentary political practices, government administration, or institutional functioning. This can include a procedurally phrased point of order when its real content concerns party-political conduct rather than merely speaking procedure.
+
+For example, a point of order commenting that questions originate from a named political party’s research unit is Political System, because its substantive target is party politics, not merely procedure.
+
+Do not use Political System merely because an excerpt mentions a Minister, inquiry, allegation, government agency, or controversy. Identify the underlying policy subject instead.
+
+4. Economy
+Markets, prices, trade, commercial regulation, licenses, economic planning, growth, productivity, labor and employment, industrial disputes, privatization, nationalization, property, business activity, technology, infrastructure, protectionism, and economic or financial transactions.
+
+Use Economy where the principal issue is the value, allocation, acquisition, reassignment, bidding, trading, regulation, or profitability of licenses or comparable economic assets, even if the excerpt also mentions convictions, allegations, reputational attacks, or calls for an inquiry.
+
+Questions concerning industrial disputes, employment, trade, ports, commercial activity, or workers’ work-related disputes are generally Economy where the economic or industrial issue is central.
+
+5. Welfare and Quality of Life
+Health, education, welfare, social services, poverty, social justice, housing, environmental protection, culture, and other quality-of-life concerns.
+
+6. Fabric of Society
+National identity, patriotism, nationalism, national way of life, morality, law and order, multiculturalism, social cohesion, and broad questions about the character, values, or cohesion of society.
+
+7. Social Groups
+Explicit discussion of particular social or demographic groups, such as workers, unions, farmers, women, young people, elderly people, ethnic or religious minorities, middle-class people, professionals, or other defined groups.
+
+Use Social Groups only when the group itself—its interests, status, treatment, rights, or conditions—is the central subject. Do not choose it merely because a group is mentioned incidentally in an economic, welfare, or other policy discussion.
+
+8. No Topic
+Purely procedural, administrative, rhetorical, or non-substantive remarks with no identifiable policy content. This includes routine points of order, speaking rules, committee administration, isolated denials, and vague remarks that do not substantively discuss an issue.
+
+Do not classify an excerpt as No Topic merely because it is short, unclear, or framed procedurally. First determine whether it has a substantive concern falling under another domain.
+
+Likewise, do not classify a remark as having a policy topic solely because it contains an isolated topic word. For example, a statement that it is not the speaker’s role to deal with employment, followed only by a denial that a legal report exists, is No Topic if it contains no substantive discussion of employment, law, or policy.
+
+DECISION PROCEDURE
+1. Identify what the speaker is actually doing: discussing a policy issue, criticizing political conduct, asserting a constitutional principle, making a procedural remark, etc.
+2. Identify the dominant substantive subject, not incidental words or background details.
+3. If several subjects appear, choose the single most central one.
+4. Do not default to Political System merely because there is an allegation, investigation, inquiry, Minister, agency, or political controversy.
+5. Do not default to No Topic merely because the excerpt is a point of order or procedural intervention.
+6. Return exactly one permitted label in the required JSON format."
+rheault_line_of_fire_incivility,ok,0.825,0.9,0.6433566433566433,0.6344827586206897,-0.00887388473595363,0.6837606837606838,0.04040404040404044,3.0,0.0622,745.0,1910.0,"You will be given a public tweet addressed to a politician. Classify whether it is UNCIVIL under the coding scheme of Rheault, Rayment, and Musulan (2019).
+
+Return only valid JSON with exactly one field:
+{""uncivil"": 0}
+or
+{""uncivil"": 1}
+
+Do not provide explanations, markdown, or any additional text.
+
+Definition:
+A tweet is uncivil (`1`) if it contains at least one of the following:
+1. Swear words or profanity
+2. Vulgar or obscene language
+3. Insults, name-calling, or demeaning epithets
+4. Threats
+5. Personal attacks on a person’s private life
+6. Attacks targeting a group, including hate speech
+
+Otherwise classify it as civil (`0`).
+
+Important decision rules:
+- Do NOT mark a tweet uncivil merely because it is angry, confrontational, partisan, sarcastic, accusatory, morally condemning, or strongly critical of a politician, party, government, policy, ideology, or decision.
+- Questions such as “How do you sleep at night?” are harsh criticism but are not necessarily uncivil unless they include one of the six categories above.
+- A policy proposal or criticism of an ideology is not automatically uncivil.
+- However, mark `1` when language attacks, excludes, demeans, or expresses hostility toward people because they belong to a protected or social group, including religion or religious identity. This includes statements that portray adherents of a religion as unwelcome or say they should not be allowed into the country because of that religious affiliation or associated religious practice.
+- For example, “Sharia is an ideology. Want to practice it, don't come here” should be coded `1`, because it targets and excludes a religious group/practitioners rather than merely debating policy.
+- Use the tweet’s wording and reasonable implied target. Do not require an explicit slur for group-targeted hostility to count as uncivil.
+- If none of the listed forms of incivility is present, return `0`."
+haunss_papea_fgz_forms,ok,0.85,0.875,0.9427155531345814,0.9424045986857346,-0.0003109544488468785,0.9501576759556719,0.007442122821090469,2.0,0.0742,1195.0,3573.0,"You will receive a short protest-related text span, usually in German and often extracted from a newspaper article. Classify the protest action explicitly described in the span.
+
+Return exactly one of the following seven labels:
+
+- `Demonstration / Assembly`
+- `Petition`
+- `Strike`
+- `Non-verbal Protest / Cultural Event`
+- `Leaflet / Resolution / Open Letter`
+- `Attack with Damage to Property`
+- `Blockade / Sit-in`
+
+Use the literal content of the span. Select the single best-fitting form of action; do not infer an action that is not described.
+
+Classification guidance:
+
+- `Demonstration / Assembly`: Public gatherings such as demonstrations, rallies, marches, protest marches/processions, vigils where the gathering itself is central, assemblies, or `Protestzug`.
+  - Examples/cues: `Demonstration`, `Kundgebung`, `Protestzug`, `Mahnwache`, `Versammlung`, `Aufmarsch`.
+
+- `Petition`: Petition campaigns or the collection/submission of signatures.
+  - Examples/cues: `Petition`, `Unterschriftensammlung`, `Unterschriften übergeben`.
+
+- `Strike`: Work stoppages, walkouts, labor strikes, or refusal to work.
+  - Examples/cues: `Streik`, `Warnstreik`, `Arbeitsniederlegung`, `Ausstand`.
+
+- `Non-verbal Protest / Cultural Event`: Symbolic, visual, artistic, theatrical, performative, or other primarily non-verbal protest actions. This includes symbolic street actions and installations, even if they occur in public and involve participants.
+  - Examples/cues: art actions, performances, symbolic displays, die-ins, installations, creative street actions.
+  - Important: Terms such as `Straßen-Aktion` do not automatically mean a demonstration. A symbolic action such as `Grünpoller Straßen-Aktion` should be classified as `Non-verbal Protest / Cultural Event`, not `Demonstration / Assembly`.
+
+- `Leaflet / Resolution / Open Letter`: Distribution, posting, publication, or delivery of written protest messages, including leaflets, resolutions, open letters, written banners/posters with demands, declarations, or appeals.
+  - Examples/cues: `Flugblätter`, `Resolution`, `offener Brief`, `verteilten ...`, `Erklärung`.
+
+- `Attack with Damage to Property`: Protest-related vandalism, arson, sabotage, attacks on buildings or objects, or intentional physical damage to property.
+  - Examples/cues: throwing eggs, paint bags, stones, or other objects at a building; graffiti or damage; setting objects/buildings on fire; sabotaging equipment.
+  - Example: `bewarfen ... die Fassade einer Bank ... mit Eiern und Farbbeuteln` is `Attack with Damage to Property`.
+
+- `Blockade / Sit-in`: Actions intended to obstruct access, traffic, work, or activity, including blockades, sit-ins, occupations, encampments, road/rail blockages, or chaining/gluing oneself to infrastructure.
+  - Examples/cues: `Blockade`, `Sitzblockade`, `besetzten`, `besetzt`, `blockierten`, `Straße gesperrt`, `Zufahrt blockiert`.
+
+Decision rules:
+1. Prefer the concrete action described over broad words such as `Protest` or `Aktion`.
+2. If a span describes property damage, use `Attack with Damage to Property` even if it occurred during a broader protest.
+3. If it describes an obstruction or occupation, use `Blockade / Sit-in` rather than `Demonstration / Assembly`.
+4. If it is primarily symbolic, artistic, visual, or performative rather than a conventional rally or march, use `Non-verbal Protest / Cultural Event`.
+5. A march/procession (`Protestzug`) is `Demonstration / Assembly`.
+
+Output JSON only, with exactly this structure and no explanation:
+
+{""protest_form"": ""Demonstration / Assembly""}"
+brandt_political_relevance,skipped: training pool too small,,,,,,,,,,,,
+douglass_icbe_sentence_event_type,ok,0.475,0.5,0.46171431981422006,0.46376766440413936,0.0020533445899192926,0.45279801197673064,-0.008916307837489423,4.0,0.0981,942.0,3240.0,"You will receive input in this format:
+
+Crisis title: <title>
+Sentence: <one sentence from a narrative about that crisis>
+
+Classify the sentence and return JSON only, exactly in this format:
+
+{""event_type"":""<label>""}
+
+Use exactly one label:
+- ""No Event""
+- ""Action""
+- ""Speech""
+- ""Thought""
+- ""Mixed""
+
+Use the crisis title only as limited background. Classify events actually expressed by the sentence; do not infer an event merely from the crisis title.
+
+Definitions:
+
+- Action: one concrete, observable act, development, condition, or official/political move. This includes clashes, fighting, invasions, troop movements, mobilization, alerting forces, buildups, deployments, attacks, withdrawals, interventions, sanctions, occupations, ratification of a treaty, and a state's concrete stance or conduct such as remaining neutral.
+
+- Speech: one communicative, diplomatic, or official message act. This includes statements, declarations, proclamations, announcements, warnings, threats, demands, appeals, complaints, accusations, requests, promises, rejections, notifications, reports, notes, ultimatums, or informing another actor.
+
+- Thought: one mental-state event, such as belief, fear, concern, perception, realization, desire, intention, resolve, expectation, or determination.
+
+- No Event: no qualifying Action, Speech, or Thought is expressed.
+
+- Mixed: two or more distinct qualifying events are independently expressed in the sentence. The events may be of the same category or different categories.
+
+Important counting rules:
+
+1. Count the sentence’s independently asserted event expressions, not every historical event referred to in passing.
+
+2. A single action with ordinary details remains one Action. For example, “deployed troops to the border” is one Action.
+
+3. A single speech act with its content remains one Speech. For example, “warned that it would retaliate” is one Speech unless the retaliation itself is independently described as having occurred.
+
+4. Use Mixed for genuinely separate, independently asserted moves or communications, including coordinated clauses or lists. For example:
+   - “Egypt put its armed forces on alert and began a military buildup” → Mixed.
+   - “Argentina proclaimed a technical state of war and informed the Security Council” → Mixed.
+
+5. Do not create Mixed solely because the main event is temporally or conditionally framed by another event mentioned as background, context, or a reference point. For example:
+   - “Only after their withdrawal on 15 December did the Iranian Majlis ratify the treaty” → Action.
+   Here, ratification is the sentence’s central asserted action; “their withdrawal” functions as temporal background rather than a separate independently counted event.
+
+6. Nominalized events can count when they are independently presented as a move or development, but not when they merely provide incidental temporal/background context for another event.
+
+Examples:
+- “Serious clashes occurred.” → {""event_type"":""Action""}
+- “Laos, Yugoslavia, and Romania remained neutral.” → {""event_type"":""Action""}
+- “Only after their withdrawal on 15 December did the Iranian Majlis ratify the treaty.” → {""event_type"":""Action""}
+
+Return no explanation, no markdown, and no extra keys."
+muller_fujimura_campaign_policy_area,ok,0.675,0.725,0.6247294031983354,0.6124776349005918,-0.012251768297743548,0.6085152272118372,-0.016214175986498214,4.0,0.1483,3283.0,6982.0,"### Role and Task ###
+You are an expert political scientist coding short Japanese campaign-manifesto statements into exactly one policy area.
+
+You will receive an input containing a Japanese campaign statement, typically in this format:
+
+### text_to_code
+Japanese campaign statement:
+[Japanese text]
+
+Read the statement and assign the single best-fitting policy area. Code the substantive policy objective, beneficiary, or policy domain—not merely the instrument used to achieve it.
+
+This is a single-label classification task. Return only one JSON object and nothing else.
+
+### Policy Areas ###
+
+Agriculture, Forestry, and Fisheries
+- Farming, farmers, fisheries, food production, rural producers, forestry, agricultural land, and related primary-sector policy.
+
+Committees on Cabinet
+- General national-government reform; cabinet, prime minister, ministries, civil service, postal reform, political reform, or broad state-structure/administrative reform not centered on another sector.
+- Use this for reforms of central government institutions when the issue is not specifically local government, regional administration, elections, telecommunications, broadcasting, or another substantive sector.
+
+Economy, Trade and Industry
+- Businesses, small and medium enterprises, industry, commerce, innovation by firms, economic growth, trade, jobs policy, taxation when discussed primarily as an economic/business policy, and industrial policy.
+- Example: 「中小企業や小規模な事業者の革新を支援します」 → Economy, Trade and Industry.
+
+Education, Culture, Sports, Science, and Technology
+- Schools, universities, education systems, culture, arts, sports, academic research, science, and technology policy.
+- Do not use this category merely because a statement refers broadly to “human resources” or talent; determine whether it is specifically about education/research versus labour/welfare.
+
+Environment
+- Climate change, pollution, environmental conservation, biodiversity, nature, sustainability, renewable energy, energy transition, and environmental protection.
+
+Financial Affairs
+- Government budgets and fiscal management, public debt, banking, monetary policy, financial markets, or financial-system regulation.
+- Tax policy belongs here only when the main focus is revenue, fiscal structure, budgetary management, or the tax/financial system itself.
+
+Foreign Affairs
+- Diplomacy, international relations, foreign aid, treaties, international organizations, and overseas affairs, except core military or national-security matters.
+
+Health, Labour, and Welfare
+- Health care, social security, pensions, nursing care, childcare, disability policy, poverty relief, welfare benefits, labor conditions, workers, employment protection, and human-resource/workforce development.
+- If a tax or budget measure is explicitly dedicated to social security, welfare, health, pensions, or similar benefits, code this category based on the spending purpose rather than Financial Affairs.
+- Broad statements framing people, talent, or human resources as central to Japan’s future should be coded here when they concern human-resource or workforce development rather than clearly specified education, science, or technology policy.
+- Example: 「人材こそが日本の将来の鍵」 → Health, Labour, and Welfare.
+- Example: 「年金制度への信頼を守るために、基礎年金への国庫負担割合を2分の1に引き上げ、制度の改善に取り組みます」 → Health, Labour, and Welfare.
+
+Internal Affairs and Communications
+- Local government, regional administration, decentralization, prefectural/municipal systems, elections administration, telecommunications, broadcasting, and domestic administrative coordination.
+- Reforms that reorganize Japan into regions or alter subnational governance structures belong here, even if described as changing “the structure of the country.”
+- In particular, 道州制 (dōshūsei; a regional-state/provincial system replacing or reorganizing prefectural administration) is Internal Affairs and Communications.
+- Example: 「5年以内に道州制への移行を果たし国の仕組みを大変換します」 → Internal Affairs and Communications.
+
+Land, Infrastructure, Transport, and Tourism
+- Housing, public works, construction, roads, railways, public transport, urban planning, land use, infrastructure, and tourism.
+
+No Policy Area
+- Generic slogans, valence statements, character claims, vague reform rhetoric, or campaign messaging with no identifiable substantive issue area.
+- Use this only when no policy area can reasonably be inferred.
+- Do not use it for concise statements that identify a substantive policy subject, such as social security, small-business innovation, human resources, or regional-government reform.
+- Example: 「未来に責任を持つ政治」 → No Policy Area.
+
+Security
+- Defense, military forces, deterrence, national security, territorial protection, and security alliances.
+
+### Coding Rules ###
+1. Choose exactly one policy area: the most specific and central policy area stated or clearly targeted by the text.
+2. Focus on what the statement seeks to achieve, support, regulate, reform, or fund.
+3. Do not classify solely by the policy instrument.
+   - A tax, budget allocation, subsidy, or fiscal measure should be classified by its explicit ultimate purpose.
+   - Tax or budget reform itself, fiscal structure, debt, or revenue-system issues → Financial Affairs.
+   - Tax or budget measures for pensions, health care, social security, or welfare → Health, Labour, and Welfare.
+4. Distinguish central-government reform from local/regional-government reform:
+   - Cabinet, ministries, civil service, postal reform, or general national political/administrative reform → Committees on Cabinet.
+   - Local governments, decentralization, prefectural/municipal reform, regional administration, or 道州制 → Internal Affairs and Communications.
+5. For broad references to people, talent, or human resources, prefer Health, Labour, and Welfare unless the text specifically concerns schools, universities, educational institutions, research, science, or technology.
+6. Do not infer additional issues that are not supported by the wording. However, use well-established Japanese policy terminology when it identifies a clear policy field; for example, 道州制 identifies regional/local administrative reform.
+7. Use No Policy Area only for genuinely issue-free slogans or vague messaging. If the statement identifies a concrete beneficiary, institution, policy system, or substantive target, select the corresponding policy area.
+
+### Required Output Format ###
+Return exactly one JSON object in this form:
+
+{""policy_area"": ""Economy, Trade and Industry""}
+
+The value of ""policy_area"" must be exactly one of:
+- Agriculture, Forestry, and Fisheries
+- Committees on Cabinet
+- Economy, Trade and Industry
+- Education, Culture, Sports, Science, and Technology
+- Environment
+- Financial Affairs
+- Foreign Affairs
+- Health, Labour, and Welfare
+- Internal Affairs and Communications
+- Land, Infrastructure, Transport, and Tourism
+- No Policy Area
+- Security
+
+Do not output explanations, markdown, confidence scores, or any text outside the JSON object."
+burnham_polnli_entailment,ok,0.875,0.9,0.8457446808510638,0.8457446808510638,0.0,0.8727272727272727,0.026982591876208883,4.0,0.0815,409.0,2040.0,"You are evaluating whether a hypothesis is supported by a political or social-science text.
+
+Input format:
+- The input contains `text_to_code`, which includes:
+  - a `Source task` label (such as stance detection or event extraction),
+  - a `Text`,
+  - a `Hypothesis`.
+
+Task:
+Determine whether the hypothesis is entailed by the text.
+
+Output labels:
+- Return `""entails"": 1` when the hypothesis is clearly supported by the text, including when it is strongly implied by the author’s evaluative stance or by the described event.
+- Return `""entails"": 0` when the hypothesis is contradicted, unsupported, irrelevant, ambiguous, or cannot be determined from the text.
+
+Reasoning rules:
+1. Use only the provided text. Do not add facts from outside knowledge.
+2. For stance-detection texts, infer the author’s position from evaluative language and consequences, not only from explicit statements.
+   - If a policy is described negatively—for example, as harming poor people or diminishing the recognition people receive for their accomplishments—this supports the inference that the author opposes that policy or believes it should end.
+   - Thus, criticism of affirmative action as diminishing credit for women’s and minorities’ accomplishments supports the claim that the author believes affirmative action should be ended.
+   - Similarly, stating that an austerity regime would take services from poor people supports that the author does not favor adopting austerity.
+3. For event-extraction texts, classify the event described by the text rather than requiring the exact hypothesis wording to appear.
+   - Violence by non-state actors, such as masked assailants shooting members of a farm group during a land dispute, entails extra-government violence.
+4. Do not treat a hypothesis as entailed merely because its topic is mentioned. The text must support the specific claim.
+5. If the text gives no clear basis for the hypothesis, choose 0.
+
+Return only valid JSON in exactly this format, with no explanation or additional text:
+{""entails"": 1}"
+theocharis_dynamics_incivility,ok,0.9,0.9,0.6397058823529411,0.6397058823529411,0.0,0.6319702602230484,-0.007735622129892761,3.0,0.0533,803.0,803.0,"You will be shown a public tweet directed at a political actor or political discussion.
+
+Decide whether the tweet is UNCIVIL.
+
+Use the coding logic from Theocharis et al. (2020): mark a tweet as uncivil when it violates norms of respectful political discussion through insults, name-calling, vulgarity, profanity, slurs, threats, demeaning language, or personal attacks.
+
+A tweet can be angry, partisan, sarcastic, or strongly critical of a policy or politician without being uncivil. Mark it as uncivil only when the language attacks a person or group in an insulting, abusive, vulgar, threatening, or degrading way.
+
+Classify as:
+- `1` if the tweet is uncivil
+- `0` if the tweet is not uncivil
+
+Return JSON only, with exactly one field:
+
+  {""uncivil"": 0}
+
+Do not return any explanation or extra text.
+"
+toxicity_protests_es,ok,0.925,0.925,0.8802946593001841,0.8777777777777778,-0.0025168815224063668,0.8761552680221811,-0.004139391278003002,3.0,0.0537,662.0,662.0,"You will be shown a Spanish-language social media post about protests.
+
+Decide whether the post is TOXIC. Mark it as toxic if it contains insulting, abusive, threatening, demeaning, hateful, or personally attacking language toward a person or group.
+
+A post can be angry, partisan, sarcastic, or strongly critical of a policy, protest, institution, or political actor without being toxic. Mark it as toxic only when the wording itself is abusive, insulting, threatening, or degrading.
+
+Classify as:
+- `1` if the post is toxic
+- `0` if the post is not toxic
+
+Return JSON only, with exactly one field:
+
+  {""toxic"": 0}
+
+Do not return any explanation or extra text.
+"
+brandt_gtd_attack_type,ok,0.825,0.825,0.6072610840904736,0.6040089080943343,-0.0032521759961393615,0.6011278600443034,-0.006133224046170227,4.0,0.1021,1391.0,1391.0,"You will be shown a short event summary from the Global Terrorism Database.
+
+Classify the primary attack type described in the summary. Use exactly one of these labels:
+
+- `Assassination`: an attack whose primary purpose is killing a specific, prominent, or individually targeted person.
+- `Armed Assault`: a direct attack using firearms, knives, or other weapons, without explosives as the primary method.
+- `Bombing/Explosion`: an attack using bombs, grenades, rockets, mines, suicide explosives, or other explosive devices.
+- `Facility/Infrastructure Attack`: sabotage or physical attack against a building, facility, vehicle, pipeline, communications asset, or other infrastructure.
+- `Hijacking`: seizure or attempted seizure of an aircraft, vehicle, vessel, or other transport while it is in transit.
+- `Hostage Taking (Barricade Incident)`: seizure of hostages in a fixed location during a standoff or barricade situation.
+- `Hostage Taking (Kidnapping)`: abduction, seizure, or attempted abduction of people for ransom, coercion, or intimidation.
+- `Unarmed Assault`: attack or attempted attack without firearms, explosives, or other conventional weapons.
+- `Unknown`: the summary does not provide enough information to identify the primary attack type.
+
+Return JSON only, with exactly one field:
+
+  {""attack_type"": ""Bombing/Explosion""}
+
+Do not return any explanation or extra text.
+"
+haunss_papea_claims,ok,0.525,0.6,0.4520481097751674,0.4846233844253458,0.0325752746501784,0.46690839948714075,0.01486028971197334,4.0,0.1088,665.0,1914.0,"You will be given one input in this format:
+
+Sentence:
+<German protest-related sentence or phrase>
+
+Classify the main protest claim or issue expressed in the German sentence. Return exactly one label from this closed set:
+
+- `Anti-Far-Right`
+- `Anticapitalist`
+- `Church`
+- `COVID`
+- `Democracy`
+- `Economy`
+- `Education`
+- `Environment`
+- `Far Right`
+- `Foreign Rights`
+- `Gender`
+- `Infrastructure`
+- `International`
+- `Labour`
+- `Media`
+- `Migration`
+- `Nuclear Power`
+- `Other`
+- `Peace`
+- `Peasants`
+- `Political System`
+- `Repression`
+- `Religion`
+- `Rights`
+- `Social`
+- `Solidarity`
+- `Tolerance`
+- `Unclear`
+
+Choose the label for the central issue being protested, not merely a topic or institution mentioned in passing. Sentences may be short noun phrases rather than complete sentences.
+
+Key annotation guidance and precedents:
+- Use `Infrastructure` for transport or construction infrastructure disputes, including opposition to major building/rail projects. Example: “einen Baustopp für Stuttgart 21” → `Infrastructure`.
+- Use `Labour` for employment, professions, pay, insurance costs affecting workers/self-employed people, working conditions, staffing, workloads, or administrative/service-processing issues attributable to public-sector work. Example: “Ab Sommer sollen selbstständige Hebammen eine Prämie von knapp 6000 Euro pro Jahr für ihre Haftpflichtversicherung bezahlen” → `Labour`.
+- In particular, complaints about processing times by the Jugendamt are annotated as `Labour`, rather than `Unclear` or `Social`. Example: “die Bearbeitungszeit durchs Jugendamt” → `Labour`.
+- Use `Unclear` only when the text does not provide enough information to identify a substantive issue; do not use it merely because the phrase is short.
+
+Return JSON only, with exactly one field and one of the labels above:
+
+{""protest_claim"":""Labour""}
+
+Do not include explanations, Markdown, or any additional text."
+twitcivility_impoliteness,ok,0.825,0.9,0.5862068965517241,0.5821917808219178,-0.0040151157298062845,0.6097560975609756,0.023549201009251508,4.0,0.0721,637.0,2039.0,"You will be given a political tweet in the following format:
+
+Tweet:
+<tweet text>
+
+Classify whether the tweet is IMPOLITE.
+
+Return JSON only, with exactly one field and no explanation:
+
+{""impolite"": 0}
+
+Use:
+- `1` = impolite
+- `0` = not impolite
+
+A tweet is impolite when its wording includes explicit disrespectful language toward a person or group, including insults, derogatory labels, name-calling, mockery, contemptuous descriptions, hostile personal attacks, or demeaning characterizations.
+
+Mark `1` for:
+- Direct insults or pejorative labels, such as calling someone “petty,” “evil,” “diabolical,” “sadistic,” or a “Dictator.”
+- Contemptuous labels for groups, such as “Traitors.”
+- Disparaging mocking descriptions, such as calling someone “frumpy.”
+- Derogatory labels even when they appear in quotation marks, are attributed to another actor, or are presented as a reported accusation. For example, describing parents as “domestic terrorists” is impolite language toward parents, even if the tweet says someone else wanted to label or treat them that way.
+- Hashtags, mentions, quoted wording, and political context when they contain insulting or contemptuous language.
+
+Mark `0` for civil political criticism or disagreement that does not use clearly rude or derogatory wording. This includes:
+- Criticizing politicians, parties, unions, institutions, or actions.
+- Accusing people of wrongdoing, dishonesty, prioritizing political goals, or making poor decisions, when stated without insulting labels.
+- Statements that someone has a “bad take,” should “do better,” is untrustworthy, or acted improperly.
+- Partisan, emotional, or forceful political commentary without explicit insults.
+- Negative political claims or predictions such as “the hammer is finally falling.”
+
+Focus on the form of the language, not whether the political claim is true, severe, controversial, or partisan. Strong criticism alone is not enough, but explicit derogatory or demeaning labels—including quoted or attributed ones—make the tweet impolite."
+bestvater_wm_stance,ok,0.7,0.8,0.8263795423956931,0.8194070080862533,-0.006972534309439782,0.8567639257294429,0.03038438333374982,4.0,0.089,703.0,3973.0,"You are classifying tweets for stance toward the Women’s March.
+
+You will receive one input in this format:
+
+Tweet:
+<tweet text>
+
+Determine whether the tweet expresses a pro-Women’s-March stance.
+
+Output exactly one JSON object and nothing else:
+
+{""pro_womens_march"": 1}
+
+or
+
+{""pro_womens_march"": 0}
+
+Use this label definition:
+
+- `1`: The tweet supports, promotes, celebrates, defends, organizes for, mobilizes for, identifies with, or positively frames the Women’s March, its goals, participants, related demonstrations, or associated activism.
+- `0`: The tweet opposes, mocks, criticizes, dismisses, or negatively frames the Women’s March or its participants; is clearly neutral/reporting-only; or has no apparent connection or supportive stance toward the March.
+
+Decision rules:
+
+1. Judge stance toward the Women’s March specifically.
+   - A tweet may use profanity or attack politicians, sexism, Trump, or other opponents; this can still be pro-March if it supports March-associated activism or messages.
+   - Conversely, a tweet may mention women’s rights or use `#WomensMarch` while attacking the March itself; this is not pro.
+
+2. Classify explicit support as `1`.
+   Examples include:
+   - Encouragement to attend, march, resist, organize, donate, contact representatives, or take “next steps.”
+   - Praise for marchers, rally turnout, speeches, protest actions, or Women’s March leaders.
+   - Positive celebration of an event location or crowd in a clearly March-related post, such as an enthusiastic “Holy shit, ANCHORAGE!” retweet associated with the March.
+   - Positive approval of prominent March-associated actions or messages. For example, enthusiastic celebration of Madonna saying “Fuck You” on television alongside `#WomensMarch` is pro.
+   - Retweets of supportive content, unless the author clearly adds disagreement.
+
+3. Treat organizational, activist, and mobilization content as `1` even when it does not literally say “Women’s March.”
+   - Short posts such as “NEXT STEPS!!!” with links may be March-related organizing and should be `1`.
+   - Campaign-resource links, action links, event links, and activist updates are supportive when presented as part of the March movement or its continued advocacy.
+
+4. Dataset-specific calibration for sparse tweets:
+   - Do not require explicit wording such as “I support the Women’s March.”
+   - In this dataset, tweets that appear to be affiliated with, distributing, or boosting Women’s March content are generally labeled pro, even if their visible text is minimal.
+   - A non-hostile automated/daily-link post carrying `#womensmarch` can be `1`, such as “The latest The Geek To Author Daily! [link] #womensmarch.”
+   - Likewise, terse enthusiastic location/crowd updates or retweets can be `1` when they plausibly promote or celebrate a March event.
+   - When a tweet includes `#WomensMarch` and is non-hostile, consider whether it is functioning as amplification, affiliation, event promotion, or movement participation. If so, prefer `1` rather than treating it as neutral merely because the wording is sparse.
+
+5. Classify criticism or hostility as `0`.
+   - Tweets portraying the March as hypocritical, manufactured victimhood, immoral, clueless, ungrateful, self-serving, or otherwise contemptible are `0`, even if they use `#WomensMarch`.
+   - For example, “the manufactured victim-hood is a disgrace… this self-serving mob has no gratitude. #WomensMarch” is `0`.
+
+6. Use `0` for genuinely unrelated tweets or clearly neutral references.
+   - Do not infer pro-March support from an unrelated URL, a completely contextless mention, or a hashtag when there is no sign of affiliation, amplification, organizing, celebration, or supportive context.
+   - However, apply the sparse-tweet calibration above: brief content with a Women’s March hashtag or clear March-context signals is often intended as amplification and may be `1`.
+
+Return only the JSON object with the single field `pro_womens_march`."
+erlich_ati_topics,ok,0.8464285714285713,0.8857142857142858,0.45947107171343643,0.45477143754508875,-0.004699634168347677,0.43559250590276694,-0.023878565810669494,4.0,0.1334,1282.0,4045.0,"You will receive a Spanish-language access-to-information request, usually in a field such as `text_to_code`.
+
+Classify the request into all applicable topics. Return `1` for each applicable topic and `0` otherwise.
+
+Use exactly these seven labels:
+
+- `Activities`: Institutional actions, programs, services, procedures, operations, work, or actions carried out by the institution. Includes requested counts/details of actions, such as lawsuits filed, land returned, services delivered, inspections conducted, or procedures performed.
+- `Budget`: Budgets, allocated resources, expenditure, payments, salaries, prices, costs, monetary amounts, or financial aspects of contracts.
+- `Evaluation`: Audits, assessments, evaluations, compliance reviews, indicators, performance measures, institutional results, or aggregate/statistical measures about capacity or performance. A request for the total number of positions/plazas in the institution’s workforce is both `Evaluation` and `Institutional Structure`.
+- `External Contracts`: Procurement, tenders, bidding, awards/adjudications, suppliers, outsourcing, or contracts/agreements with external parties. Do not use this label merely because the word “convocatoria” appears or because the institution performs an activity.
+- `Institutional Structure`: Organizational units, internal structure, staffing/plantilla, positions/plazas, functions, responsibilities, internal rules/manuals, organizational composition, and institutional records/registers concerning internal organization.
+- `Other`: Subjects that do not clearly fit the substantive categories above. Normally use `Other` only when no other topic applies, except for the explicit special case described below regarding administrative procedures/resources tied to rights reservations.
+- `Regulatory`: Laws, regulations, legal norms, formal authorizations, permits, resolutions, administrative procedures/resources, or other formal regulatory/legal decisions. Do not label lawsuits or legal claims as `Regulatory` merely because they are legal; lawsuits filed by the institution are generally `Activities` unless legal rules, resolutions, or formal regulatory decisions are requested.
+
+Classification rules:
+1. Apply every label directly supported by the request; labels are not mutually exclusive.
+2. Do not infer Budget, External Contracts, Regulatory, Evaluation, or Institutional Structure from vague context alone.
+3. Operational counts (for example, number of lawsuits filed per year or hectares returned through an institutional action) are `Activities`, not automatically `Evaluation`.
+4. A request for budget assigned to an activity is `Budget` only, unless the request separately asks for details/counts of the activity.
+5. Requests for total workforce positions/plazas must receive both `Institutional Structure: 1` and `Evaluation: 1`.
+6. Procurement-related wording must clearly concern an external contractual or acquisition relationship before using `External Contracts`.
+
+Important benchmark-specific interpretations:
+- If a request refers to information “described in the annex/anexo” without providing the annex contents, classify it as `Institutional Structure: 1` and all other labels as `0`.
+- A short request such as “Registro Convocatoria PI-2009” is classified as `Institutional Structure: 1`, not `External Contracts`.
+- A request asking whether there is an administrative procedure or administrative appeal/resource related to a reservation of exclusive-use rights (for example, a copyright-related “Reserva de Derechos al Uso Exclusivo”) is `Regulatory: 1` and `Other: 1`, with all other labels `0`. This is an exception to the usual rule that `Other` is 0 whenever another substantive topic applies.
+
+Return JSON only, with exactly these fields in this order and integer values of `0` or `1`:
+
+{""Activities"": 0, ""Budget"": 0, ""Evaluation"": 0, ""External Contracts"": 0, ""Institutional Structure"": 0, ""Other"": 0, ""Regulatory"": 0}
+
+Do not provide explanations, markdown, headings, or any text outside the JSON object."
+plover_cameo_event,skipped: training pool too small,,,,,,,,,,,,
+burnham_polnli_event_entailment,ok,1.0,1.0,0.9709864603481625,0.9689922480620154,-0.0019942122861470457,0.9689922480620154,-0.0019942122861470457,2.0,0.0413,467.0,467.0,"You will be shown a short political event text and a hypothesis about that event.
+
+Decide whether the event text supports the hypothesis. The hypothesis may ask whether the text describes a particular event type or event attribute.
+
+Classify as:
+- `1` if the hypothesis is supported by the event text
+- `0` if the hypothesis is not supported by the event text
+
+Return JSON only, with exactly one field:
+
+  {""entails"": 1}
+
+Do not return any explanation or extra text.
+"
+burnham_trump_stance,ok,0.65,0.65,0.7664859844237588,0.7724511928915742,0.005965208467815342,0.7755607875069584,0.009074803083199634,4.0,0.0639,672.0,672.0,"You will be shown a short political text about Donald Trump.
+
+Decide the text's stance toward Donald Trump. Focus on support or opposition toward Donald Trump himself, not general sentiment, tone, or stance toward another actor mentioned in the text.
+
+Classify as exactly one of:
+- `Support` if the text supports, praises, defends, or positively frames Donald Trump
+- `Oppose` if the text opposes, criticizes, attacks, or negatively frames Donald Trump
+- `Neutral` if the text mentions Donald Trump without a clear supportive or opposing stance
+
+Return JSON only, with exactly one field:
+
+  {""stance_toward_trump"": ""Support""}
+
+Do not return any explanation or extra text.
+"
+burnham_covid_threat_minimization,skipped: training pool too small,,,,,,,,,,,,
+dicocco_manifesto_populism,ok,0.9,0.9,0.2909090909090909,0.2909090909090909,0.0,0.2909090909090909,0.0,3.0,0.0643,693.0,693.0,"You will be shown a political manifesto sentence.
+
+Decide whether the sentence uses populist rhetoric. Mark it as populist if it frames politics as a conflict between a virtuous people and a corrupt, self-serving, or illegitimate elite, or if it claims that politics should express the unified will of the people against such elites.
+
+A sentence can be anti-establishment, critical, nationalist, or policy-specific without being populist. Focus on whether it contains the people-versus-elite logic.
+
+Classify as:
+- `1` if the sentence is populist
+- `0` if the sentence is not populist
+
+Return JSON only, with exactly one field:
+
+  {""populist"": 0}
+
+Do not return any explanation or extra text.
+"
+bestvater_kavanaugh_stance,ok,0.925,0.925,0.8745247148288974,0.8685714285714285,-0.005953286257468826,0.8740458015267175,-0.00047891330217986194,3.0,0.0573,690.0,690.0,"You will be shown a tweet about Brett Kavanaugh's Supreme Court confirmation.
+
+Decide whether the tweet expresses a pro-Kavanaugh stance. Mark the tweet as pro-Kavanaugh if it supports, praises, defends, or positively frames Brett Kavanaugh or his confirmation.
+
+A tweet can use negative sentiment toward Kavanaugh's opponents while still being pro-Kavanaugh. A tweet can mention Kavanaugh without taking a pro stance. Focus on stance toward Brett Kavanaugh, not general emotional tone.
+
+Classify as:
+- `1` if the tweet is pro-Kavanaugh
+- `0` if the tweet is not pro-Kavanaugh
+
+Return JSON only, with exactly one field:
+
+  {""pro_kavanaugh"": 1}
+
+Do not return any explanation or extra text.
+"
+politicause_causal_relation,ok,0.575,0.725,0.6843501326259946,0.6843501326259946,0.0,0.5307692307692308,-0.15358090185676387,4.0,0.0724,700.0,1875.0,"You will receive one political-text input in this format:
+
+Sentence:
+<sentence>
+
+Classify whether the sentence expresses an asserted causal relation.
+
+Return `1` only when the sentence clearly states that an identifiable event, condition, action, decision, or process brings about, prevents, changes, or directly results in another identifiable event or condition. Use a strict, conservative standard: the causal link must be asserted in the sentence itself, not merely inferred from context, plans, intentions, or practical necessity.
+
+Return `0` for sentences that only express:
+- priorities, objectives, commitments, requests, or anticipated actions;
+- chronology or movement toward implementation;
+- capability, opportunity, feasibility, or a condition being necessary for action;
+- a counterfactual or conditional limitation such as “without X, Y is not possible”;
+- a measure “ensuring” that someone can plan, choose, time, access, or potentially perform an action, especially where the cause is vague or referred to only as “this”;
+- correlations or associations without an asserted cause-effect claim.
+
+Important annotation-specific guidance:
+- “Securing climate financing is the main priority ..., as without it no action ... is possible” is `0`. A statement that something is required or that action is impossible without it is not sufficient by itself.
+- “This will ensure they can time their booster ...” is `0`. Do not label statements about enabling someone to schedule or time an action as causal merely because they use “ensure.”
+- “looks forward to engaging ... towards implementation” is `0`.
+
+Label `1` only for a direct, explicit causal assertion such as “The policy caused unemployment to fall,” “Sanctions led to shortages,” or “Flooding prevented access to schools.”
+
+Return JSON only, with exactly one field and no explanation:
+
+{""causal_relation"": 1}"
+cap_party_platform_policy_topic,ok,0.675,0.7,0.6891289594393412,0.683095801539735,-0.006033157899606123,0.6755973231011021,-0.013531636338239061,4.0,0.0938,751.0,2292.0,"You will be given a U.S. political party platform quasi-statement in this format:
+
+Party: [party name]
+Year: [year]
+
+Platform statement:
+[statement text]
+
+Classify the statement into exactly one Comparative Agendas Project (CAP) major-topic label. Select the label that best matches the statement’s main substantive policy content, not merely incidental language, rhetoric, or broad values.
+
+Use exactly one of these labels:
+
+- `Macroeconomics`
+- `Civil Rights`
+- `Health`
+- `Agriculture`
+- `Labor and Immigration`
+- `Education`
+- `Environment`
+- `Energy`
+- `Immigration`
+- `Transportation`
+- `Law and Crime`
+- `Social Welfare`
+- `Housing`
+- `Domestic Commerce`
+- `Defense`
+- `Technology`
+- `Foreign Trade`
+- `International Affairs`
+- `Government Operations`
+- `Public Lands`
+- `Culture`
+
+Classification guidance:
+- Focus on the policy area being acted on or discussed. For example, Medicaid, SCHIP, health insurance coverage, and medical care are `Health`; farm programs, agricultural surpluses, and farm prices are `Agriculture`.
+- Distinguish `Labor and Immigration` from `Immigration`: use `Labor and Immigration` for labor, employment, unions, wages, workplace issues, or immigration specifically tied to labor; use `Immigration` for immigration, citizenship, border, refugee, or migrant issues whose primary focus is not labor.
+- Use `Civil Rights` for voting rights, discrimination, equal rights, and rights of protected groups, except where CAP’s historical coding convention places the issue elsewhere.
+- Important dataset-specific convention: statements about U.S. territories and possessions—such as Guam, Puerto Rico, and the Virgin Islands—including their political status, administration, or residents’ participation in U.S. national elections, are coded as `Public Lands`. Thus, a proposal to allow residents of Guam, Puerto Rico, and the Virgin Islands to vote for President and Vice President must be labeled `Public Lands`, even though it concerns voting rights.
+- When a statement could plausibly fit multiple labels, choose the single topic that captures its central policy target and emulate these CAP coding conventions rather than relying only on ordinary-language intuition.
+
+Return JSON only, with exactly one field and no additional text:
+
+{""policy_topic"": ""Health""}"
+cap_crs_policy_topic,ok,0.725,0.725,0.7016328519746937,0.707560833231784,0.005927981257090265,0.703927394954722,0.0022945429800282913,4.0,0.1108,765.0,765.0,"You will be shown the title and summary of a Congressional Research Service report.
+
+Classify the main policy topic of the report using exactly one Comparative Agendas Project major-topic label:
+
+- `Macroeconomics`
+- `Civil Rights`
+- `Health`
+- `Agriculture`
+- `Labor and Immigration`
+- `Education`
+- `Environment`
+- `Energy`
+- `Immigration`
+- `Transportation`
+- `Law and Crime`
+- `Social Welfare`
+- `Housing`
+- `Domestic Commerce`
+- `Defense`
+- `Technology`
+- `Foreign Trade`
+- `International Affairs`
+- `Government Operations`
+- `Public Lands`
+- `Culture`
+
+Choose the topic that best captures the main substantive policy content of the report.
+
+Return JSON only, with exactly one field:
+
+  {""policy_topic"": ""Health""}
+
+Do not return any explanation or extra text.
+"
+agoraspeech_criticism_agenda,ok,0.95,0.95,0.9064675645780467,0.9127006362702463,0.006233071692199665,0.9166771666985054,0.010209602120458738,4.0,0.0793,622.0,622.0,"You will be shown a paragraph from a campaign speech.
+
+Decide whether the paragraph is primarily criticism or political agenda.
+
+Classify as:
+- `criticism` if the paragraph mainly criticizes an opponent, government, party, institution, policy, or past action
+- `political agenda` if the paragraph mainly presents the speaker's proposals, priorities, values, promises, plans, or governing program
+
+If both are present, choose the label that best describes the paragraph's main function.
+
+Return JSON only, with exactly one field:
+
+  {""criticism_or_agenda"": ""political agenda""}
+
+Do not return any explanation or extra text.
+"

@@ -1,0 +1,34 @@
+{
+  "source": "DeepSeek platform Usage page (platform.deepseek.com/usage), read from the console",
+  "captured": "2026-09-20, range 'Today' in the console's PDT/MST local time, which covers the run",
+  "delta_total_usd": 0.05,
+  "items_per_model": 99,
+  "requests_observed": 198,
+  "tokens_observed": 118260,
+  "execution": "sequential, unbatched, one request in flight",
+  "isolation": "the day's only DeepSeek activity was this run: 198 requests = 99 x 2 models",
+  "note": "DeepSeek states usage data is delayed at most 5 minutes, and the run appeared within that window.",
+  "caveats": {
+    "rounding": "The console reports whole cents, so a $0.01 figure carries +/- half a cent, i.e. +/- 50 percent.",
+    "off_peak": "The run landed on a weekend, and the console states weekends are billed at off-peak rates. These are discounted prices, not standard weekday rates."
+  },
+  "peak_rate_multiplier": 2.0,
+  "peak_rate_source": {
+    "url": "https://api-docs.deepseek.com/quick_start/pricing",
+    "read": "2026-09-20",
+    "basis": "Off-peak is exactly half of peak for every token category of both models: deepseek-flash cache hit 0.003/0.006, cache miss 0.15/0.30, output 0.60/1.20 per 1M tokens; deepseek-v4-pro cache hit 0.022/0.044, cache miss 0.66/1.32, output 1.98/3.96. Because the discount is uniform across categories, the peak figure is the off-peak figure doubled regardless of the token mix.",
+    "peak_window": "01:00-04:00 and 06:00-10:00 UTC, Monday to Friday, excluding Chinese public holidays. Everything else is off-peak. The run at 04:16 UTC on a Saturday was off-peak on two counts, and that clock hour is outside the peak window on weekdays too."
+  },
+  "cost_usd_by_model": {
+    "deepseek-v4-flash": 0.01,
+    "deepseek-v4-pro": 0.04
+  },
+  "console_model_names": {
+    "deepseek-v4-flash": "deepseek-flash",
+    "deepseek-v4-pro": "deepseek-v4-pro"
+  },
+  "tokens_by_model": {
+    "deepseek-v4-flash": 56922,
+    "deepseek-v4-pro": 61338
+  }
+}

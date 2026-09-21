@@ -1,0 +1,16 @@
+{
+  "source": "OpenAI organization costs endpoint via ~/.local/bin/check-openai-cost",
+  "captured": "2026-09-19, after the ledger settled",
+  "baseline_usd": 0.0,
+  "delta_total_usd": 0.7717,
+  "items_per_model": 99,
+  "execution": "sequential, unbatched, one request in flight",
+  "line_items": "input, output, cache writes and cached input summed per model",
+  "note": "An immediate post-run query returned $0.2659, a partial total. The ledger lags, so costs must be read after it settles.",
+  "cost_usd_by_model": {
+    "gpt-6-astra": 0.4392,
+    "gpt-5.6-sol": 0.2111,
+    "gpt-5.6-terra": 0.1053,
+    "gpt-5.6-luna": 0.0161
+  }
+}
