@@ -29,7 +29,7 @@ def test_paper_figures_require_matching_release_and_assets():
         result=preview.paper_figures(root,{})
         default,expanded=result.split('<details class="disclosure" id="more-analyses">')
         assert default.count('<figure ')==5 and '<h3>Top 0</h3>' in default
-        assert expanded.count('<figure ')==7 and 'figure-data.json' in expanded
+        assert expanded.count('<figure ')==7 and 'figure-data.json' not in expanded and '.pdf"' not in result
         manifest['featured_models']=['other-model']
         (folder/'figure-data.json').write_text(json.dumps(manifest))
         with unittest.TestCase().assertRaisesRegex(ValueError,'Featured figure selection'):
@@ -42,15 +42,12 @@ def data():
     return dict(release_id='test',status='pending',updated_at='2026-09-14',models=[dict(model='example',label='Example',n=3400,tasks=34,kind='API',hardware_tier='api',mean_task_f1=.6,malformed=1,cost_usd_upper=2,cost_per_1k_items=.5,cost_basis='provider_ledger')],task_scores=[],class_scores=[],candidates=[dict(model='Open candidate',status='pending',reason='Pilot queued')])
 
 
-def test_page_has_no_ranking_tables_and_a_short_task_table():
+def test_page_has_no_tables_or_task_selector():
     source=data()
     source['models'].append(dict(source['models'][0],model='older-model',label='Older model',mean_task_f1=.99))
     page=preview.render(source)
     assert 'model-rows' not in page and 'featured-rows' not in page
-    assert '<caption>Five best models on the selected task</caption>' in page
-    assert '<option value="older-model">Older model</option>' in page
-    assert page.index('value="older-model"')<page.index('value="example"')
-    assert 'rows.slice(0,5)' in preview.JS
+    assert 'id="tasks"' not in page and '<table' not in page
     assert '<details class="disclosure" id="methods">' in page and '<h2 id="hardware">Where the models ran</h2>' in page
     assert 'id="downloads"' not in page and 'github.com/hhilbig/polsci-open-bench' in page
 
@@ -58,7 +55,7 @@ def test_static_page_and_pending():
     page=preview.render(data())
     assert 'Pilot queued' in page and 'Local preview, not published' in page
     assert 'The open-weight models are a selection rather than a complete list.' in page
-    assert '<noscript>' in page and 'name="robots" content="noindex"' in page
+    assert 'name="robots" content="noindex"' in page
 
 def test_deepseek_observed_run_dates_are_required():
     release=dict(manifest=dict(release='test',status='pending',api_completed_at='2026-09-14'),
@@ -121,11 +118,11 @@ def test_null_and_zero_distinct():
 
 def test_controls_and_no_external_scripts():
     page=preview.render(data())
-    for identifier in ['category','task','compare','task-rank','pair-model','pair-reference']:
+    for identifier in ['pair-model','pair-reference','pair-result']:
         assert f'id="{identifier}"' in page
     assert 'src="https://' not in page
     assert "document.createElement('td')" in preview.JS
-    assert 'ranks ${rank+1} of ${rows.length}' in preview.JS
+    assert 'taskOptions' not in preview.JS
 
 def test_homepage_proposals_follow_current_data_and_sitemap_markup():
     assert '<div>' not in preview.homepage_link_proposal()
@@ -156,8 +153,7 @@ def test_no_javascript_fallbacks():
     with tempfile.TemporaryDirectory() as folder:
         root=Path(folder);(root/'release.json').write_text(json.dumps(release))
         page=(preview.build(root)/'index.html').read_text()
-        assert '<details class="class-support-details"><summary>Class support and class F1 for the compared model</summary>' in page
-        assert 'The task selector requires JavaScript.' in page
+        assert 'Paired comparisons require JavaScript.' in page
         assert 'that zero says nothing about the model' in page
         assert 'F1 of 0 by convention' in (root/'preview/llm-benchmark/downloads/methodology.md').read_text()
 
