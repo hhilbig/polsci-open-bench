@@ -71,7 +71,7 @@ def test_static_table_and_pending():
     assert '0.600' in page and '0.03%' in page
     assert '$0.500 per 1,000 texts' in page and 'Provider billing record' in page
     assert 'Pilot queued' in page and 'Local preview, not published' in page
-    assert 'The open-weight roster is selective, not exhaustive.' in page
+    assert 'The open-weight models are a selection, not a complete list.' in page
     assert '<noscript>' in page and 'name="robots" content="noindex"' in page
 
 def test_deepseek_rows_label_version_and_observed_run_dates():
@@ -218,9 +218,9 @@ def test_no_javascript_table_headings_are_plain_text():
             assert f'<span class="static-heading">{label}</span>' in page
             assert f'<button class="sort-button" data-sort="{key}">{label} ↕</button>' in page
         assert '<details class="class-support-details"><summary>Class support and class F1</summary>' in page
-        assert 'aggregate task and class results are available in the downloads' in page
-        assert 'zero-support row does not measure classification ability' in page
-        assert 'zero-division convention' in (root/'preview/llm-benchmark/downloads/methodology.md').read_text()
+        assert 'Task and class results are in the downloads.' in page
+        assert 'that zero says nothing about the model' in page
+        assert 'F1 of 0 by convention' in (root/'preview/llm-benchmark/downloads/methodology.md').read_text()
 
 def test_build_preserves_aggregate_download_and_values():
     release=dict(manifest=dict(release='test',status='pending',api_completed_at='2026-09-14',seed=20260910,
@@ -237,8 +237,8 @@ def test_build_preserves_aggregate_download_and_values():
         import csv
         with (output/'downloads/task_definitions.csv').open(newline='') as handle:
             assert json.loads(next(csv.DictReader(handle))['labels'])==['a','b']
-        assert '2000 replicates' in (output/'downloads/methodology.md').read_text()
-        assert 'The open-weight roster is selective, not exhaustive.' in (output/'downloads/methodology.md').read_text()
+        assert '2000 draws' in (output/'downloads/methodology.md').read_text()
+        assert 'The open-weight models are a selection, not a complete list' in (output/'downloads/methodology.md').read_text()
         for name in ['task_definitions.csv','manifest.json','methodology.md']:
             assert f'downloads/{name}' in (output/'index.html').read_text()
         assert '0.600' in (output/'index.html').read_text()
@@ -279,7 +279,7 @@ def test_build_preserves_aggregate_download_and_values():
         model_csv.write_text(original_csv)
         method_file=output/'downloads/methodology.md'
         original_methods=method_file.read_text()
-        method_file.write_text(original_methods.replace('2000 replicates','1000 replicates',1))
+        method_file.write_text(original_methods.replace('2000 draws','1000 draws',1))
         with unittest.TestCase().assertRaisesRegex(ValueError,'Public methodology'):
             preview.verify(root)
 

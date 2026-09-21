@@ -57,18 +57,23 @@ def build(release_dir):
     single=[m for m in models if m['hardware_tier']=='single-gpu']
     panels=[('API models',[m for m in models if m['kind']=='API']),('Open weights · single GPU (1 of 2)',single[:10]),
             ('Open weights · single GPU (2 of 2)',single[10:]),('Open weights · multiple GPUs',[m for m in models if m['hardware_tier']=='multi-gpu'])]
-    fig,axes=plt.subplots(4,1,figsize=(10,14));rng=np.random.default_rng(20260910)
-    for ax,(title,group) in zip(axes,panels):
+    panels=[('API models',[m for m in models if m['kind']=='API']),('Open weights, one GPU',single),
+            ('Open weights, two GPUs',[m for m in models if m['hardware_tier']=='multi-gpu'])]
+    panels=[(t,g) for t,g in panels if g]
+    fig,axes=plt.subplots(len(panels),1,figsize=(7,.26*len(models)+1.6),sharex=True,
+                          gridspec_kw={'height_ratios':[len(g)+1 for _,g in panels]})
+    rng=np.random.default_rng(20260910)
+    for ax,(title,group) in zip(np.atleast_1d(axes),panels):
         for i,m in enumerate(group):
-            ys=[scores[m['model'],t] for t in tasks]
-            ax.scatter(i+rng.uniform(-.2,.2,len(ys)),ys,s=12,color='#cccccc',alpha=.4)
-            ax.scatter(i,m['mean_task_f1'],s=100,color=colors[m['model']],edgecolor='#333333',zorder=3)
-            ax.text(i,m['mean_task_f1']+.055,f"{m['mean_task_f1']:.3f}",ha='center',fontsize=9,fontweight='bold')
-        ax.set_xticks(range(len(group)),[names[m['model']] for m in group],rotation=24,ha='right',fontsize=8)
-        ax.set_ylim(0,1.04);ax.set_xlim(-.6,max(len(group)-.4,2.4));ax.set_ylabel('Mean F1 across tasks')
-        ax.set_title(title,loc='left',fontsize=11,fontweight='bold')
-    fig.tight_layout(h_pad=2)
-    save(fig,'fig-mean-f1','Large circles show equal-task mean F1; small gray dots show the {N_TASKS} task scores. All models use the same {N_TEXTS} texts. Panels separate API, single-GPU and multiple-GPU models. The two single-GPU panels continue the same ranking. These are point estimates; uncertainty intervals are in the table.',[dict(model=m['model'],mean_f1=m['mean_task_f1']) for m in models])
+            xs=[scores[m['model'],t] for t in tasks]
+            ax.scatter(xs,i+rng.uniform(-.2,.2,len(xs)),s=8,color='#cccccc',alpha=.45)
+            ax.scatter(m['mean_task_f1'],i,s=55,color=colors[m['model']],edgecolor='#333333',zorder=3)
+            ax.text(1.08,i,f"{m['mean_task_f1']:.3f}",ha='right',va='center',fontsize=8,fontweight='bold')
+        ax.set_yticks(range(len(group)),[names[m['model']] for m in group],fontsize=8)
+        ax.set_ylim(len(group)-.4,-.6);ax.set_xlim(0,1.08)
+        ax.set_title(title,loc='left',fontsize=10,fontweight='bold')
+    np.atleast_1d(axes)[-1].set_xlabel('F1');fig.tight_layout(h_pad=1)
+    save(fig,'fig-mean-f1','The overview above for all models, grouped by access and hardware.',[dict(model=m['model'],mean_f1=m['mean_task_f1']) for m in models])
     groups={'API':[m for m in models if m['kind']=='API'],'Open (single GPU)':single}
     best={t:{g:max(scores[m['model'],t] for m in ms) for g,ms in groups.items()} for t in tasks}
     gaps={t:v['API']-v['Open (single GPU)'] for t,v in best.items()}
@@ -79,7 +84,7 @@ def build(release_dir):
         ax.plot([0,gaps[t]],[i,i],color=c,lw=1);ax.scatter(gaps[t],i,color=c,s=28)
     ax.axvline(0,color='#777777',ls='--',lw=.8);ax.set_yticks(range(n_tasks),[t.replace('_',' ') for t in order],fontsize=8)
     ax.invert_yaxis();ax.set_xlabel('Best API minus best single-GPU open F1');fig.tight_layout()
-    save(fig,'fig-best-local-api-gap','Best API minus best single-GPU open F1 by task. Negative values favor open models (green); positive values favor APIs (gray). Winners are selected after observing results: this is a descriptive upper bound. The two-GPU Qwen3.8 Flash-Next is excluded from this single-GPU comparison.',[dict(task=t,api_minus_open=gaps[t]) for t in order])
+    save(fig,'fig-best-local-api-gap','The task-gap figure above, using every API model and every open model that runs on one GPU.',[dict(task=t,api_minus_open=gaps[t]) for t in order])
     family_order=['Relevance & Harm','Position & Tone','Events & Actions','Claims & Relations','Issues & Topics']
     fig,axes=plt.subplots(3,2,figsize=(13,19));rows=[]
     for ax,family in zip(axes.flat,family_order):
@@ -92,7 +97,7 @@ def build(release_dir):
         ax.set_title(f'{family} ({len(subset)} tasks)',fontsize=11,fontweight='bold',backgroundcolor='#eeeeee')
         rows.extend(dict(family=family,model=m['model'],mean_f1=v) for m,v in zip(models,values))
     axes.flat[-1].axis('off');fig.tight_layout(h_pad=2,w_pad=2)
-    save(fig,'fig-family',f'Mean F1 within the paper’s five annotation types, retaining its original task assignments. These assignments differ from the category selector below. All {len(models)} models appear in overall-score order; the two-GPU model is labeled. Type means are descriptive.',rows)
+    save(fig,'fig-family','The annotation-type figure above for all models.',rows)
     fig,axes=plt.subplots(1,2,figsize=(9,4));rows=[];levels=['Low','Medium','High']
     for ax,use_best,title in zip(axes,[False,True],['All model-task results','Best model per task in each class']):
         for group,c in [('API','#333333'),('Open (single GPU)','#009E73')]:
@@ -106,7 +111,7 @@ def build(release_dir):
             for x,y in zip(xs,means):ax.annotate(f'{y:.2f}',(x,y),xytext=(0,10 if group=='API' else -16),textcoords='offset points',ha='center',fontsize=8)
         ax.set_xticks(range(3),levels);ax.set_ylim(.15,1.02);ax.set_title(title,fontsize=10);ax.set_xlabel('Coding complexity');ax.set_ylabel('F1')
     axes[1].legend(loc='lower left',frameon=False,fontsize=8);fig.tight_layout()
-    save(fig,'fig-complexity','The paper’s complexity rule on the frozen sample: high means at least eight effective labels or multi-label output; medium means at least three effective labels or a prompt of 300 words; otherwise low. Effective labels are exp(entropy) of the 100 gold outcomes, including joint patterns for multi-label tasks. Left: all model-task means. Right: best API and single-GPU open model per task. Lines connect descriptive means.',rows)
+    save(fig,'fig-complexity','The complexity figure above, using every API model and every open model that runs on one GPU.',rows)
     fig,ax=plt.subplots(figsize=(8,4.5))
     for title,marker in [('Binary / 2-class','o'),('3-class','^'),('Many-class / multi-label','s')]:
         selected=[]
@@ -121,7 +126,7 @@ def build(release_dir):
     ax.set_xscale('log');ax.set_xticks([1,2,3,5,10,20],['1','2','3','5','10','20']);ax.minorticks_off()
     ax.set_xlabel('Effective number of labels (log scale)');ax.set_ylabel('Best API minus best single-GPU open F1')
     ax.legend(loc='upper center',bbox_to_anchor=(.5,-.2),ncol=3,frameon=False,fontsize=8);fig.tight_layout()
-    save(fig,'fig-label-structure-gap','Each point is a task. Effective label counts use the frozen gold outcomes. The dashed line marks equal performance; the solid line is the paper’s descriptive linear fit on the log-scaled x-axis. Model selection uses the best observed API and single-GPU open score on each task.',[dict(task=t,effective_labels=tasks[t]['effective_labels'],gap=gaps[t]) for t in tasks])
+    save(fig,'fig-label-structure-gap','Each point is a task: best API score minus best one-GPU open score, against the number of labels in real use. The dashed line marks equal performance; the solid line is a linear fit on the log scale.',[dict(task=t,effective_labels=tasks[t]['effective_labels'],gap=gaps[t]) for t in tasks])
     comparable=defaultdict(list)
     for m in models:
         key=tuple(m.get(k) for k in ['throughput_keyset_sha256','throughput_settings_sha256','throughput_hardware','throughput_items'])
@@ -136,7 +141,7 @@ def build(release_dir):
         ax.annotate(names[m['model']],(x,y),xytext=offset,textcoords='offset points',fontsize=8,
                     arrowprops={'arrowstyle':'-','color':'#999999','lw':.5} if offset==(-90,45) else None)
     ax.set_xscale('log');ax.margins(x=.5,y=.35);ax.set_xlabel('Generation seconds per item (log scale)');ax.set_ylabel(f'Mean F1 across {n_tasks} tasks');fig.tight_layout()
-    note=f'Generation time for {key[3]:,} identical texts on {key[2]}, with matching runtime and concurrency settings. Model load and queue time are excluded. The new runs do not contain the paper’s one-at-a-time versus 10-items-per-prompt comparison. These plots show aggregate generation time per item, not median request latency.'
+    note=f'Mean F1 against generation time per text. All models coded the same {key[3]:,} texts on one RTX PRO 6000 GPU with identical settings; loading and queue time are excluded.'
     save(fig,'fig-speed',note,[dict(model=m['model'],seconds_per_item=1/m['throughput_items_per_second'],mean_f1=m['mean_task_f1']) for m in group])
     group=sorted(group,key=lambda m:-m['throughput_items_per_second']);fig,ax=plt.subplots(figsize=(9,4.5))
     minutes=[1000/m['throughput_items_per_second']/60 for m in group]
@@ -144,7 +149,7 @@ def build(release_dir):
     for i,v in enumerate(minutes):ax.text(v+.01,i,f'{v:.2f}',va='center',fontsize=9)
     ax.set_yticks(range(len(group)),[names[m['model']] for m in group],fontsize=9);ax.invert_yaxis()
     ax.set_xlim(0,max(minutes)*1.2);ax.set_xlabel('Generation minutes per 1,000 items');fig.tight_layout()
-    save(fig,'fig-local-runtime-per-1000',note,[dict(model=m['model'],minutes_per_1000=v) for m,v in zip(group,minutes)])
+    save(fig,'fig-local-runtime-per-1000','Generation minutes per 1,000 texts from the same runs.',[dict(model=m['model'],minutes_per_1000=v) for m,v in zip(group,minutes)])
     featured=[m for m in models if m['model'] in FEATURED_MODELS]
     if {m['model'] for m in featured}!=FEATURED_MODELS:
         raise ValueError('Featured models must all have complete release metrics')
@@ -171,7 +176,7 @@ def build(release_dir):
         ax.set_title(f'{family} ({len(subset)} tasks)',fontsize=10,backgroundcolor='#eeeeee')
         rows.extend(dict(family=family,model=m['model'],mean_f1=v) for m,v in zip(featured,values))
     fig.tight_layout(h_pad=2,w_pad=2)
-    save(fig,'fig-recent-family',f'Mean F1 for the same {len(featured)} selected models within the paper’s five annotation types. Each task receives equal weight within its type. These task assignments differ from the category selector. Hardware details appear in the comparison table. All-model versions are available under More analyses.',rows)
+    save(fig,'fig-recent-family','Mean F1 within the five annotation types used in the paper, with each task weighted equally. These types are not the categories in the task selector.',rows)
     manifest['featured_figures']=manifest['figures'][-2:]
     manifest['figures']=manifest['figures'][:-2]
     manifest['featured_models']=sorted(FEATURED_MODELS)
