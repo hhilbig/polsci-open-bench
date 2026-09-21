@@ -71,7 +71,7 @@ def test_static_table_and_pending():
     assert '0.600' in page and '0.03%' in page
     assert '$0.500 per 1,000 texts' in page and 'Provider billing record' in page
     assert 'Pilot queued' in page and 'Local preview, not published' in page
-    assert 'The open-weight models are a selection, not a complete list.' in page
+    assert 'The open-weight models are a selection rather than a complete list.' in page
     assert '<noscript>' in page and 'name="robots" content="noindex"' in page
 
 def test_deepseek_rows_label_version_and_observed_run_dates():
@@ -238,7 +238,7 @@ def test_build_preserves_aggregate_download_and_values():
         with (output/'downloads/task_definitions.csv').open(newline='') as handle:
             assert json.loads(next(csv.DictReader(handle))['labels'])==['a','b']
         assert '2000 draws' in (output/'downloads/methodology.md').read_text()
-        assert 'The open-weight models are a selection, not a complete list' in (output/'downloads/methodology.md').read_text()
+        assert 'models are a selection rather than a complete list' in (output/'downloads/methodology.md').read_text()
         for name in ['task_definitions.csv','manifest.json','methodology.md']:
             assert f'downloads/{name}' in (output/'index.html').read_text()
         assert '0.600' in (output/'index.html').read_text()

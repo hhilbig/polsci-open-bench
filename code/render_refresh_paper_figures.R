@@ -50,7 +50,7 @@ p <- ggplot()+geom_jitter(data=scores_h,aes(headline_f1,model),width=0,height=.1
  scale_x_continuous(limits=c(0,1.08),breaks=seq(0,1,.2))+
  labs(y=NULL,x='F1')+theme_hanno(fontsize=10.5)+
  theme(plot.margin=margin(5.5,12,5.5,5.5))
-save_plot(p,'fig-recent-mean-f1',sprintf('Each row is one model. The large circle is its mean F1 over the %d tasks, printed on the right; faint dots are the single tasks. *Flash-Next runs on two GPUs.',n_tasks),models |> transmute(model=as.character(model),mean_f1=mean_task_f1),6.5,.21*model_count+.8)
+save_plot(p,'fig-recent-mean-f1',sprintf('Each row shows one model. Large circles show mean F1 across the %d tasks, printed on the right, and small gray dots show the score on each task. *Qwen3.8 Flash-Next runs on two GPUs.',n_tasks),models |> transmute(model=as.character(model),mean_f1=mean_task_f1),6.5,.21*model_count+.8)
 families <- c('Relevance & Harm','Position & Tone','Events & Actions','Claims & Relations','Issues & Topics')
 questions <- c('Is it relevant or harmful?','What position or tone does it express?','What action or event is described?','What claim or relationship is asserted?','What issue is this about?')
 facet_labels <- setNames(paste0(families,'\n"',questions,'"'),families)
@@ -63,7 +63,7 @@ p <- ggplot(family,aes(model,mean_f1,fill=model))+geom_col(width=.75)+geom_text(
  scale_x_discrete(labels=labels)+scale_y_continuous(limits=c(0,1.05),expand=expansion(mult=c(0,.05)))+
  scale_fill_manual(values=colors,guide='none')+labs(x=NULL,y='Mean F1 within type')+theme_hanno(fontsize=10.5)+
  theme(axis.text.x=element_blank(),axis.ticks.x=element_blank(),strip.background=element_rect(fill='grey94',color='grey45',linewidth=.35),strip.text=element_text(face='bold',size=8))
-save_plot(p,'fig-recent-family',sprintf('Mean F1 for the %s selected models within the five annotation types used in the paper, with each task weighted equally. These types are not the categories in the task selector. *Flash-Next runs on two GPUs.',model_count),family |> transmute(model=as.character(model),family=as.character(paper_family),mean_f1),8.5,max(8.2,.60*model_count))
+save_plot(p,'fig-recent-family',sprintf('Mean F1 for the %s selected models within the five annotation types used in the paper, with each task weighted equally. These types differ from the categories in the task selector below. *Qwen3.8 Flash-Next runs on two GPUs.',model_count),family |> transmute(model=as.character(model),family=as.character(paper_family),mean_f1),8.5,max(8.2,.60*model_count))
 hardware <- setNames(models$provenance$hardware_tier,as.character(models$model))
 comparison <- scores |> filter(hardware[as.character(model)] %in% c('api','single-gpu')) |>
  mutate(group=if_else(hardware[as.character(model)]=='api','API','Open (single GPU)'))
@@ -78,7 +78,7 @@ p <- ggplot(gap,aes(y=reorder(task,gap)))+geom_vline(xintercept=0,color='grey45'
  scale_y_discrete(labels=function(x)gsub('_',' ',x))+scale_fill_manual(values=c('API'='#333333','Open (single GPU)'='#009E73'),name=NULL)+
  scale_color_manual(values=c('API'='#333333','Open (single GPU)'='#009E73'),guide='none')+
  labs(x='Best API minus best single-GPU open F1',y=NULL)+theme_hanno(fontsize=10)+theme(legend.position='bottom')
-save_plot(p,'fig-recent-task-gap',sprintf('Best of %s API models minus best of %s one-GPU open models on each task. Green points below zero are tasks where an open model did better. The best model is picked after seeing the results, so the gaps describe the best case for each group.',api_count,open_count),gap |> select(task,gap),7.5,8.5)
+save_plot(p,'fig-recent-task-gap',sprintf('Each row shows one task. Points show the best score among %s API models minus the best score among %s open models that run on one GPU. Negative values (green) mark tasks where an open model performs better. Because the best model is chosen after observing the results, these gaps describe the best case for each group.',api_count,open_count),gap |> select(task,gap),7.5,8.5)
 complexity <- bind_rows(comparison |> group_by(complexity,group) |> summarise(mean_f1=mean(headline_f1),.groups='drop') |> mutate(panel='All model-task results'),
  best |> group_by(complexity,group) |> summarise(mean_f1=mean(f1),.groups='drop') |> mutate(panel='Best model per task in each class')) |>
  mutate(complexity=factor(complexity,levels=c('Low','Medium','High')))
@@ -86,6 +86,6 @@ p <- ggplot(complexity,aes(complexity,mean_f1,color=group,group=group))+geom_lin
  facet_wrap(~panel,ncol=2)+scale_color_manual(values=c('API'='#333333','Open (single GPU)'='#009E73'),name=NULL)+
  scale_y_continuous(limits=c(0,1))+labs(x='Coding complexity',y='Mean F1')+theme_hanno(fontsize=10)+
  theme(legend.position='bottom',strip.background=element_rect(fill='grey94',color='grey45',linewidth=.35),strip.text=element_text(face='bold',size=8))
-save_plot(p,'fig-recent-complexity',sprintf('F1 by coding complexity for the same %s API and %s one-GPU open models. High: several labels per text, or at least eight labels in real use. Medium: at least three labels in real use, or a prompt of 300 words or more. Low: all other tasks. Labels in real use is the exponential of the entropy of the gold labels. Left: all model-task scores. Right: the best model of each group on each task.',api_count,open_count),complexity,8.5,3.5)
+save_plot(p,'fig-recent-complexity',sprintf('Tasks grouped by coding complexity, following the paper, for the same %s API and %s single-GPU open models. High-complexity tasks allow several labels per text or use at least eight labels in practice. Medium-complexity tasks use at least three labels or have a prompt of 300 words or more. The remaining tasks are low complexity. The number of labels in practice is the exponential of the entropy of the gold labels, which counts rare labels less than common ones. The left panel averages all model-task scores; the right panel uses the best model of each group on each task.',api_count,open_count),complexity,8.5,3.5)
 manifest$featured_figures <- entries
 write_json(manifest,file.path(out,'figure-data.json'),auto_unbox=TRUE,pretty=TRUE,digits=NA,null='null')
