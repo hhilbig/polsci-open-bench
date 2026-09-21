@@ -16,15 +16,13 @@
   [`output/run_registry.jsonl`](output/run_registry.jsonl), then refresh
   [`docs/run_status.md`](docs/run_status.md).
 
-## Open Decisions (recorded 2026-09-19)
+## Decisions (recorded 2026-09-19, updated 2026-09-20)
 
-- **`yan_bernhard_offensive` needs API and Hive runs to join the headline panel.**
-  It currently has results from four Hive open-weight checkpoints only, so it
-  carries no local-versus-API comparison and sits in `tasks_ext/` rather than
-  `tasks/`. Completing it needs the four commercial API models, which is paid
-  inference and requires a cost estimate and approval first, plus the remaining
-  open-weight checkpoints on Hive, which is free. Until then it is reported as an
-  open-weight extension, not part of the 33-task headline.
+- **`yan_bernhard_offensive` stays an open-weight extension (decided 2026-09-20).**
+  All four Hive checkpoints completed; predictions are on Hive under
+  `polsci-taskext-20260918/output/sidecar/task_ext_20260918/`. No API runs, so it
+  carries no local-versus-API comparison and stays in `tasks_ext/`, outside the
+  33-task headline. Reversible if API runs are approved later.
 
 - **`halterman_ccc_protest` stays held out and the authors will not be contacted.**
   The task cannot be rebuilt from public data because the pairing of Crowd
@@ -33,12 +31,11 @@
   `status: excluded` with the evidence, so the decision is reversible if the
   pairing is ever published.
 
-- **The refresh configs pin `benchmark_commit: 3c7ad07`**, so
-  `tests/test_refresh_backfills.py::test_actual_refresh_harmony_run_and_resume`
-  fails against any newer HEAD. That is the pin working as designed: the refresh
-  panels genuinely cannot be reproduced from current HEAD now that the task set
-  and the metric have changed. Either re-pin the configs and rebuild those panels,
-  or declare the refresh track frozen at `3c7ad07`.
+- **The refresh track is frozen at `3c7ad07` (decided 2026-09-20).** The refresh
+  configs pin `benchmark_commit: 3c7ad07`, and the Hive panels cannot be reproduced
+  from later HEADs. No further refresh inference is planned; the model roster is
+  frozen. The run-and-resume test mocks the pin, which is tested separately in
+  `tests/test_refresh_hive_selection.py`.
 
 ## Benchmark Extensions
 
