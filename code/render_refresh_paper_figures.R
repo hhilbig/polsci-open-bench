@@ -51,6 +51,7 @@ scores <- release$tasks |> select(model, task, headline_f1) |>
 stopifnot(nrow(scores) == nrow(models) * n_tasks, !anyNA(scores$headline_f1))
 
 entries <- list(featured = list(), more = list())
+all_ids <- models$model
 save_figure <- function(p, stem, title, caption, values, width, height, section) {
   for (ext in c("svg", "pdf", "png")) {
     ggsave(file.path(out, paste0(stem, ".", ext)), p, width = width, height = height,
@@ -78,9 +79,8 @@ overview <- function(ids, label_col) {
     theme_clara()
 }
 overview_caption <- sprintf(paste(
-  "Each row shows one model. Points show mean F1 across the %d tasks, printed on the right,",
-  "and grey bars show 95%% intervals from resampling tasks. Blue marks open-weight models",
-  "and grey marks API models."), n_tasks)
+  "Each row shows one model. Points mark mean F1 across the %d tasks, and grey bars mark 95%%",
+  "intervals from resampling tasks. Open-weight models are blue and API models grey."), n_tasks)
 
 p <- overview(featured, "short_label")
 save_figure(p, "fig-recent-mean-f1", "Overall performance", overview_caption,
@@ -107,12 +107,20 @@ p <- ggplot(costs, aes(cost_per_1k_items, mean_task_f1)) +
   labs(x = "Cost per 1,000 texts at standard prices (USD, log scale)",
        y = sprintf("Mean F1 across %d tasks", n_tasks)) +
   theme_clara()
+top_api <- costs |> slice_max(mean_task_f1, n = 1)
+cheap_api <- costs |> slice_min(cost_per_1k_items, n = 1)
+api_above <- sum(costs$mean_task_f1 > best_open$mean_task_f1)
 save_figure(p, "fig-cost-f1", "Cost and performance",
             sprintf(paste(
-              "Each point shows one API model: its mean F1 across the %d tasks against its cost per",
-              "1,000 texts at standard prices in September 2026. Hollow points mark costs estimated from",
-              "token counts rather than taken from provider bills. The dashed line marks the best open-weight",
-              "model that runs on one GPU, which has no per-text charge."), n_tasks),
+              "Higher prices buy small gains in accuracy. %s costs about %.0f times as much per text as %s",
+              "and scores %.3f higher. %s of the %d API models score above the best open-weight model that",
+              "runs on one GPU (dashed line), which has no per-text charge. Costs are per 1,000 texts at",
+              "standard prices in September 2026; hollow points are estimated from token counts rather than",
+              "taken from provider bills."),
+              top_api$short_label, top_api$cost_per_1k_items / cheap_api$cost_per_1k_items, cheap_api$short_label,
+              top_api$mean_task_f1 - cheap_api$mean_task_f1,
+              c("None", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven")[api_above + 1],
+              nrow(costs)),
             costs |> select(model, cost_per_1k_items, mean_task_f1, estimated), 7, 4.6, "featured")
 
 # Best API score minus best one-GPU open score, task by task.
@@ -137,14 +145,18 @@ task_gap <- function(ids) {
 gap_counts <- function(ids) {
   sum(models$model %in% ids & models$hardware_tier == "api")
 }
-p <- task_gap(featured)
+# API and open comparisons use every one-GPU open model, not only the featured ones.
+p <- task_gap(all_ids)
+gap_tasks <- scores |> filter(hardware_tier %in% c("api", "single-gpu")) |>
+  group_by(task, group) |> summarise(f1 = max(headline_f1), .groups = "drop") |>
+  pivot_wider(names_from = group, values_from = f1)
 save_figure(p, "fig-recent-task-gap", "API and open models by task",
             sprintf(paste(
-              "Each row shows one task. Points show the best score among the %d API models minus the best",
-              "score among the %d open-weight models that run on one GPU. Blue points left of zero mark",
-              "tasks where an open model performs better. Because the best model is chosen after observing",
-              "the results, these gaps describe the best case for each group."),
-              gap_counts(featured), sum(models$model %in% featured & models$hardware_tier == "single-gpu")),
+              "Each row shows one task. Points show the best API score minus the best score among the %d",
+              "open-weight models that run on one GPU. An open model matches or beats the best API model on",
+              "%d of the %d tasks (blue points)."),
+              sum(models$hardware_tier == "single-gpu"),
+              sum(gap_tasks$`Open weights` >= gap_tasks$API), n_tasks),
             NULL, 7, 7.8, "featured")
 
 # Annotation types as small multiples, with models in the same overall order in every panel.
@@ -169,8 +181,8 @@ p <- family_plot(featured, "short_label", 3)
 save_figure(p, "fig-recent-family", "Performance by annotation type",
             paste(
               "Mean F1 within the five annotation types used in the paper, with each task weighted equally.",
-              "Models appear in the same order in every panel, ranked by their mean across all tasks.",
-              "These types differ from the categories in the task selector below."),
+              "Models appear in the same order in every panel, ranked by their overall mean.",
+              "These types differ from the categories in the task selector."),
             NULL, 8.5, 0.34 * length(featured) + 1.2, "featured")
 
 # Coding complexity: all scores and the best model per task, API against open.
@@ -196,52 +208,22 @@ complexity_plot <- function(ids) {
     labs(x = "Coding complexity", y = "Mean F1") +
     theme_clara()
 }
-complexity_caption <- paste(
-  "Tasks grouped by coding complexity, following the paper. High-complexity tasks allow several",
-  "labels per text or use at least eight labels in practice; medium-complexity tasks use at least three",
-  "labels or have a prompt of 300 words or more; the remaining tasks are low complexity. The number of",
-  "labels in practice is the exponential of the entropy of the gold labels, which counts rare labels",
-  "less than common ones. Open models are those that run on one GPU.")
-p <- complexity_plot(featured)
+complexity_caption <- sprintf(paste(
+  "The gap between API and open models grows with coding complexity. On the %d low-complexity tasks,",
+  "the best open model on each task scores as high as the best API model; on medium- and",
+  "high-complexity tasks it trails by about 0.04 F1. High-complexity tasks allow several labels per",
+  "text or use at least eight labels in practice, and medium-complexity tasks use at least three labels",
+  "or have a prompt of 300 words or more. The number of labels in practice is the exponential of the",
+  "entropy of the gold labels, which counts rare labels less than common ones."),
+  sum(meta$complexity == "Low"))
+p <- complexity_plot(all_ids)
 save_figure(p, "fig-recent-complexity", "Coding complexity", complexity_caption, NULL, 7.5, 3.4, "featured")
 
 # Further figures: every model.
-all_ids <- models$model
 p <- overview(all_ids, "label")
 save_figure(p, "fig-mean-f1", "Overall performance, all models", overview_caption,
             models |> select(model, mean_task_f1, task_ci_low, task_ci_high),
             7.5, 0.22 * length(all_ids) + 0.9, "more")
-p <- task_gap(all_ids)
-save_figure(p, "fig-best-local-api-gap", "API and open models by task, all models",
-            "Same as the task-gap figure above, for every API model and every open model that runs on one GPU.",
-            NULL, 7, 7.8, "more")
-p <- family_plot(all_ids, "label", 3)
-save_figure(p, "fig-family", "Performance by annotation type, all models",
-            "Same as the annotation-type figure above, for all models.",
-            NULL, 10, 0.3 * length(all_ids) + 1.2, "more")
-p <- complexity_plot(all_ids)
-save_figure(p, "fig-complexity", "Coding complexity, all models",
-            "Same as the complexity figure above, for every API model and every open model that runs on one GPU.",
-            NULL, 7.5, 3.4, "more")
-
-# Label structure: the task gap against the number of labels in practice.
-structure <- scores |> filter(hardware_tier %in% c("api", "single-gpu")) |>
-  group_by(task, effective_labels, group) |> summarise(f1 = max(headline_f1), .groups = "drop") |>
-  pivot_wider(names_from = group, values_from = f1) |> mutate(gap = API - `Open weights`)
-p <- ggplot(structure, aes(effective_labels, gap)) +
-  geom_hline(yintercept = 0, color = "grey70", linetype = "dashed", linewidth = 0.4) +
-  geom_smooth(method = "lm", formula = y ~ x, se = FALSE, color = CLARA_GREY, linewidth = 0.6) +
-  geom_point(color = CLARA_DARK, size = 2) +
-  scale_x_log10(breaks = c(1, 2, 3, 5, 10, 20)) +
-  labs(x = "Number of labels in practice (log scale)", y = "Best API F1 minus best one-GPU open F1") +
-  theme_clara()
-save_figure(p, "fig-label-structure-gap", "Label structure",
-            paste(
-              "Each point shows one task: the best API score minus the best score among open models that run",
-              "on one GPU, against the number of labels in practice. The dashed line marks equal performance,",
-              "and the solid line is a linear fit on the log scale."),
-            structure |> select(task, effective_labels, gap), 6.5, 4, "more")
-
 # Speed of the open models that ran on identical texts and settings.
 tp <- bind_rows(lapply(manifest$throughput$models, as_tibble)) |>
   left_join(models |> select(model, short_label), by = "model")
@@ -252,25 +234,15 @@ p <- ggplot(tp, aes(seconds_per_item, mean_f1)) +
   scale_x_log10() +
   labs(x = "Generation seconds per text (log scale)", y = sprintf("Mean F1 across %d tasks", n_tasks)) +
   theme_clara()
+minutes <- tp$seconds_per_item * 1000 / 60
 speed_caption <- sprintf(paste(
-  "Each point shows one open-weight model: mean F1 against generation time per text. All models coded",
-  "the same %s texts on one RTX PRO 6000 GPU with identical settings. Load and queue times are excluded."),
-  format(manifest$throughput$items, big.mark = ","))
+  "Each point shows one open-weight model: mean F1 against generation time per text. The %s models",
+  "coded the same %s texts on one RTX PRO 6000 GPU with identical settings, and they need between",
+  "%.1f and %.1f minutes per 1,000 texts. Load and queue times are excluded."),
+  tolower(c("None", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten")[nrow(tp) + 1]),
+  format(manifest$throughput$items, big.mark = ","), min(minutes), max(minutes))
 save_figure(p, "fig-speed", "Quality and generation time", speed_caption,
             tp |> select(model, seconds_per_item, mean_f1), 7, 4.4, "more")
-runtime <- tp |> mutate(minutes = seconds_per_item * 1000 / 60) |> arrange(minutes) |>
-  mutate(name = factor(short_label, levels = rev(short_label)))
-p <- ggplot(runtime, aes(minutes, name)) +
-  geom_segment(aes(x = 0, xend = minutes, yend = name), color = CLARA_GUIDE, linewidth = 0.9) +
-  geom_point(color = CLARA_BLUE, size = 2.2) +
-  geom_text(aes(label = sprintf("%.1f", minutes)), hjust = -0.5, size = 3, color = "grey20") +
-  scale_x_continuous(expand = expansion(mult = c(0, 0.12))) +
-  labs(x = "Generation minutes per 1,000 texts", y = NULL) +
-  theme_clara()
-save_figure(p, "fig-local-runtime-per-1000", "Generation time per 1,000 texts",
-            "Generation minutes per 1,000 texts, from the same runs as the previous figure.",
-            runtime |> select(model, minutes), 6.5, 0.3 * nrow(runtime) + 1, "more")
-
 manifest$featured_figures <- entries$featured
 manifest$figures <- entries$more
 write_json(manifest, file.path(out, "figure-data.json"), auto_unbox = TRUE, pretty = TRUE,

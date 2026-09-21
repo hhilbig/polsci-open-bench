@@ -51,7 +51,8 @@ def test_page_has_no_ranking_tables_and_a_short_task_table():
     assert '<option value="older-model">Older model</option>' in page
     assert page.index('value="older-model"')<page.index('value="example"')
     assert 'rows.slice(0,5)' in preview.JS
-    assert '<details class="disclosure" id="methods">' in page and '<h2 id="downloads">' in page
+    assert '<details class="disclosure" id="methods">' in page and '<h2 id="hardware">Where the models ran</h2>' in page
+    assert 'id="downloads"' not in page and 'github.com/hhilbig/polsci-open-bench' in page
 
 def test_static_page_and_pending():
     page=preview.render(data())
@@ -156,7 +157,7 @@ def test_no_javascript_fallbacks():
         root=Path(folder);(root/'release.json').write_text(json.dumps(release))
         page=(preview.build(root)/'index.html').read_text()
         assert '<details class="class-support-details"><summary>Class support and class F1 for the compared model</summary>' in page
-        assert 'Task and class results are in the downloads.' in page
+        assert 'The task selector requires JavaScript.' in page
         assert 'that zero says nothing about the model' in page
         assert 'F1 of 0 by convention' in (root/'preview/llm-benchmark/downloads/methodology.md').read_text()
 
@@ -177,8 +178,10 @@ def test_build_preserves_aggregate_download_and_values():
             assert json.loads(next(csv.DictReader(handle))['labels'])==['a','b']
         assert '2000 draws' in (output/'downloads/methodology.md').read_text()
         assert 'models are a selection rather than a complete list' in (output/'downloads/methodology.md').read_text()
+        # The files are still written and verified, but the page no longer links to them.
         for name in ['task_definitions.csv','manifest.json','methodology.md']:
-            assert f'downloads/{name}' in (output/'index.html').read_text()
+            assert (output/'downloads'/name).is_file()
+            assert f'downloads/{name}' not in (output/'index.html').read_text()
         assert '0.600' in (output/'index.html').read_text()
         first={p.name:p.read_bytes() for p in (output/'downloads').iterdir()};first['index.html']=(output/'index.html').read_bytes();preview.build(root)
         assert first=={**{p.name:p.read_bytes() for p in (output/'downloads').iterdir()},'index.html':(output/'index.html').read_bytes()}
@@ -198,10 +201,6 @@ def test_build_preserves_aggregate_download_and_values():
         sitemap.write_text(sitemap_original)
         page_file=output/'index.html'
         page_original=page_file.read_text()
-        page_file.write_text(page_original.replace('href="downloads/release.json"',
-                                              'href="downloads/old-release.json"',1))
-        with unittest.TestCase().assertRaisesRegex(ValueError,'aggregate download link'):
-            preview.verify(root)
         page_file.write_text(page_original.replace('href="https://www.hannohilbig.com/llm-benchmark/"',
                                                    'href="https://www.hannohilbig.com/old-benchmark/"',1))
         with unittest.TestCase().assertRaisesRegex(ValueError,'Preview metadata'):

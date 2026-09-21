@@ -41,7 +41,7 @@ Before:
 After:
 > Can researchers code political science texts with open-weight language models instead of commercial APIs? This page compares {31} models, {11} commercial APIs and {20} open-weight models, on the same {3,300} texts: 100 from each of {33} coding tasks drawn from political science papers and public datasets.
 
-**HH:**
+**HH:** Sure 
 
 ## 2. Results intro: cut the second sentence
 
@@ -54,7 +54,7 @@ Before:
 After:
 > The figures below show {18} models: all API models, the most recent open-weight models and two Llama 70B models as reference points.
 
-**HH:**
+**HH:** sure 
 
 ## 3. Caption, overall performance
 
@@ -67,7 +67,7 @@ Before:
 After:
 > Each row shows one model. Points mark mean F1 across the 33 tasks, and grey bars mark 95% intervals from resampling tasks. Open-weight models are blue and API models grey.
 
-**HH:**
+**HH:** sure 
 
 ## 4. Caption, cost and performance: state the finding first
 
@@ -80,7 +80,7 @@ Before:
 After:
 > Higher prices buy small gains in accuracy. Claude Opus 5 costs about 220 times as much per text as Jev 1.13 and scores 0.054 higher. Seven of the 11 API models score above the best open-weight model that runs on one GPU (dashed line), which has no per-text charge. Costs are per 1,000 texts at standard prices in September 2026; hollow points are estimated from token counts rather than taken from provider bills.
 
-**HH:**
+**HH:** Sure 
 
 ## 5. Task-gap figure: compare against all one-GPU open models (substantive)
 
@@ -104,11 +104,11 @@ Before (caption):
 > Each row shows one task. Points show the best score among the 11 API models minus the best score among the 6 open-weight models that run on one GPU. Blue points left of zero mark tasks where an open model performs better. Because the best model is chosen after observing the results, these gaps describe the best case for each group.
 
 After (caption):
-> Each row shows one task. Points show the best API score minus the best score among the 19 open-weight models that run on one GPU. An open model matches or beats the best API model on 14 of the 33 tasks (blue points). Because the best model is chosen after observing the results, these gaps describe the best case for each group.
+> Each row shows one task. Points show the best API score minus the best score among the 19 open-weight models that run on one GPU. An open model matches or beats the best API model on 14 of the 33 tasks (blue points). 
 
 NOTE: this changes which models the figure uses, not only its wording.
 
-**HH:**
+**HH:** made edits, good
 
 ## 6. Caption, annotation types
 
@@ -121,7 +121,7 @@ Before:
 After:
 > Mean F1 within the five annotation types used in the paper, with each task weighted equally. Models appear in the same order in every panel, ranked by their overall mean. These types differ from the categories in the task selector.
 
-**HH:**
+**HH:** Sure 
 
 ## 7. Caption, coding complexity: state the finding first
 
@@ -135,7 +135,7 @@ Before:
 After:
 > The gap between API and open models grows with coding complexity. On the 18 low-complexity tasks, the best open model on each task scores as high as the best API model; on medium- and high-complexity tasks it trails by about 0.04 F1. High-complexity tasks allow several labels per text or use at least eight labels in practice, and medium-complexity tasks use at least three labels or have a prompt of 300 words or more. The number of labels in practice is the exponential of the entropy of the gold labels, which counts rare labels less than common ones.
 
-**HH:**
+**HH:** Sure 
 
 ## 8. Cut three duplicate figures from the collapsed section
 
@@ -152,7 +152,7 @@ Cut:
 Keep "Overall performance, all models", which is now the only place the full
 ranking of 31 models appears.
 
-**HH:**
+**HH:** sure 
 
 ## 9. Cut the label-structure figure
 
@@ -160,7 +160,7 @@ ranking of 31 models appears.
 labels, which the complexity figure already shows more readably. The per-task
 values stay in the figure JSON download.
 
-**HH:**
+**HH:** Sure 
 
 ## 10. Cut the runtime-per-1,000 figure and move its range into the speed caption
 
@@ -173,7 +173,7 @@ Before (speed caption):
 After (speed caption):
 > Each point shows one open-weight model: mean F1 against generation time per text. The seven models coded the same 2,142 texts on one RTX PRO 6000 GPU with identical settings, and they need between 0.6 and 1.4 minutes per 1,000 texts. Load and queue times are excluded.
 
-**HH:**
+**HH:** Sure 
 
 ## 11. Intro to the collapsed section
 
@@ -190,7 +190,7 @@ After:
 >
 > The first figure repeats the overview for all 31 models. The second compares the speed of the seven open-weight models that ran under identical settings.
 
-**HH:**
+**HH:** sure 
 
 ## 12. Excluded models: cut the "Pending" sentence
 
@@ -201,9 +201,9 @@ Before:
 > The models below are not ranked. Not evaluated means that I could not run the model, for the reason listed. Excluded means that a run finished but violated the benchmark's rules. Pending means that the run is not finished. None of these categories implies a score of zero.
 
 After:
-> The models below are not ranked. Not evaluated means that I could not run the model, for the reason listed. Excluded means that a run finished but violated the benchmark's rules. Neither category implies a score of zero.
+> The models below are not ranked. Not evaluated means that I could not run the model, for the reason listed. Excluded means that a run finished but violated the benchmark's rules.
 
-**HH:**
+**HH:** Sure , made edit 
 
 ## 13. New section: where the models ran (before Methods, visible)
 
@@ -220,7 +220,7 @@ New text, under the heading "Where the models ran":
 >
 > Two groups of models were not tested. I did not run the API models with extended reasoning, which raises cost and response time, and I could not run the largest open-weight models (Kimi K3, GLM-5.3 and MiniMax M3) on this hardware. The top scores on this page may therefore understate what the strongest configurations of these models reach.
 
-**HH:**
+**HH:** Sure 
 
 ## 14. Methods: cut "Settings"
 
@@ -232,7 +232,7 @@ Before:
 
 After: *(paragraph removed)*
 
-**HH:**
+**HH:** I dont want this section  
 
 ## 15. Downloads paragraph
 
@@ -244,4 +244,41 @@ Before:
 After:
 > The downloads contain aggregate scores and the run records for each model, including model versions, quantization and runtime settings. I do not include the texts or item-level predictions while redistribution rights are checked.
 
-**HH:**
+**HH:** I dont want downloads here
+
+---
+
+## Implementation record (2026-09-21)
+
+**Applied:** items 1–13 as proposed, with your edits to items 5 and 12 used
+verbatim:
+- the last sentence of the item 5 caption is removed;
+- the "Neither category…" sentence in item 12 is removed.
+
+**Item 14:** only the "Settings" paragraph is removed (your answer to the
+follow-up question). Methods keeps Sample, Scoring and Limits.
+
+**Item 15:** the whole Downloads section is removed (your answer to the
+follow-up question):
+- The link to the code on GitHub moved to the footer.
+- The "Downloads" navigation link is replaced by "Hardware", which points to
+  the new section.
+- The task selector's fallback text no longer mentions the downloads.
+- The download files are still written and checked against the release, but the
+  page no longer links to them.
+
+**Deviations from the proposed text:**
+- **Computed from the data:** the counts and ratios in the cost, task-gap and
+  speed captions (220 times, 0.054, seven of 11, 19 models, 14 of 33, 0.6–1.4
+  minutes) and the model counts in the intro. They are not typed in, so they
+  update if the release changes. The rendered values equal the proposed ones.
+- **Typed in:** "about 0.04 F1" in the complexity caption stays fixed text.
+- **Item 11:** the model counts in the new summary line and intro come from the
+  release.
+
+**Verification:**
+- The page rebuilds, and `--verify-only` passes (31 models, 33 tasks).
+- The overview figures' means match the release.
+- The refresh preview, release and audit tests pass.
+- In the browser: 7 figures, all images load, no horizontal scroll, and the
+  task selector and paired comparison work.
