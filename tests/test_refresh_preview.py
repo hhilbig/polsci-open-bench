@@ -12,30 +12,28 @@ def test_paper_figures_require_matching_release_and_assets():
         root=Path(directory)
         assert preview.paper_figures(root,{})==''
         folder=root/'figures';folder.mkdir()
-        manifest={'release_sha256':'stale','figures':[]}
+        manifest={'release_sha256':'stale','figures':[],'featured_figures':[]}
         (folder/'figure-data.json').write_text(json.dumps(manifest))
         with unittest.TestCase().assertRaisesRegex(ValueError,'stale'):
             preview.paper_figures(root,{})
         manifest['release_sha256']=hashlib.sha256(b'{}').hexdigest()
-        manifest['figures']=[{'file':f'fig-test-{i}','caption':'Matched results.'} for i in range(7)]
+        manifest['featured_models']=sorted(preview.FEATURED_MODELS)
+        manifest['featured_figures']=[{'file':f'fig-top-{i}','title':f'Top {i}','caption':'Matched results.'} for i in range(5)]
+        manifest['figures']=[{'file':f'fig-more-{i}','title':f'More {i}','caption':'Matched results.'} for i in range(7)]
         (folder/'figure-data.json').write_text(json.dumps(manifest))
         with unittest.TestCase().assertRaisesRegex(ValueError,'Missing figure'):
             preview.paper_figures(root,{})
-        for row in manifest['figures']:
+        for row in manifest['featured_figures']+manifest['figures']:
             for ext in ['svg','pdf']:
                 (folder/(row['file']+'.'+ext)).write_text('test')
         result=preview.paper_figures(root,{})
-        assert result.count('<figure ')==7
-        assert result.count('tabindex="0"')==7
-        assert 'figure-data.json' in result
-        manifest['featured_models']=sorted(preview.FEATURED_MODELS)
-        manifest['featured_figures']=manifest['figures'][:4]
-        (folder/'figure-data.json').write_text(json.dumps(manifest))
-        result=preview.paper_figures(root,{})
         default,expanded=result.split('<details class="disclosure" id="more-analyses">')
-        assert default.count('<figure ')==4
-        assert expanded.count('<figure ')==7
-        assert 'API and open models by task' in default and 'Coding complexity' in default
+        assert default.count('<figure ')==5 and '<h3>Top 0</h3>' in default
+        assert expanded.count('<figure ')==7 and 'figure-data.json' in expanded
+        manifest['featured_models']=['other-model']
+        (folder/'figure-data.json').write_text(json.dumps(manifest))
+        with unittest.TestCase().assertRaisesRegex(ValueError,'Featured figure selection'):
+            preview.paper_figures(root,{})
 
 spec=importlib.util.spec_from_file_location('preview',Path(__file__).parents[1]/'code/build_refresh_preview.py')
 preview=importlib.util.module_from_spec(spec);spec.loader.exec_module(preview)
@@ -44,37 +42,24 @@ def data():
     return dict(release_id='test',status='pending',updated_at='2026-09-14',models=[dict(model='example',label='Example',n=3400,tasks=34,kind='API',hardware_tier='api',mean_task_f1=.6,malformed=1,cost_usd_upper=2,cost_per_1k_items=.5,cost_basis='provider_ledger')],task_scores=[],class_scores=[],candidates=[dict(model='Open candidate',status='pending',reason='Pilot queued')])
 
 
-def test_compact_view_keeps_full_comparison_and_fixed_shortlist():
+def test_page_has_no_ranking_tables_and_a_short_task_table():
     source=data()
-    template=source['models'][0]
-    source['models']=[dict(template,model=name,label=name,observed_run_dates=['2026-09-16'])
-                      for name in sorted(preview.FEATURED_MODELS)]
-    source['models'].append(dict(template,model='older-model',label='Older model',mean_task_f1=.99))
-    original=preview.render(source)
-    page=preview.compact_page(original,source)
-    import re
-    featured=re.search(r'<tbody id="featured-rows">(.*?)</tbody>',page).group(1)
-    assert featured.count('<tr>')==len(preview.FEATURED_MODELS)
-    assert 'llama3_1_70b_instruct_fp8_dynamic_full34' in featured
-    assert 'llama3_3_70b_instruct_fp8_dynamic' in featured
-    assert 'older-model' not in featured
-    assert f'Show all {len(preview.FEATURED_MODELS)+1} models' in page
-    assert '<details class="disclosure" id="all-models">' in page
-    assert '<input type="checkbox" id="task-all">' in page
-    assert re.search(r'<tbody id="model-rows">(.*?)</tbody>',page).group(1)==re.search(r'<tbody id="model-rows">(.*?)</tbody>',original).group(1)
-    assert '<details class="disclosure" id="methods">' in page
-    assert '<h2 id="downloads">' in page
+    source['models'].append(dict(source['models'][0],model='older-model',label='Older model',mean_task_f1=.99))
+    page=preview.render(source)
+    assert 'model-rows' not in page and 'featured-rows' not in page
+    assert '<caption>Five best models on the selected task</caption>' in page
+    assert '<option value="older-model">Older model</option>' in page
+    assert page.index('value="older-model"')<page.index('value="example"')
+    assert 'rows.slice(0,5)' in preview.JS
+    assert '<details class="disclosure" id="methods">' in page and '<h2 id="downloads">' in page
 
-def test_static_table_and_pending():
+def test_static_page_and_pending():
     page=preview.render(data())
-    assert '<tbody id="model-rows"><tr' in page
-    assert '0.600' in page and '0.03%' in page
-    assert '$0.500 per 1,000 texts' in page and 'Provider billing record' in page
     assert 'Pilot queued' in page and 'Local preview, not published' in page
     assert 'The open-weight models are a selection rather than a complete list.' in page
     assert '<noscript>' in page and 'name="robots" content="noindex"' in page
 
-def test_deepseek_rows_label_version_and_observed_run_dates():
+def test_deepseek_observed_run_dates_are_required():
     release=dict(manifest=dict(release='test',status='pending',api_completed_at='2026-09-14'),
                  models=[dict(model='deepseek-v4-flash',n=3400,tasks=34,mean_task_f1=.6,
                               malformed=0,provenance=dict(access='api',hardware_tier='api',
@@ -82,41 +67,13 @@ def test_deepseek_rows_label_version_and_observed_run_dates():
                                   observed_completion_dates=['2026-09-12','2026-09-10','2026-09-12']))],
                  tasks=[],classes=[],categories=[],pairs=[])
     source=preview.normalize_release(release)
-    page=preview.render(source)
-    assert '<small>DeepSeek-V4.1-Flash</small>' in page
-    assert '<small>Observed response dates: 2026-09-10, 2026-09-12</small>' in page
     assert source['models'][0]['observed_run_dates']==['2026-09-10','2026-09-12']
+    assert '2026-09-10' in preview.render(source)
     release['models'][0]['provenance']['observed_completion_dates']=[]
     with unittest.TestCase().assertRaisesRegex(ValueError,'observed run dates'):
         preview.normalize_release(release)
 
-def test_open_hardware_name_is_visible_in_comparison_table():
-    source=data()
-    source['models'][0].update(kind='open',hardware_tier='multi-gpu',
-                               hardware='2 NVIDIA RTX PRO 6000 Blackwell',cost_usd_upper=None)
-    page=preview.render(source)
-    assert '2 NVIDIA RTX PRO 6000 Blackwell' in page
-    assert '<small>Run cost upper estimate: $' not in page
-    assert '<small>Multiple GPUs</small>' in page
-
-def test_hardware_filter_has_readable_labels_and_stable_values():
-    page=preview.render(data())
-    assert '<option value="api">API service</option>' in page
-    assert 'data-hardware="api"' in page
-
-def test_multi_gpu_ranked_model_has_distinct_filter_tier():
-    source=data()
-    source['models'][0].update(kind='open',hardware_tier='single-gpu',
-                               hardware='1 NVIDIA RTX PRO 6000 Blackwell',cost_usd_upper=None)
-    source['models'].append(dict(source['models'][0],model='larger',label='Larger',
-                                 hardware_tier='multi-gpu',
-                                 hardware='2 NVIDIA RTX PRO 6000 Blackwell'))
-    page=preview.render(source)
-    assert '<option value="single-gpu">Single GPU</option>' in page
-    assert '<option value="multi-gpu">Multiple GPUs</option>' in page
-    assert 'data-model="example" data-kind="open" data-hardware="single-gpu"' in page
-    assert 'data-model="larger" data-kind="open" data-hardware="multi-gpu"' in page
-    assert '2 NVIDIA RTX PRO 6000 Blackwell' in page
+def test_multi_gpu_model_keeps_its_hardware_tier():
     release=dict(manifest=dict(release='test',status='complete',api_completed_at='2026-09-14'),
                  models=[dict(model='larger',n=3400,tasks=34,mean_task_f1=.6,malformed=0,
                               provenance=dict(access='open',hardware_tier='multi-gpu',
@@ -125,7 +82,7 @@ def test_multi_gpu_ranked_model_has_distinct_filter_tier():
                  tasks=[],classes=[],categories=[],pairs=[])
     normalized=preview.normalize_release(release)
     assert normalized['models'][0]['hardware_tier']=='multi-gpu'
-    assert 'data-model="larger" data-kind="open" data-hardware="multi-gpu"' in preview.render(normalized)
+    assert '2 NVIDIA RTX PRO 6000 Blackwell' in preview.render(normalized)
 
 def test_partial_model_cannot_rank():
     source=data();source['models'][0]['n']=3399
@@ -161,28 +118,13 @@ def test_null_and_zero_distinct():
     assert preview.fmt(None)=='Unavailable'
     assert preview.fmt(0)=='0.000'
 
-def test_open_speed_view_only_groups_same_subset_settings_and_gpu():
-    common=dict(kind='open',hardware_tier='single-gpu',mean_task_f1=.6,
-                throughput_keyset_sha256='same-items',throughput_settings_sha256='same-settings',
-                throughput_hardware='Blackwell',throughput_items=2142)
-    models=[dict(common,model='a',label='Model A',throughput_tokens_per_second=100),
-            dict(common,model='b',label='Model B',throughput_tokens_per_second=200),
-            dict(common,model='c',label='Model C',throughput_tokens_per_second=300,
-                 throughput_hardware='A100'),
-            dict(common,model='d',label='Model D',throughput_tokens_per_second=400,
-                 throughput_settings_sha256='different-settings')]
-    rows=preview.comparable_speed_rows(models)
-    assert '2,142 identical frozen texts on Blackwell' in rows
-    assert 'Model A' in rows and 'Model B' in rows
-    assert 'Model C' not in rows and 'Model D' not in rows
-
 def test_controls_and_no_external_scripts():
     page=preview.render(data())
-    for identifier in ['kind','hardware','category','task','model-count']:
+    for identifier in ['category','task','compare','task-rank','pair-model','pair-reference']:
         assert f'id="{identifier}"' in page
     assert 'src="https://' not in page
     assert "document.createElement('td')" in preview.JS
-    assert 'No models match these filters' in preview.JS
+    assert 'ranks ${rank+1} of ${rows.length}' in preview.JS
 
 def test_homepage_proposals_follow_current_data_and_sitemap_markup():
     assert '<div>' not in preview.homepage_link_proposal()
@@ -202,8 +144,7 @@ def test_skip_link_target_can_receive_keyboard_focus():
     assert '<a class="skip-link" href="#main">Skip to content</a>' in page
     assert '<main id="main" tabindex="-1">' in page
 
-def test_no_javascript_table_headings_are_plain_text():
-    assert '.sort-button{display:none}.js .sort-button{display:inline}' in preview.CSS
+def test_no_javascript_fallbacks():
     assert '.class-support-details{display:none}.js .class-support-details{display:block}' in preview.CSS
     release=dict(manifest=dict(release='test',status='pending',api_completed_at='2026-09-14',
                                seed=20260910,bootstrap_replicates=2000,panel_sha256='hash',
@@ -214,10 +155,7 @@ def test_no_javascript_table_headings_are_plain_text():
     with tempfile.TemporaryDirectory() as folder:
         root=Path(folder);(root/'release.json').write_text(json.dumps(release))
         page=(preview.build(root)/'index.html').read_text()
-        for label,key in (('Model','label'),('F1','mean_task_f1'),('Malformed','malformed')):
-            assert f'<span class="static-heading">{label}</span>' in page
-            assert f'<button class="sort-button" data-sort="{key}">{label} ↕</button>' in page
-        assert '<details class="class-support-details"><summary>Class support and class F1</summary>' in page
+        assert '<details class="class-support-details"><summary>Class support and class F1 for the compared model</summary>' in page
         assert 'Task and class results are in the downloads.' in page
         assert 'that zero says nothing about the model' in page
         assert 'F1 of 0 by convention' in (root/'preview/llm-benchmark/downloads/methodology.md').read_text()
@@ -283,7 +221,7 @@ def test_build_preserves_aggregate_download_and_values():
         with unittest.TestCase().assertRaisesRegex(ValueError,'Public methodology'):
             preview.verify(root)
 
-def test_preview_verifier_rejects_changed_embedded_or_static_metrics():
+def test_preview_verifier_rejects_changed_embedded_metrics():
     release=dict(manifest=dict(release='test',status='pending',api_completed_at='2026-09-14',seed=20260910,
                                panel_sha256='panel-hash',scoring='Equal-task F1.',uncertainty='Paired intervals.',
                                bootstrap_replicates=2000),
@@ -294,18 +232,32 @@ def test_preview_verifier_rejects_changed_embedded_or_static_metrics():
         root=Path(folder);(root/'release.json').write_text(json.dumps(release))
         page=preview.build(root)/'index.html'
         original=page.read_text()
-        page.write_text(original.replace('<td class="numeric">0.600</td>',
-                                         '<td class="numeric">0.601</td>',1))
-        with unittest.TestCase().assertRaisesRegex(ValueError,'Static model table'):
-            preview.verify(root)
-        page.write_text(original.replace('<td class="numeric">0.00%</td>',
-                                         '<td class="numeric">0.03%</td>',1))
-        with unittest.TestCase().assertRaisesRegex(ValueError,'Static model table'):
-            preview.verify(root)
         changed=original.replace('"mean_task_f1": 0.6','"mean_task_f1": 0.7',1)
         assert changed!=original
         page.write_text(changed)
         with unittest.TestCase().assertRaisesRegex(ValueError,'Embedded preview metrics'):
+            preview.verify(root)
+
+def test_verifier_rejects_overview_figure_that_differs_from_release():
+    release=dict(manifest=dict(release='test',status='pending',api_completed_at='2026-09-14',seed=20260910,
+                               panel_sha256='panel-hash',scoring='Equal-task F1.',uncertainty='Paired intervals.',
+                               bootstrap_replicates=2000),
+                 models=[dict(model='example',n=3400,tasks=34,mean_task_f1=.6,malformed=0,
+                              provenance=dict(access='api',hardware_tier='api',cost_usd_upper=1))],
+                 tasks=[],classes=[],categories=[],pairs=[])
+    with tempfile.TemporaryDirectory() as folder:
+        root=Path(folder);(root/'release.json').write_text(json.dumps(release))
+        preview.build(root)
+        loaded=preview.preview_release(root)
+        figures=root/'preview/llm-benchmark/figures';figures.mkdir()
+        manifest=dict(release_sha256=hashlib.sha256(json.dumps(loaded,sort_keys=True,ensure_ascii=False).encode()).hexdigest(),
+                      featured_models=sorted(preview.FEATURED_MODELS),featured_figures=[],
+                      figures=[dict(file='fig-mean-f1',title='Overall',caption='x',data=[dict(model='example',mean_task_f1=.6)])])
+        (figures/'figure-data.json').write_text(json.dumps(manifest))
+        preview.verify(root)
+        manifest['figures'][0]['data'][0]['mean_task_f1']=.61
+        (figures/'figure-data.json').write_text(json.dumps(manifest))
+        with unittest.TestCase().assertRaisesRegex(ValueError,'Overview figure'):
             preview.verify(root)
 
 def test_ranked_candidate_not_repeated_outside_ranking_and_update_date_is_current():

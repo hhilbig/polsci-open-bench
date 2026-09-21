@@ -64,22 +64,10 @@ const byId=id=>document.getElementById(id);
 const num=x=>x===null||x===undefined?'Unavailable':Number(x).toFixed(3);
 const makeCell=(row,text)=>{const c=document.createElement('td');c.textContent=text;row.appendChild(c);return c;};
 const labels=Object.fromEntries(data.models.map(m=>[m.model,m.label||m.model]));
-let order={key:'mean_task_f1',ascending:false};
-function filterModels(){
- const kind=byId('kind').value,hardware=byId('hardware').value;
- const rows=[...byId('model-rows').children];
- rows.forEach(r=>{r.hidden=!!((kind&&r.dataset.kind!==kind)||(hardware&&r.dataset.hardware!==hardware));});
- const visible=rows.filter(r=>!r.hidden).length;
- byId('model-count').textContent=visible?`${visible} models shown.`:'No models match these filters. Select All to restore results.';
-}
-byId('kind').addEventListener('change',filterModels);byId('hardware').addEventListener('change',filterModels);
-document.querySelectorAll('[data-sort]').forEach(button=>button.addEventListener('click',()=>{
- const key=button.dataset.sort;order={key,ascending:order.key===key?!order.ascending:key==='label'};
- const values=Object.fromEntries(data.models.map(m=>[m.model,m]));
- [...byId('model-rows').children].sort((a,b)=>{const x=values[a.dataset.model][key],y=values[b.dataset.model][key];if(x==null)return y==null?0:1;if(y==null)return -1;return (typeof x==='string'?x.localeCompare(y):x-y)*(order.ascending?1:-1);}).forEach(r=>byId('model-rows').appendChild(r));
- document.querySelectorAll('[aria-sort]').forEach(th=>th.setAttribute('aria-sort','none'));
- button.parentNode.setAttribute('aria-sort',order.ascending?'ascending':'descending');
-}));
+function addOptions(id,values){byId(id).replaceChildren(...values.map(([value,label])=>{const o=document.createElement('option');o.value=value;o.textContent=label;return o;}));}
+const ranked=[...data.models].sort((a,b)=>b.mean_task_f1-a.mean_task_f1);
+const firstOpen=ranked.find(m=>m.kind==='open');
+if(firstOpen)byId('compare').value=firstOpen.model;
 function taskOptions(){
  const category=byId('category').value;
  const tasks=[...new Set(data.task_scores.filter(r=>!category||r.category===category).map(r=>r.task))].sort();
@@ -87,16 +75,22 @@ function taskOptions(){
  showTask();
 }
 function showTask(){
- const task=byId('task').value;byId('task-rows').replaceChildren();
- const selected=r=>!byId('task-all')||byId('task-all').checked||featuredModels.has(r.model);
- const rows=data.task_scores.filter(r=>r.task===task&&selected(r)).sort((a,b)=>(b.f1??-1)-(a.f1??-1));
- rows.forEach(r=>{const tr=document.createElement('tr');[labels[r.model]||r.model,num(r.f1),num(r.accuracy),num(r.mcc),String(r.n)].forEach(v=>makeCell(tr,v));byId('task-rows').appendChild(tr);});
+ const task=byId('task').value,compare=byId('compare').value;
+ const rows=data.task_scores.filter(r=>r.task===task).sort((a,b)=>(b.f1??-1)-(a.f1??-1));
+ byId('task-rows').replaceChildren();
+ rows.slice(0,5).forEach(r=>{const tr=document.createElement('tr');[labels[r.model]||r.model,num(r.f1),num(r.accuracy),num(r.mcc)].forEach(v=>makeCell(tr,v));byId('task-rows').appendChild(tr);});
+ const rank=rows.findIndex(r=>r.model===compare);
+ byId('task-rank').textContent=rank<0?'':`${labels[compare]} ranks ${rank+1} of ${rows.length} on this task, with F1 ${num(rows[rank].f1)}.`;
  byId('class-rows').replaceChildren();
- data.class_scores.filter(r=>r.task===task&&selected(r)).forEach(r=>{const tr=document.createElement('tr');[labels[r.model]||r.model,r.label,String(r.support),num(r.f1)].forEach(v=>makeCell(tr,v));byId('class-rows').appendChild(tr);});
- byId('task-description').textContent=rows.length?`${task.replaceAll('_',' ')}: ${rows[0].n} texts per model. Class results with small support are descriptive.`:'No completed results available for this selection.';
+ data.class_scores.filter(r=>r.task===task&&r.model===compare).forEach(r=>{const tr=document.createElement('tr');[r.label,String(r.support),num(r.f1)].forEach(v=>makeCell(tr,v));byId('class-rows').appendChild(tr);});
+ byId('task-description').textContent=rows.length?`${task.replaceAll('_',' ')}: ${rows[0].n} texts per model.`:'No completed results available for this selection.';
 }
-byId('category').addEventListener('change',taskOptions);byId('task').addEventListener('change',showTask);taskOptions();filterModels();
-byId('task-all')?.addEventListener('change',showTask);
+byId('category').addEventListener('change',taskOptions);byId('task').addEventListener('change',showTask);byId('compare').addEventListener('change',showTask);taskOptions();
+addOptions('pair-model',ranked.map(m=>[m.model,m.label]));addOptions('pair-reference',ranked.map(m=>[m.model,m.label]));
+if(firstOpen)byId('pair-reference').value=firstOpen.model;
+function showPair(){const model=byId('pair-model').value,reference=byId('pair-reference').value;const r=data.pairs.find(r=>r.model===model&&r.reference===reference);byId('pair-result').textContent=model===reference?'Select two different models.':r?`${labels[model]} minus ${labels[reference]}: ${num(r.difference)} F1. 95% item interval ${num(r.item_ci_low)} to ${num(r.item_ci_high)}; task interval ${num(r.task_ci_low)} to ${num(r.task_ci_high)}.`:'Paired comparison unavailable.';}
+byId('pair-model').addEventListener('change',showPair);byId('pair-reference').addEventListener('change',showPair);showPair();
+document.querySelectorAll('a[href="#methods"]').forEach(a=>a.addEventListener('click',()=>{byId('methods').open=true;}));
 '''
 
 def number_word(n):
@@ -137,7 +131,6 @@ def safe_payload(data):
         'task_scores': ('model','task','category','n','f1','accuracy','mcc'),
         'class_scores': ('model','task','label','support','f1'),
         'candidates': ('model','status','reason'),
-        'categories': ('model','category','tasks','mean_task_f1','item_ci_low','item_ci_high','task_ci_low','task_ci_high'),
         'pairs': ('model','reference','difference','item_ci_low','item_ci_high','task_ci_low','task_ci_high'),
     }
     result={key:[{f:r.get(f) for f in keep} for r in data.get(key,[])] for key,keep in fields.items()}
@@ -295,11 +288,15 @@ def verify(release_dir):
     script=re.search(r'<script id="benchmark-data" type="application/json">(.*?)</script>',page,re.S)
     if script is None or json.loads(script.group(1)) != expected:
         raise ValueError('Embedded preview metrics do not reproduce the release')
-    static_rows=re.search(r'<tbody id="model-rows">(.*?)</tbody>',page,re.S)
-    rendered_rows=re.search(r'<tbody id="model-rows">(.*?)</tbody>',render(expected),re.S)
-    if (static_rows is None or rendered_rows is None or
-            static_rows.group(1) != rendered_rows.group(1)):
-        raise ValueError('Static model table does not reproduce the release')
+    manifest=figure_manifest(preview,release)
+    if manifest is not None:
+        # The overview figures carry the ranking now, so their plotted means must match the release.
+        means={m['model']:m['mean_task_f1'] for m in release['models']}
+        for figure in manifest['featured_figures']+manifest['figures']:
+            if figure['file'] in ('fig-mean-f1','fig-recent-mean-f1'):
+                for row in figure['data']:
+                    if abs(row['mean_task_f1']-means[row['model']])>1e-9:
+                        raise ValueError('Overview figure does not reproduce the release means')
     if json.loads((preview/'downloads/release.json').read_text()) != release:
         raise ValueError('Public release download differs from the validated release')
     if json.loads((preview/'downloads/manifest.json').read_text()) != release['manifest']:
@@ -342,115 +339,59 @@ def verify(release_dir):
     return dict(models=len(expected['models']),tasks=len({r['task'] for r in release['tasks']}),
                 task_definitions=len(definitions))
 
-def comparable_speed_rows(models):
-    """Show generation rates only inside identical subset/settings/GPU groups."""
-    groups={}
-    for model in models:
-        if model['kind'] != 'open' or model.get('throughput_tokens_per_second') is None:
-            continue
-        key=(model.get('throughput_keyset_sha256'), model.get('throughput_settings_sha256'),
-             model.get('throughput_hardware'), model.get('throughput_items'))
-        if any(value in (None, '') for value in key):
-            continue
-        groups.setdefault(key, []).append(model)
-    rows=[]
-    for (_, _, gpu, items), group in sorted(groups.items(), key=lambda item: (-len(item[1]), item[0])):
-        if len(group) < 2:
-            continue
-        rows.append(f'<tr><td colspan="4"><strong>Comparable generation subset:</strong> '
-                    f'{int(items):,} identical frozen texts on {esc(gpu)}. '
-                    'Generation, runtime and batch-concurrency settings match. '
-                    f'The F1 scores use all {N_ITEMS:,} texts; generation rates exclude model load '
-                    'and queue time.</td></tr>')
-        for model in group:
-            rows.append(f"<tr><td>{esc(model.get('label') or model['model'])}</td>"
-                        f"<td>{fmt(model['mean_task_f1'])}</td>"
-                        f"<td>{fmt(model['throughput_tokens_per_second'],1)}</td>"
-                        f"<td>{esc(model['hardware_tier'])}</td></tr>")
-    return ''.join(rows)
-
-
-def render(data, downloads=()):
-    data=safe_payload(data)
-    models=sorted(data['models'],key=lambda m:m['mean_task_f1'],reverse=True)
-    rows=[]
-    for m in models:
-        version=', '.join(m.get('documented_versions') or []) or 'Revision unavailable'
-        run_dates=m.get('observed_run_dates') or []
-        if m['model'] in ('deepseek-v4-flash','deepseek-v4-pro') and not run_dates:
-            raise ValueError('DeepSeek model row is missing observed run dates')
-        version_details=f'<small>{esc(version)}</small>'
-        if run_dates:
-            version_details+=f'<small>Observed response dates: {esc(", ".join(run_dates))}</small>'
-        detail=(f'${fmt(m["cost_per_1k_items"],3)} per 1,000 texts'
-                if m['kind']=='API' and m.get('cost_per_1k_items') is not None
-                else m.get('hardware') or 'Hardware name unavailable')
-        rows.append(f'''<tr data-model="{esc(m['model'])}" data-kind="{esc(m['kind'])}" data-hardware="{esc(m['hardware_tier'])}"><td class="model-label">{esc(m.get('label') or m['model'])}{version_details}</td><td class="numeric">{fmt(m['mean_task_f1'])}</td><td class="numeric">{interval(m,'item')}<small>Items</small>{interval(m,'task')}<small>Tasks</small></td><td class="numeric">{fmt(100*m['malformed']/m['n'],2)}%</td><td>{esc(m['kind'])}<small>{esc(hardware_label(m['hardware_tier']))}</small><small>{esc(detail)}</small></td></tr>''')
-    hardware=''.join(f'<option value="{esc(t)}">{esc(hardware_label(t))}</option>' for t in sorted({m['hardware_tier'] for m in models}))
-    categories=''.join(f'<option value="{esc(c)}">{esc(c)}</option>' for c in sorted({r['category'] for r in data['task_scores'] if r['category']}))
-    pending=''.join(f"<li><strong>{esc(r['model'])}</strong>: {esc(r['status'])}. {esc(r['reason'])}</li>" for r in data['candidates'])
-    costs=''.join(f"<tr><td>{esc(m.get('label') or m['model'])}</td><td>{fmt(m['mean_task_f1'])}</td><td>${fmt(m['cost_per_1k_items'],3)}</td><td>{'$'+fmt(m['cost_per_1k_items_batch'],3) if m.get('cost_per_1k_items_batch') is not None else 'No batch option'}</td><td>{esc(COST_BASIS_LABELS.get(m['cost_basis'],m['cost_basis']))}</td></tr>" for m in models if m['kind']=='API' and m.get('cost_per_1k_items') is not None)
-    speeds=comparable_speed_rows(models)
-    links=''.join(f'<li><a href="downloads/{esc(name)}" download>{esc(name)}</a></li>' for name in downloads)
-    takeaway=lead_sentences(models)
-    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Political Science LLM Benchmark | Hanno Hilbig</title><meta name="author" content="Hanno Hilbig"><meta name="description" content="Matched evaluation of language models on {N_TASKS} political science text-coding tasks."><meta name="robots" content="noindex"><link rel="canonical" href="https://www.hannohilbig.com/llm-benchmark/"><link rel="stylesheet" href="styles.css"></head><body><a class="skip-link" href="#main">Skip to content</a><div class="wrapper"><header><h1>Political Science LLM Benchmark</h1><p class="title">{N_TASKS} text-coding tasks · 100 texts per task<br><a href="https://www.hannohilbig.com/">Hanno Hilbig</a>, University of California, Davis</p><nav aria-label="Page sections"><a href="#comparison">Models</a><a href="#tasks">Tasks</a><a href="#methods">Methods</a><a href="#downloads">Downloads</a></nav></header><main id="main" tabindex="-1"><p class="notice">Local preview, not published. Release {esc(data['release_id'])}; status: {esc(data['status'])}. Updated {esc(data['updated_at'])}.</p><p>Can researchers code political science texts with open-weight language models instead of commercial APIs? This page compares {len(models)} models on the same {N_ITEMS:,} texts, 100 from each of {N_TASKS} coding tasks drawn from political science papers and public datasets. Every model receives the same texts, prompts and gold labels.</p><p>The main result is that the differences between models are small. {takeaway} Differences of a few hundredths in the mean often reverse on individual tasks, so researchers should check the tasks closest to their own before choosing a model.</p><h2 id="comparison">Model comparison</h2><p>The table reports mean F1 for every model that coded all {N_ITEMS:,} texts. F1 is the harmonic mean of precision and recall, and each task receives equal weight.</p><div class="controls js-only"><label>Model access<select id="kind"><option value="">All</option><option value="API">API</option><option value="open">Open weights</option></select></label><label>Hardware tier<select id="hardware"><option value="">All</option>{hardware}</select></label></div><p id="model-count" role="status" aria-live="polite">{len(models)} models shown.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Model comparison, horizontally scrollable"><table><caption>Equal-task mean F1 and 95% uncertainty intervals</caption><thead><tr><th aria-sort="none"><button data-sort="label">Model ↕</button></th><th aria-sort="descending"><button data-sort="mean_task_f1">F1 ↕</button></th><th>95% intervals</th><th aria-sort="none"><button data-sort="malformed">Malformed ↕</button></th><th>Access / hardware</th></tr></thead><tbody id="model-rows">{''.join(rows)}</tbody></table></div><p class="note">I report two 95% intervals. The item interval resamples texts within each task and reflects uncertainty about these tasks. The task interval resamples tasks and reflects how a model would perform on a different set of tasks, which is why it is wider. Both use 2,000 bootstrap draws.</p><noscript><p>Task and class results are in the downloads.</p></noscript><h2 id="tasks">Choose by task</h2><div class="controls js-only"><label>Category<select id="category"><option value="">All categories</option>{categories}</select></label><label>Task<select id="task"></select></label></div><p id="task-description">Task scores are in tasks.csv under Downloads.</p><div class="table-scroll js-only"><table><caption>Selected task results</caption><thead><tr><th>Model</th><th>F1</th><th>Accuracy</th><th>MCC</th><th>Texts</th></tr></thead><tbody id="task-rows"></tbody></table></div><details><summary>Class support and class F1</summary><p>MCC is the Matthews correlation coefficient. Blank cells mark undefined metrics, not zeros. Scores for classes with few texts are unstable.</p><div class="table-scroll"><table><thead><tr><th>Model</th><th>Class</th><th>Reference support</th><th>F1</th></tr></thead><tbody id="class-rows"></tbody></table></div></details><h2>Practical tradeoffs</h2><h3>API quality and cost</h3><p>Costs are per 1,000 texts at prices in September 2026. The first column uses standard prices, and the second uses batch prices, which OpenAI, Anthropic and Google set at half the standard rate. DeepSeek and Jev offer no batch option. Where provider bills are available, I use them; otherwise, I multiply token counts by list prices.</p><div class="table-scroll"><table><thead><tr><th>Model</th><th>Mean F1</th><th>Standard cost</th><th>Batch cost</th><th>Source</th></tr></thead><tbody>{costs}</tbody></table></div><h3>Open-model quality and throughput</h3><p>Speeds are only comparable across runs on the same hardware with the same settings, which the table groups together. University GPU time is free to the researcher, but not free to provide.</p>{'<div class="table-scroll"><table><thead><tr><th>Model</th><th>Mean F1</th><th>Output tokens / second</th><th>Hardware</th></tr></thead><tbody>'+speeds+'</tbody></table></div>' if speeds else '<p>No comparable speed measurements are available.</p>'}<h2>Models outside the ranking</h2><p>The models below are not ranked. Not evaluated means that I could not run the model, for the reason listed. Excluded means that a run finished but violated the benchmark's rules. Pending means that the run is not finished. None of these categories implies a score of zero.</p><p>The open-weight models are a selection rather than a complete list. Whether a model runs depends on its weight files, quantization, software support and GPU memory, not only on its size. A missing model therefore says nothing about its quality.</p><ul>{pending or '<li>No additional candidate status has been recorded.</li>'}</ul><h2 id="methods">Methods and limitations</h2><p>Sample. For each task, I draw 100 texts by hashing task and item identifiers with seed 20260910. Every model receives the same texts, gold labels and prompts. I reuse earlier predictions only when their inputs and settings match exactly.</p><p>Scoring. For binary tasks, I use the F1 score for the positive class. For tasks with several binary labels, I average the per-label F1 scores. For single-label categorical tasks, I use macro F1, which gives each class equal weight. A class that appears in neither the gold labels nor the predictions receives an F1 of 0 by convention; that zero says nothing about the model. Unusable answers count as incorrect, and I record infrastructure failures separately.</p><p>Settings. Reasoning is disabled where a model allows it and otherwise set to its lowest level. API models may return at most 256 tokens. The downloads report model versions, quantization and runtime settings, which can affect performance.</p><p>Limits. These results describe {N_TASKS} tasks. Researchers should validate candidate models on labeled examples from their own task before using them at scale.</p><h2 id="downloads">Downloads and reproducibility</h2><p>The downloads contain aggregate scores and run records. I do not include the texts or item-level predictions while redistribution rights are checked.</p><ul>{links}<li><a href="https://github.com/hhilbig/polsci-open-bench">Benchmark code and task definitions</a></li></ul></main><footer>This is a local preview. Publication requires approval.</footer></div><script id="benchmark-data" type="application/json">{json.dumps(data,ensure_ascii=False,allow_nan=False).replace('<',chr(92)+'u003c')}</script><script src="benchmark.js" defer></script></body></html>'''
-
-def paper_figures(preview, release):
+def figure_manifest(preview, release):
+    """Load the rendered figures' manifest and refuse figures built from another release."""
     manifest_path=preview/'figures/figure-data.json'
     if not manifest_path.exists():
-        return ''
+        return None
     manifest=json.loads(manifest_path.read_text())
     digest=hashlib.sha256(json.dumps(release,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
     if manifest.get('release_sha256')!=digest:
         raise ValueError('Paper figures are stale; rerun build_refresh_figures.py')
-    titles=['Overall performance','API and single-GPU open models by task',
-            'Performance by annotation type','Coding complexity','Label structure',
-            'Quality and generation time','Generation time per 1,000 items']
-    if len(manifest['figures'])!=len(titles):
-        raise ValueError('Expected seven paper figures')
-    def figure_html(title,figure):
-        stem=figure['file']
+    if set(manifest.get('featured_models',[]))!=FEATURED_MODELS:
+        raise ValueError('Featured figure selection differs from page selection')
+    return manifest
+
+
+def paper_figures(preview, release):
+    manifest=figure_manifest(preview, release)
+    if manifest is None:
+        return ''
+    def figure_html(figure):
+        stem,title=figure['file'],figure['title']
         if not re.fullmatch(r'fig-[a-z0-9-]+',stem):
             raise ValueError('Invalid figure filename')
         for ext in ['svg','pdf']:
             if not (preview/'figures'/f'{stem}.{ext}').is_file():
                 raise ValueError(f'Missing figure {stem}.{ext}')
-        wide=' wide' if stem=='fig-family' else ''
-        return f'<h3>{esc(title)}</h3><figure class="paper-figure"><div class="figure-scroll" tabindex="0" role="region" aria-label="{esc(title)}, horizontally scrollable"><img class="paper-plot{wide}" src="figures/{stem}.svg" alt="{esc(title)}. {esc(figure["caption"])}" loading="lazy"></div><figcaption>{esc(figure["caption"])} <a href="figures/{stem}.svg">Full-size SVG</a> · <a href="figures/{stem}.pdf">PDF</a></figcaption></figure>'
-    blocks=[f'<h2 id="figures">Recent models and reference baselines</h2><p>The figures below focus on {len(FEATURED_MODELS)} models: all API models, the most recent open-weight models and two Llama 70B models as reference points. The full comparison further down includes all models.</p>']
-    featured=manifest.get('featured_figures',[])
-    if featured:
-        if len(featured)!=4 or set(manifest.get('featured_models',[]))!=FEATURED_MODELS:
-            raise ValueError('Featured figure selection differs from page selection')
-        blocks.extend(figure_html(title,fig) for title,fig in zip(['Overall performance','Performance by annotation type','API and open models by task','Coding complexity'],featured))
-        blocks.append('<details class="disclosure" id="more-analyses"><summary>More analyses and all-model figures</summary><p>These figures include all models. Comparisons between API and open models use only open models that run on a single GPU.</p>')
-    blocks.extend(figure_html(title,figure) for title,figure in zip(titles,manifest['figures']))
-    blocks.append('<p><a href="figures/figure-data.json">Download figure values and task groupings (JSON)</a></p>')
-    if featured: blocks.append('</details>')
+        return (f'<h3>{esc(title)}</h3><figure class="paper-figure"><img class="paper-plot" src="figures/{stem}.svg" '
+                f'alt="{esc(title)}. {esc(figure["caption"])}" loading="lazy"><figcaption>{esc(figure["caption"])} '
+                f'<a href="figures/{stem}.svg">SVG</a> · <a href="figures/{stem}.pdf">PDF</a></figcaption></figure>')
+    blocks=[f'<h2 id="results">Results</h2><p>The figures below focus on {len(FEATURED_MODELS)} models: all API models, '
+            'the most recent open-weight models and two Llama 70B models as reference points. The section further '
+            'down repeats them for all models.</p>']
+    blocks.extend(figure_html(fig) for fig in manifest['featured_figures'])
+    blocks.append('<details class="disclosure" id="more-analyses"><summary>More analyses and all-model figures</summary>'
+                  '<p>These figures include all models. Comparisons between API and open models use only open models '
+                  'that run on a single GPU.</p>')
+    blocks.extend(figure_html(fig) for fig in manifest['figures'])
+    blocks.append('<p><a href="figures/figure-data.json">Figure values and task groupings (JSON)</a></p></details>')
     return ''.join(blocks)
 
 
-def compact_page(page,data):
-    """Keep the full static comparison accessible inside native disclosures."""
-    models=sorted((m for m in data['models'] if m['model'] in FEATURED_MODELS),key=lambda m:-m['mean_task_f1'])
-    if not models: return page
-    rows=''.join(f'<tr><td>{esc(m["label"])}</td><td>{fmt(m["mean_task_f1"])}</td><td>{interval(m,"item")}</td><td>{interval(m,"task")}</td><td>{esc(hardware_label(m["hardware_tier"]))}</td></tr>' for m in models)
-    compact=f'<div class="table-scroll" tabindex="0" role="region" aria-label="Recent models and reference baselines"><table><caption>Recent models and reference baselines: equal-task mean F1</caption><thead><tr><th>Model</th><th>F1</th><th>95% item interval</th><th>95% task interval</th><th>Access / hardware</th></tr></thead><tbody id="featured-rows">{rows}</tbody></table></div><p class="note">The item interval resamples texts within each task, and the task interval resamples tasks. The full table below adds model versions, failure rates and filters.</p>'
-    start=page.index('<div class="controls js-only">',page.index('<h2 id="comparison">'))
-    end=page.index('<h2 id="tasks">',start)
-    page=page[:start]+compact+f'<details class="disclosure" id="all-models"><summary>Show all {len(data["models"])} models</summary>'+page[start:end]+'</details>'+page[end:]
-    page=page.replace('<h2 id="tasks">Choose by task</h2>','<h2 id="tasks">Choose by task</h2><label class="js-only task-scope"><input type="checkbox" id="task-all"> Show all evaluated models (default: recent models and reference baselines)</label>',1)
-    # Each section retains its content and stable navigation anchor.
-    for start_marker,end_marker,label,anchor in [
-        ('<h2>Practical tradeoffs</h2>','<h2>Models outside the ranking</h2>','API costs and open-model runtime','tradeoffs'),
-        ('<h2>Models outside the ranking</h2>','<h2>Paired comparisons</h2>','Not evaluated and excluded models','excluded'),
-        ('<h2>Paired comparisons</h2>','<h2 id="methods">','Paired comparisons and category summaries','paired-details'),
-        ('<h2 id="methods">Methods and limitations</h2>','<h2 id="downloads">','Methods and limitations','methods')]:
-        if start_marker not in page or end_marker not in page: continue
-        start=page.index(start_marker);end=page.index(end_marker,start)
-        content=page[start+len(start_marker):end]
-        page=page[:start]+f'<details class="disclosure" id="{anchor}"><summary>{label}</summary>'+content+'</details>'+page[end:]
-    return page
+def render(data, downloads=(), figures=''):
+    data=safe_payload(data)
+    models=sorted(data['models'],key=lambda m:m['mean_task_f1'],reverse=True)
+    for m in models:
+        if m['model'] in ('deepseek-v4-flash','deepseek-v4-pro') and not m.get('observed_run_dates'):
+            raise ValueError('DeepSeek model row is missing observed run dates')
+    categories=''.join(f'<option value="{esc(c)}">{esc(c)}</option>' for c in sorted({r['category'] for r in data['task_scores'] if r['category']}))
+    compare=''.join(f'<option value="{esc(m["model"])}">{esc(m.get("label") or m["model"])}</option>' for m in models)
+    pending=''.join(f"<li><strong>{esc(r['model'])}</strong>: {esc(r['status'])}. {esc(r['reason'])}</li>" for r in data['candidates'])
+    links=''.join(f'<li><a href="downloads/{esc(name)}" download>{esc(name)}</a></li>' for name in downloads)
+    takeaway=lead_sentences(models)
+    payload=json.dumps(data,ensure_ascii=False,allow_nan=False).replace('<',chr(92)+'u003c')
+    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Political Science LLM Benchmark | Hanno Hilbig</title><meta name="author" content="Hanno Hilbig"><meta name="description" content="Matched evaluation of language models on {N_TASKS} political science text-coding tasks."><link rel="icon" href="data:,"><meta name="robots" content="noindex"><link rel="canonical" href="https://www.hannohilbig.com/llm-benchmark/"><link rel="stylesheet" href="styles.css"></head><body><a class="skip-link" href="#main">Skip to content</a><div class="wrapper"><header><h1>Political Science LLM Benchmark</h1><p class="title">{N_TASKS} text-coding tasks · 100 texts per task<br><a href="https://www.hannohilbig.com/">Hanno Hilbig</a>, University of California, Davis</p><nav aria-label="Page sections"><a href="#results">Results</a><a href="#tasks">Tasks</a><a href="#methods">Methods</a><a href="#downloads">Downloads</a></nav></header><main id="main" tabindex="-1"><p class="notice">Local preview, not published. Release {esc(data['release_id'])}; status: {esc(data['status'])}. Updated {esc(data['updated_at'])}.</p><p>Can researchers code political science texts with open-weight language models instead of commercial APIs? This page compares {len(models)} models on the same {N_ITEMS:,} texts, 100 from each of {N_TASKS} coding tasks drawn from political science papers and public datasets. Every model receives the same texts, prompts and gold labels.</p><p>The main result is that the differences between models are small. {takeaway} Differences of a few hundredths in the mean often reverse on individual tasks, so researchers should check the tasks closest to their own before choosing a model.</p>{figures}<h2 id="tasks">Choose by task</h2><div class="controls js-only"><label>Category<select id="category"><option value="">All categories</option>{categories}</select></label><label>Task<select id="task"></select></label><label>Compare a model<select id="compare">{compare}</select></label></div><p id="task-description">Task scores are in tasks.csv under Downloads.</p><div class="table-scroll js-only"><table><caption>Five best models on the selected task</caption><thead><tr><th>Model</th><th>F1</th><th>Accuracy</th><th>MCC</th></tr></thead><tbody id="task-rows"></tbody></table></div><p id="task-rank" class="js-only" role="status" aria-live="polite"></p><details class="class-support-details"><summary>Class support and class F1 for the compared model</summary><p>MCC is the Matthews correlation coefficient. Blank cells mark undefined metrics, not zeros. Scores for classes with few texts are unstable.</p><div class="table-scroll"><table><thead><tr><th>Class</th><th>Reference support</th><th>F1</th></tr></thead><tbody id="class-rows"></tbody></table></div></details><noscript><p>Task and class results are in the downloads.</p></noscript><details class="disclosure" id="excluded"><summary>Not evaluated and excluded models</summary><p>The models below are not ranked. Not evaluated means that I could not run the model, for the reason listed. Excluded means that a run finished but violated the benchmark's rules. Pending means that the run is not finished. None of these categories implies a score of zero.</p><p>The open-weight models are a selection rather than a complete list. Whether a model runs depends on its weight files, quantization, software support and GPU memory, not only on its size. A missing model therefore says nothing about its quality.</p><ul>{pending or '<li>No additional candidate status has been recorded.</li>'}</ul></details><details class="disclosure" id="paired"><summary>Paired comparisons</summary><p>Both models are scored on the same texts. Positive differences favor the first model. The 95% intervals apply to one comparison at a time and are not adjusted for multiple comparisons.</p><div class="controls js-only"><label>Model<select id="pair-model"></select></label><label>Reference<select id="pair-reference"></select></label></div><p id="pair-result" role="status" aria-live="polite">Paired differences are in pairs.csv.</p></details><details class="disclosure" id="methods"><summary>Methods and limitations</summary><p>Sample. For each task, I draw 100 texts by hashing task and item identifiers with seed 20260910. Every model receives the same texts, gold labels and prompts. I reuse earlier predictions only when their inputs and settings match exactly.</p><p>Scoring. For binary tasks, I use the F1 score for the positive class. For tasks with several binary labels, I average the per-label F1 scores. For single-label categorical tasks, I use macro F1, which gives each class equal weight. A class that appears in neither the gold labels nor the predictions receives an F1 of 0 by convention; that zero says nothing about the model. Unusable answers count as incorrect, and I record infrastructure failures separately.</p><p>Settings. Reasoning is disabled where a model allows it and otherwise set to its lowest level. API models may return at most 256 tokens. The downloads report model versions, quantization and runtime settings, which can affect performance.</p><p>Limits. These results describe {N_TASKS} tasks. Researchers should validate candidate models on labeled examples from their own task before using them at scale.</p></details><h2 id="downloads">Downloads and reproducibility</h2><p>The downloads contain aggregate scores and run records. I do not include the texts or item-level predictions while redistribution rights are checked.</p><ul>{links}<li><a href="https://github.com/hhilbig/polsci-open-bench">Benchmark code and task definitions</a></li></ul></main><footer>This is a local preview. Publication requires approval.</footer></div><script id="benchmark-data" type="application/json">{payload}</script><script src="benchmark.js" defer></script></body></html>'''
 
 
 def build(release_dir=DEFAULT_RELEASE):
@@ -483,41 +424,11 @@ def build(release_dir=DEFAULT_RELEASE):
     validate_public(methods)
     (downloads/'methodology.md').write_text(methods)
     names.append('methodology.md')
-    page=render(safe,names)
-    for label,key in (('Model','label'),('F1','mean_task_f1'),('Malformed','malformed')):
-        original=f'<button data-sort="{key}">{label} ↕</button>'
-        accessible=(f'<span class="static-heading">{label}</span>'
-                    f'<button class="sort-button" data-sort="{key}">{label} ↕</button>')
-        if original not in page:
-            raise ValueError(f'Missing sortable heading: {label}')
-        page=page.replace(original,accessible,1)
-    class_details='<details><summary>Class support and class F1</summary>'
-    if class_details not in page:
-        raise ValueError('Missing class-support details')
-    page=page.replace(class_details,
-                      '<details class="class-support-details"><summary>Class support and class F1</summary>',1)
-    extra='''<h2>Paired comparisons</h2><p>Both models are scored on the same texts. Positive differences favor the first model. The 95% intervals apply to one comparison at a time and are not adjusted for multiple comparisons.</p><div class="controls js-only"><label>Model<select id="pair-model"></select></label><label>Reference<select id="pair-reference"></select></label></div><p id="pair-result" role="status" aria-live="polite">Paired differences are in pairs.csv.</p><h2>Category summaries</h2><div class="controls js-only"><label>Category summary<select id="summary-category"></select></label></div><div class="table-scroll"><table><thead><tr><th>Model</th><th>Mean F1</th><th>Tasks</th><th>95% item interval</th><th>95% task interval</th></tr></thead><tbody id="category-rows"></tbody></table></div><noscript><p>Download categories.csv for category scores and uncertainty.</p></noscript>'''
-    page=page.replace('<h2 id="methods">',extra+'<h2 id="methods">')
-    page=page.replace('<meta name="robots"','<link rel="icon" href="data:,"><meta name="robots"')
-    figures=paper_figures(preview,release)
-    if figures:
-        page=page.replace('<h2 id="comparison">',figures+'<h2 id="comparison">',1)
-        page=page.replace('<a href="#comparison">Models</a>','<a href="#figures">Figures</a> <a href="#comparison">Models</a>',1)
-    page=compact_page(page,data)
+    page=render(safe,names,paper_figures(preview,release))
     (preview/'index.html').write_text(page)
-    (preview/'styles.css').write_text(CSS+'\n.paper-figure{margin:1.4rem 0}.figure-scroll{overflow-x:auto;border:1px solid var(--border,#ddd);border-radius:6px}.paper-plot{display:block;width:100%;min-width:720px;height:auto}.paper-plot.wide{min-width:1100px}.paper-figure figcaption{font-size:.88em;color:#555;margin-top:.4rem;line-height:1.5}\n')
-    extra_js='''
-function addOptions(id,values){byId(id).replaceChildren(...values.map(([value,label])=>{const o=document.createElement('option');o.value=value;o.textContent=label;return o;}));}
-addOptions('pair-model',data.models.map(m=>[m.model,m.label]));addOptions('pair-reference',data.models.map(m=>[m.model,m.label]));
-byId('pair-reference').value=data.models.some(m=>m.model==='qwen3_6_27b_fp8')?'qwen3_6_27b_fp8':data.models[1]?.model||data.models[0]?.model;
-function showPair(){const model=byId('pair-model').value,reference=byId('pair-reference').value;const r=data.pairs.find(r=>r.model===model&&r.reference===reference);byId('pair-result').textContent=model===reference?'Select two different models.':r?`${labels[model]} minus ${labels[reference]}: ${num(r.difference)} F1. 95% item interval ${num(r.item_ci_low)} to ${num(r.item_ci_high)}; task interval ${num(r.task_ci_low)} to ${num(r.task_ci_high)}.`:'Paired comparison unavailable.';}
-byId('pair-model').addEventListener('change',showPair);byId('pair-reference').addEventListener('change',showPair);showPair();
-addOptions('summary-category',[...new Set(data.categories.map(r=>r.category))].sort().map(c=>[c,c]));
-function showCategory(){byId('category-rows').replaceChildren();data.categories.filter(r=>r.category===byId('summary-category').value).sort((a,b)=>b.mean_task_f1-a.mean_task_f1).forEach(r=>{const tr=document.createElement('tr');[labels[r.model],num(r.mean_task_f1),String(r.tasks),`${num(r.item_ci_low)} to ${num(r.item_ci_high)}`,`${num(r.task_ci_low)} to ${num(r.task_ci_high)}`].forEach(t=>makeCell(tr,t));byId('category-rows').appendChild(tr);});}
-byId('summary-category').addEventListener('change',showCategory);showCategory();
-'''
-    (preview/'styles.css').write_text((preview/'styles.css').read_text()+'\n.disclosure{margin:1.4rem 0;border-top:1px solid #ddd;padding-top:1rem}.disclosure>summary{cursor:pointer;font-weight:600;color:#0069b4}.disclosure[open]>summary{margin-bottom:1rem}.task-scope{margin-bottom:1rem}.task-scope input{width:auto;margin-right:.4rem}\n')
-    (preview/'benchmark.js').write_text('const featuredModels=new Set('+json.dumps(sorted(FEATURED_MODELS))+');\n'+JS+extra_js+'\ndocument.querySelectorAll(\'a[href="#methods"]\').forEach(a=>a.addEventListener("click",()=>{byId("methods").open=true;}));\n')
+    (preview/'styles.css').write_text(CSS+'\n.paper-figure{margin:1.2rem 0 2rem}.paper-plot{display:block;width:100%;height:auto}.paper-figure figcaption{font-size:.88em;color:#555;margin-top:.5rem;line-height:1.5}'
+        '.disclosure{margin:1.4rem 0;border-top:1px solid #ddd;padding-top:1rem}.disclosure>summary{cursor:pointer;font-weight:600;color:#0069b4}.disclosure[open]>summary{margin-bottom:1rem}\n')
+    (preview/'benchmark.js').write_text(JS)
     (release_dir/'preview/homepage-link-proposal.html').write_text(homepage_link_proposal())
     (release_dir/'preview/sitemap-entry-proposal.xml').write_text(SITEMAP_ENTRY_PROPOSAL)
     verify(release_dir)
