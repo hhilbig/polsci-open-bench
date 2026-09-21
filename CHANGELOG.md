@@ -12,6 +12,27 @@ Two conventions hold throughout:
   reproduces it exactly.
 - **A change that moves a published number says so, with the number.**
 
+## 2026-09-21 September panel published with all 31 models on 33 tasks
+
+- The September panel now covers 11 API models and 20 open-weight checkpoints on
+  the 33 active tasks, 3,300 frozen items per model
+  (`output/sidecar/refresh_20260910_release_33/`). The earlier homepage preview
+  used 34 tasks and the previous metric and had no Gemini. The nine original API
+  means reproduce the previous 33-task release exactly.
+- Open-weight means on the 33-task panel are 0.031 to 0.038 F1 higher than on the
+  34-task preview, because the held-out task and the metric correction move every
+  model. The best open models are Qwen3.8 Flash-Next (0.675, two GPUs) and Llama
+  3.1 70B FP8 (0.675, one GPU), 0.039 F1 below Claude Opus 5.
+- **Gemini numbers move.** The Gemini run's own summary dropped malformed rows;
+  every other panel model counts them as incorrect. Under the common rule
+  gemini-3.8-flash is 0.687, not 0.692 (36 malformed responses on the 33 tasks),
+  and gemini-3.1-flash-lite 0.681, not 0.682. No README claim changes.
+- The page is published at <https://www.hannohilbig.com/llm-benchmark/>. Its API
+  cost table uses the same standard-rate, evidence-labelled costs as the README.
+- The refresh track is frozen at `3c7ad07` and the model roster is closed: no
+  further runs of MiniMax M3, GLM-5.3, GLM-5.3-Flash or Kimi K3, and GPT-OSS 120B
+  stays excluded.
+
 ## 2026-09-21 API panel extended to Gemini, plus cost, latency and GEPA
 
 - Added `gemini-3.8-flash` and `gemini-3.1-flash-lite` to the September API

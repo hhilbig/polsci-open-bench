@@ -1,3 +1,8 @@
+> **Superseded 2026-09-21.** The published release is the 33-task, 31-model
+> panel in `output/sidecar/refresh_20260910_release_33/` (adds Gemini, drops
+> `halterman_ccc_protest`, uses the corrected metric). See the CHANGELOG entry
+> of that date. The text below describes the earlier 34-task preview.
+
 # Matched benchmark release and homepage preview
 
 The completed local preview contains nine API models and 20 fully matched open checkpoints, including Jev 1.13, Qwen3.8 27B, Qwen3.8 Flash-Next and 11 historical backfills. The release validates 98,600 predictions, exactly 3,400 for each of 29 ranked models and 100 per task. GPT-OSS120B is explicitly excluded because an earlier malformed response cannot be assigned to an item. Mistral Medium 3.5, GLM-5.3 and GLM-5.3-Flash remain visible as not evaluated for the documented license or runtime reasons below. Nothing has been deployed.

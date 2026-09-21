@@ -32,18 +32,32 @@ flattened. The crossover thus lies in the low thousands of labels per task.
 Researchers should test candidate models on labeled examples from their own task
 and report both performance and the rate of unusable output.
 
-## API Model Comparison, September 2026
+## Matched Model Comparison, September 2026
 
-A second panel runs 11 commercial API models on the same 33 tasks, with 100
-frozen items per task, and measures what each model costs and how long a request
-takes.
+A second panel runs 31 models, 11 commercial APIs and 20 open-weight
+checkpoints, on the same 33 tasks with 100 frozen items per task. Every model
+codes the same 3,300 texts under the same prompts and scorer. The results,
+per-task scores and downloads are at
+[hannohilbig.com/llm-benchmark](https://www.hannohilbig.com/llm-benchmark/).
+
+Claude Opus 5 has the highest mean task F1 at 0.714. The best open-weight models
+are Qwen3.8 Flash-Next at 0.675, which needs two GPUs, and Llama 3.1 70B in FP8
+at 0.675 on one GPU. Both trail Opus by 0.039 F1, a gap whose paired intervals
+exclude zero, and both score above four of the eleven API models (GPT-5.6 Luna,
+both DeepSeek models and Jev 1.13). Of those eight comparisons, only Flash-Next's
+lead over Jev is distinguishable from zero. Task by task, the best single-GPU
+open model matches or beats the best API model on 14 of 33 tasks, and the best
+API model leads by 0.013 F1 on average, the same gap as in the main release.
+
+The panel also measures what each API model costs and how long a request takes.
 
 ![Cost and latency against accuracy](output/figures/fig-jev-cost-latency.png)
 
-Mean task F1 ranges from 0.661 for Jev 1.13 to 0.714 for Claude Opus 5. On a
-paired task bootstrap, six of the ten other models outperform Jev: both Claude
-models, both Gemini Flash models and two GPT-5.6 models. The remaining four are
-indistinguishable from it. Jev is the cheapest and fastest model on the panel.
+Among the API models, mean task F1 ranges from 0.661 for Jev 1.13 to 0.714 for
+Claude Opus 5. On a paired task bootstrap, six of the ten other API models
+outperform Jev: both Claude models, both Gemini Flash models and two GPT-5.6
+models. The remaining four are indistinguishable from it. Jev is the cheapest
+and fastest API model.
 The cheapest model that outperforms it is Gemini 3.1 Flash-Lite, which costs
 about four times as much per item and takes twice as long per request, for a gain
 of 0.021 F1.
@@ -68,7 +82,7 @@ prices, and the figures draw these models with hollow markers.
 
 - 33 active tasks in [`tasks/`](tasks), one held out (see [`CHANGELOG.md`](CHANGELOG.md))
 - Main release: 6 local and 4 API models, 293 to 500 items per task
-- September panel: 11 API models, 100 items per task
+- September panel: 11 API and 20 open-weight models, 100 items per task
 - Metrics: main F1 (`headline_f1` in the CSVs), accuracy, MCC, time per item and
   unusable-output rate
 - Local hardware: Apple M2 Pro, 32 GB
