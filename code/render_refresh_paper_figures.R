@@ -2,7 +2,7 @@
 suppressPackageStartupMessages({library(ggplot2);library(dplyr);library(tidyr);library(jsonlite);library(haschaR)})
 set.seed(20260910)
 args <- commandArgs(trailingOnly=TRUE)
-root <- if(length(args)) args[1] else 'output/sidecar/refresh_20260910_release'
+root <- if(length(args)) args[1] else 'output/sidecar/refresh_20260910_release_33'
 out <- file.path(root,'preview/llm-benchmark/figures')
 manifest <- fromJSON(file.path(out,'figure-data.json'),simplifyVector=FALSE)
 release <- fromJSON(file.path(root,'release.json'))
@@ -13,7 +13,7 @@ model_count <- nrow(models)
 labels <- c('claude-opus-5'='Claude Opus 5','claude-sonnet-5'='Claude Sonnet 5',
  'gpt-6-astra'='GPT-6 Astra','gpt-5.6-sol'='GPT-5.6 Sol','gpt-5.6-terra'='GPT-5.6 Terra','gpt-5.6-luna'='GPT-5.6 Luna',
  'deepseek-v4-flash'='DeepSeek V4 Flash','deepseek-v4-pro'='DeepSeek V4 Pro',
- 'jev-1.13.0'='Jev 1.13',
+ 'jev-1.13.0'='Jev 1.13','gemini-3.8-flash'='Gemini 3.8 Flash','gemini-3.1-flash-lite'='Gemini 3.1 Flash-Lite',
  'qwen3_8_27b_fp8'='Qwen3.8 27B','qwen3_8_flash_next_fp8'='Qwen3.8 Flash-Next*',
  'qwen3_6_27b_fp8'='Qwen3.6 27B','gemma4_31b_it_qat_w4a16'='Gemma 4 31B',
  'mistral_small_4_119b_nvfp4'='Mistral Small 4',
@@ -21,16 +21,17 @@ labels <- c('claude-opus-5'='Claude Opus 5','claude-sonnet-5'='Claude Sonnet 5',
  'llama3_3_70b_instruct_fp8_dynamic'='Llama 3.3 70B')
 colors <- c('claude-opus-5'='#999999','claude-sonnet-5'='#b0b0b0','gpt-6-astra'='#1f1f1f',
  'gpt-5.6-sol'='#333333','gpt-5.6-terra'='#666666','gpt-5.6-luna'='#8a8a8a',
- 'deepseek-v4-flash'='#707070','deepseek-v4-pro'='#555555','jev-1.13.0'='#444444','qwen3_8_27b_fp8'='#d95f02',
+ 'deepseek-v4-flash'='#707070','deepseek-v4-pro'='#555555','jev-1.13.0'='#444444','gemini-3.8-flash'='#7a7a7a','gemini-3.1-flash-lite'='#a3a3a3','qwen3_8_27b_fp8'='#d95f02',
  'qwen3_8_flash_next_fp8'='#7570b3','qwen3_6_27b_fp8'='#e6ab02','gemma4_31b_it_qat_w4a16'='#0072B2',
  'mistral_small_4_119b_nvfp4'='#e7298a',
  'llama3_1_70b_instruct_fp8_dynamic_full34'='#009E73',
  'llama3_3_70b_instruct_fp8_dynamic'='#1d6e52')
 stopifnot(all(selected %in% names(labels)),all(selected %in% names(colors)))
 meta <- bind_rows(lapply(manifest$task_metadata,function(x)x[c('task','paper_family','complexity')]))
-stopifnot(nrow(meta)==34,!anyDuplicated(meta$task))
+n_tasks <- length(unique(release$tasks$task))
+stopifnot(nrow(meta)==n_tasks,!anyDuplicated(meta$task))
 scores <- release$tasks |> filter(model %in% selected) |> select(model,task,headline_f1) |> left_join(meta,by='task',relationship='many-to-one')
-stopifnot(nrow(scores)==model_count*34,!anyNA(scores$headline_f1),!anyDuplicated(scores[c('model','task')]))
+stopifnot(nrow(scores)==model_count*n_tasks,!anyNA(scores$headline_f1),!anyDuplicated(scores[c('model','task')]))
 models$model <- factor(models$model,levels=models$model)
 scores$model <- factor(scores$model,levels=levels(models$model))
 entries <- list()
@@ -45,7 +46,7 @@ p <- ggplot()+geom_jitter(data=scores,aes(model,headline_f1),width=.22,height=0,
  scale_y_continuous(limits=c(0,1.02),breaks=seq(0,1,.2))+
  labs(x=NULL,y='Mean F1 across tasks')+theme_hanno(fontsize=10.5)+
  theme(axis.text.x=element_text(angle=25,hjust=1),plot.margin=margin(5.5,12,12,16))
-save_plot(p,'fig-recent-mean-f1',sprintf('Large circles show equal-task mean F1; faint dots show all 34 task scores. The %s models use the same 3,400 texts. The selection includes recent models and reference baselines, including the strong completed Llama checkpoints. *Flash-Next uses two GPUs. Hardware, quantization details and uncertainty intervals are in the model comparison.',model_count),models |> transmute(model=as.character(model),mean_f1=mean_task_f1),max(8.5,.65*model_count),4.3)
+save_plot(p,'fig-recent-mean-f1',sprintf('Large circles show equal-task mean F1; faint dots show all %d task scores. The %s models use the same %s texts. The selection includes recent models and reference baselines, including the strong completed Llama checkpoints. *Flash-Next uses two GPUs. Hardware, quantization details and uncertainty intervals are in the model comparison.',n_tasks,model_count,format(n_tasks*100,big.mark=',')),models |> transmute(model=as.character(model),mean_f1=mean_task_f1),max(8.5,.65*model_count),4.3)
 families <- c('Relevance & Harm','Position & Tone','Events & Actions','Claims & Relations','Issues & Topics')
 questions <- c('Is it relevant or harmful?','What position or tone does it express?','What action or event is described?','What claim or relationship is asserted?','What issue is this about?')
 facet_labels <- setNames(paste0(families,'\n"',questions,'"'),families)

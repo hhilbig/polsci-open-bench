@@ -41,7 +41,7 @@ spec=importlib.util.spec_from_file_location('preview',Path(__file__).parents[1]/
 preview=importlib.util.module_from_spec(spec);spec.loader.exec_module(preview)
 
 def data():
-    return dict(release_id='test',status='pending',updated_at='2026-09-14',models=[dict(model='example',label='Example',n=3400,tasks=34,kind='API',hardware_tier='api',mean_task_f1=.6,malformed=1,cost_usd_upper=2)],task_scores=[],class_scores=[],candidates=[dict(model='Open candidate',status='pending',reason='Pilot queued')])
+    return dict(release_id='test',status='pending',updated_at='2026-09-14',models=[dict(model='example',label='Example',n=3400,tasks=34,kind='API',hardware_tier='api',mean_task_f1=.6,malformed=1,cost_usd_upper=2,cost_per_1k_items=.5,cost_basis='provider_ledger')],task_scores=[],class_scores=[],candidates=[dict(model='Open candidate',status='pending',reason='Pilot queued')])
 
 
 def test_compact_view_keeps_full_comparison_and_fixed_shortlist():
@@ -69,7 +69,7 @@ def test_static_table_and_pending():
     page=preview.render(data())
     assert '<tbody id="model-rows"><tr' in page
     assert '0.600' in page and '0.03%' in page
-    assert 'Run cost upper estimate: $2.00' in page
+    assert '$0.500 per 1,000 texts' in page and 'Provider billing record' in page
     assert 'Pilot queued' in page and 'Local preview, not published' in page
     assert 'The open-weight roster is selective, not exhaustive.' in page
     assert '<noscript>' in page and 'name="robots" content="noindex"' in page
@@ -185,8 +185,8 @@ def test_controls_and_no_external_scripts():
     assert 'No models match these filters' in preview.JS
 
 def test_homepage_proposals_follow_current_data_and_sitemap_markup():
-    assert '<div>' not in preview.HOMEPAGE_LINK_PROPOSAL
-    assert '2026. Matched evaluation' in preview.HOMEPAGE_LINK_PROPOSAL
+    assert '<div>' not in preview.homepage_link_proposal()
+    assert '2026. Matched evaluation' in preview.homepage_link_proposal()
     assert '<priority>0.8</priority>' in preview.SITEMAP_ENTRY_PROPOSAL
 
 def test_select_border_uses_contrasting_white_background_color():

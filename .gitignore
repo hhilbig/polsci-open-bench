@@ -66,6 +66,8 @@ output/sidecar/*
 !output/sidecar/jev_sidecar/
 !output/sidecar/gepa_jev_20260920/
 !output/sidecar/refresh_20260910_release_33/
+# The built page is published from the homepage repo, not from here.
+output/sidecar/refresh_20260910_release_33/preview/
 !output/sidecar/latency_sample/
 !output/sidecar/refresh_gemini_20260920/
 output/sidecar/refresh_gemini_20260920/*

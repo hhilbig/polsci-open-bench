@@ -12,19 +12,26 @@ from copy import deepcopy
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_RELEASE = ROOT / 'output/sidecar/refresh_20260910_release'
+DEFAULT_RELEASE = ROOT / 'output/sidecar/refresh_20260910_release_33'
+# Standard-rate API costs with their evidence label, shared with the README.
+COST_TABLE = ROOT / 'output/sidecar/jev_sidecar/cost_performance.csv'
+# Panel size is read from the release (see set_panel), not assumed: the
+# 34-task panel became 33 when halterman_ccc_protest was held out.
+N_TASKS = 34
+N_ITEMS = 3400
 FEATURED_MODELS = frozenset([
     'gpt-6-astra','gpt-5.6-sol','gpt-5.6-terra','gpt-5.6-luna',
     'claude-sonnet-5','claude-opus-5','deepseek-v4-flash','deepseek-v4-pro',
-    'jev-1.13.0',
+    'jev-1.13.0','gemini-3.8-flash','gemini-3.1-flash-lite',
     'qwen3_8_27b_fp8','qwen3_8_flash_next_fp8','gemma4_31b_it_qat_w4a16',
     'mistral_small_4_119b_nvfp4','qwen3_6_27b_fp8',
     'llama3_1_70b_instruct_fp8_dynamic_full34','llama3_3_70b_instruct_fp8_dynamic'])
-HOMEPAGE_LINK_PROPOSAL = ('<li><b><a href="llm-benchmark/">Political Science LLM Benchmark</a></b> '
-                          '2026. Matched evaluation of language models on 34 political-science text-coding tasks.</li>\n')
+def homepage_link_proposal():
+    return ('<li><b><a href="llm-benchmark/">Political Science LLM Benchmark</a></b> '
+            f'2026. Matched evaluation of language models on {N_TASKS} political-science text-coding tasks.</li>\n')
 SITEMAP_ENTRY_PROPOSAL = ('<url>\n  <loc>https://www.hannohilbig.com/llm-benchmark/</loc>\n'
                           '  <priority>0.8</priority>\n</url>\n')
-LABELS={'gpt-6-astra':'GPT-6 Astra','gpt-5.6-sol':'GPT-5.6 Sol','gpt-5.6-terra':'GPT-5.6 Terra','gpt-5.6-luna':'GPT-5.6 Luna','claude-sonnet-5':'Claude Sonnet 5','claude-opus-5':'Claude Opus 5','deepseek-v4-flash':'DeepSeek V4 Flash','deepseek-v4-pro':'DeepSeek V4 Pro','jev-1.13.0':'Jev 1.13'}
+LABELS={'gpt-6-astra':'GPT-6 Astra','gpt-5.6-sol':'GPT-5.6 Sol','gpt-5.6-terra':'GPT-5.6 Terra','gpt-5.6-luna':'GPT-5.6 Luna','claude-sonnet-5':'Claude Sonnet 5','claude-opus-5':'Claude Opus 5','deepseek-v4-flash':'DeepSeek V4 Flash','deepseek-v4-pro':'DeepSeek V4 Pro','jev-1.13.0':'Jev 1.13','gemini-3.8-flash':'Gemini 3.8 Flash','gemini-3.1-flash-lite':'Gemini 3.1 Flash-Lite'}
 LABELS.update({'gemma4_31b_it_qat_w4a16':'Gemma 4 31B (W4A16)','glm4_7_flash':'GLM-4.7-Flash','llama3_1_70b_instruct_fp8_dynamic_full34':'Llama 3.1 70B (FP8)','mistral_small_4_119b_nvfp4':'Mistral Small 4 (NVFP4)','qwen3_30b_a3b_instruct_2507_fp8':'Qwen3 30B-A3B 2507 (FP8)','qwen3_6_27b_fp8':'Qwen3.6 27B (FP8)','qwen3_6_35b_a3b_fp8':'Qwen3.6 35B-A3B (FP8)'})
 LABELS['qwen3_8_27b_fp8']='Qwen3.8 27B (FP8)'
 LABELS['qwen3_8_flash_next_fp8']='Qwen3.8 Flash-Next (FP8)'
@@ -109,7 +116,7 @@ def hardware_label(tier):
 def safe_payload(data):
     """Whitelist aggregate fields; never embed arbitrary release/source objects."""
     fields = {
-        'models': ('model','label','kind','hardware_tier','hardware','n','tasks','mean_task_f1','ci_item_low','ci_item_high','ci_task_low','ci_task_high','malformed','cost_usd_upper','throughput_tokens_per_second','throughput_items_per_second','throughput_items','throughput_keyset_sha256','throughput_settings_sha256','throughput_hardware','documented_versions','observed_run_dates'),
+        'models': ('model','label','kind','hardware_tier','hardware','n','tasks','mean_task_f1','ci_item_low','ci_item_high','ci_task_low','ci_task_high','malformed','cost_usd_upper','cost_per_1k_items','cost_basis','throughput_tokens_per_second','throughput_items_per_second','throughput_items','throughput_keyset_sha256','throughput_settings_sha256','throughput_hardware','documented_versions','observed_run_dates'),
         'task_scores': ('model','task','category','n','f1','accuracy','mcc'),
         'class_scores': ('model','task','label','support','f1'),
         'candidates': ('model','status','reason'),
@@ -119,14 +126,35 @@ def safe_payload(data):
     result={key:[{f:r.get(f) for f in keep} for r in data.get(key,[])] for key,keep in fields.items()}
     result.update({k:data.get(k) for k in ('release_id','status','updated_at')})
     for m in result['models']:
-        if m['n'] != 3400 or m['tasks'] != 34:
+        # Every ranked model must cover the same complete panel of 100 texts per task.
+        if (m['n'], m['tasks']) != (result['models'][0]['n'], result['models'][0]['tasks']) or m['n'] != 100*m['tasks']:
             raise ValueError(f"Incomplete model cannot enter ranking: {m['model']}")
         if not m['kind'] or not m['hardware_tier']:
             raise ValueError('Model kind and hardware tier must be explicit')
     return result
 
+COST_BASIS_LABELS = {'provider_ledger':'Provider billing record','provider_reported':'Provider-reported cost',
+                     'provider_tokens':'Estimate: provider token counts times published price',
+                     'token_estimate':'Estimate: our token counts times published price'}
+
+def standard_costs():
+    if not COST_TABLE.exists():
+        return {}
+    with COST_TABLE.open(newline='') as handle:
+        return {r['model']:(float(r['cost_per_1k_items']),r['cost_basis']) for r in csv.DictReader(handle)
+                if r.get('cost_per_1k_items')}
+
+def set_panel(release):
+    """Set the panel size used in page text from the release being built."""
+    global N_TASKS, N_ITEMS
+    tasks={r['task'] for r in release.get('tasks',[])}
+    N_TASKS=len(tasks) or max((m.get('tasks') or 0 for m in release.get('models',[])),default=N_TASKS)
+    N_ITEMS=N_TASKS*100
+
 def normalize_release(release):
     """Adapt the metrics release to the small browser-facing schema."""
+    set_panel(release)
+    costs=standard_costs()
     models=[]
     for source in release['models']:
         p=source['provenance']
@@ -151,7 +179,9 @@ def normalize_release(release):
                            throughput_settings_sha256=p.get('throughput_settings_sha256'),
                            throughput_hardware=p.get('throughput_hardware'),
                            documented_versions=p.get('documented_versions') or [p.get('revision','Unavailable')],
-                           observed_run_dates=observed_run_dates))
+                           observed_run_dates=observed_run_dates,
+                           cost_per_1k_items=costs.get(source['model'],(None,None))[0],
+                           cost_basis=costs.get(source['model'],(None,None))[1]))
     manifest=release['manifest']
     ranked_identities={(m['provenance'].get('model_id'),m['provenance'].get('revision'))
                        for m in release['models']}
@@ -195,7 +225,7 @@ def methodology(release):
                           for entry in release.get('historical_exclusions',[]))
     return (f"# Political Science LLM Benchmark methodology\n\n"
             f"This release compares model predictions with human reference labels on the same "
-            f"100 selected texts from each of 34 political-science coding tasks.\n\n"
+            f"100 selected texts from each of {N_TASKS} political-science coding tasks.\n\n"
             f"## Sample and prompts\n\n"
             f"The panel was selected by hashing task and item identifiers with seed "
             f"{manifest['seed']}. The logical prompts, reference labels and task-specific scorer "
@@ -246,6 +276,7 @@ def preview_release(release_dir):
     if candidates:
         release['candidates']=[public_candidate(candidate) for candidate in candidates]
     validate_public(release)
+    set_panel(release)
     return release
 
 def verify(release_dir):
@@ -291,7 +322,7 @@ def verify(release_dir):
     if ('<meta name="robots" content="noindex">' not in page or
             '<link rel="canonical" href="https://www.hannohilbig.com/llm-benchmark/">' not in page):
         raise ValueError('Preview metadata is missing the local noindex or canonical link')
-    if (release_dir/'preview/homepage-link-proposal.html').read_text() != HOMEPAGE_LINK_PROPOSAL:
+    if (release_dir/'preview/homepage-link-proposal.html').read_text() != homepage_link_proposal():
         raise ValueError('Homepage link proposal differs from the approved preview path')
     if (release_dir/'preview/sitemap-entry-proposal.xml').read_text() != SITEMAP_ENTRY_PROPOSAL:
         raise ValueError('Sitemap proposal differs from the approved preview path')
@@ -323,7 +354,7 @@ def comparable_speed_rows(models):
         rows.append(f'<tr><td colspan="4"><strong>Comparable generation subset:</strong> '
                     f'{int(items):,} identical frozen texts on {esc(gpu)}. '
                     'Generation, runtime and batch-concurrency settings match. '
-                    'The F1 scores use all 3,400 texts; generation rates exclude model load '
+                    f'The F1 scores use all {N_ITEMS:,} texts; generation rates exclude model load '
                     'and queue time.</td></tr>')
         for model in group:
             rows.append(f"<tr><td>{esc(model.get('label') or model['model'])}</td>"
@@ -345,18 +376,18 @@ def render(data, downloads=()):
         version_details=f'<small>{esc(version)}</small>'
         if run_dates:
             version_details+=f'<small>Observed response dates: {esc(", ".join(run_dates))}</small>'
-        detail=(f'Run cost upper estimate: ${fmt(m["cost_usd_upper"],2)}'
-                if m['kind']=='API' and m.get('cost_usd_upper') is not None
+        detail=(f'${fmt(m["cost_per_1k_items"],3)} per 1,000 texts'
+                if m['kind']=='API' and m.get('cost_per_1k_items') is not None
                 else m.get('hardware') or 'Hardware name unavailable')
         rows.append(f'''<tr data-model="{esc(m['model'])}" data-kind="{esc(m['kind'])}" data-hardware="{esc(m['hardware_tier'])}"><td class="model-label">{esc(m.get('label') or m['model'])}{version_details}</td><td class="numeric">{fmt(m['mean_task_f1'])}</td><td class="numeric">{interval(m,'item')}<small>Items</small>{interval(m,'task')}<small>Tasks</small></td><td class="numeric">{fmt(100*m['malformed']/m['n'],2)}%</td><td>{esc(m['kind'])}<small>{esc(hardware_label(m['hardware_tier']))}</small><small>{esc(detail)}</small></td></tr>''')
     hardware=''.join(f'<option value="{esc(t)}">{esc(hardware_label(t))}</option>' for t in sorted({m['hardware_tier'] for m in models}))
     categories=''.join(f'<option value="{esc(c)}">{esc(c)}</option>' for c in sorted({r['category'] for r in data['task_scores'] if r['category']}))
     pending=''.join(f"<li><strong>{esc(r['model'])}</strong>: {esc(r['status'])}. {esc(r['reason'])}</li>" for r in data['candidates'])
-    costs=''.join(f"<tr><td>{esc(m.get('label') or m['model'])}</td><td>{fmt(m['mean_task_f1'])}</td><td>${fmt(m['cost_usd_upper'],2)}</td></tr>" for m in models if m['kind']=='API' and m['cost_usd_upper'] is not None)
+    costs=''.join(f"<tr><td>{esc(m.get('label') or m['model'])}</td><td>{fmt(m['mean_task_f1'])}</td><td>${fmt(m['cost_per_1k_items'],3)}</td><td>{esc(COST_BASIS_LABELS.get(m['cost_basis'],m['cost_basis']))}</td></tr>" for m in models if m['kind']=='API' and m.get('cost_per_1k_items') is not None)
     speeds=comparable_speed_rows(models)
     links=''.join(f'<li><a href="downloads/{esc(name)}" download>{esc(name)}</a></li>' for name in downloads)
     takeaway=f"{esc(models[0].get('label') or models[0]['model'])} has the highest mean task F1 among the completed models shown below." if models else 'The matched evaluation is not yet ready for ranking.'
-    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Political Science LLM Benchmark | Hanno Hilbig</title><meta name="author" content="Hanno Hilbig"><meta name="description" content="Matched evaluation of language models on 34 political science text-coding tasks."><meta name="robots" content="noindex"><link rel="canonical" href="https://www.hannohilbig.com/llm-benchmark/"><link rel="stylesheet" href="styles.css"></head><body><a class="skip-link" href="#main">Skip to content</a><div class="wrapper"><header><h1>Political Science LLM Benchmark</h1><p class="title">34 text-coding tasks · 100 texts per task<br><a href="https://www.hannohilbig.com/">Hanno Hilbig</a>, University of California, Davis</p><nav aria-label="Page sections"><a href="#comparison">Models</a><a href="#tasks">Tasks</a><a href="#methods">Methods</a><a href="#downloads">Downloads</a></nav></header><main id="main" tabindex="-1"><p class="notice">Local preview, not published. Release {esc(data['release_id'])}; status: {esc(data['status'])}. Updated {esc(data['updated_at'])}.</p><p>This benchmark compares language models against human reference labels on the same 3,400 texts. The tasks include political science classification problems; results describe these selected tasks, not every possible research application.</p><p>{takeaway} Check the task-level results before choosing a model. Close aggregate scores need not indicate a meaningful difference.</p><h2 id="comparison">Model comparison</h2><p>Only models with all 3,400 predictions enter this table. F1 balances precision and recall; higher is better. Each task receives equal weight.</p><div class="controls js-only"><label>Model access<select id="kind"><option value="">All</option><option value="API">API</option><option value="open">Open weights</option></select></label><label>Hardware tier<select id="hardware"><option value="">All</option>{hardware}</select></label></div><p id="model-count" role="status" aria-live="polite">{len(models)} models shown.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Model comparison, horizontally scrollable"><table><caption>Equal-task mean F1 and 95% uncertainty intervals</caption><thead><tr><th aria-sort="none"><button data-sort="label">Model ↕</button></th><th aria-sort="descending"><button data-sort="mean_task_f1">F1 ↕</button></th><th>95% intervals</th><th aria-sort="none"><button data-sort="malformed">Malformed ↕</button></th><th>Access / hardware</th></tr></thead><tbody id="model-rows">{''.join(rows)}</tbody></table></div><p class="note">Items: paired resampling of texts within each task. Tasks: resampling of tasks. These estimate different sources of uncertainty, with 2,000 replicates each. The task interval does not establish generalization to all political science tasks.</p><noscript><p>All completed models are shown above. Interactive task selection requires JavaScript; aggregate task and class results are available in the downloads.</p></noscript><h2 id="tasks">Choose by task</h2><div class="controls js-only"><label>Category<select id="category"><option value="">All categories</option>{categories}</select></label><label>Task<select id="task"></select></label></div><p id="task-description">Download the task and class results below for the complete breakdown.</p><div class="table-scroll js-only"><table><caption>Selected task results</caption><thead><tr><th>Model</th><th>F1</th><th>Accuracy</th><th>MCC</th><th>Texts</th></tr></thead><tbody id="task-rows"></tbody></table></div><details><summary>Class support and class F1</summary><p>MCC is the Matthews correlation coefficient. Undefined metrics are unavailable, not zero. Small class counts make class-specific scores unstable.</p><div class="table-scroll"><table><thead><tr><th>Model</th><th>Class</th><th>Reference support</th><th>F1</th></tr></thead><tbody id="class-rows"></tbody></table></div></details><h2>Practical tradeoffs</h2><h3>API quality and cost</h3><p>Costs cover this 3,400-text evaluation, including retained uncertain attempts. They are conservative usage-based estimates, not invoices or universal prices. API batch turnaround is not generation speed.</p><div class="table-scroll"><table><thead><tr><th>Model</th><th>Mean F1</th><th>Run cost upper estimate</th></tr></thead><tbody>{costs}</tbody></table></div><h3>Open-model quality and throughput</h3><p>Compare throughput only for documented, comparable hardware and inference settings. Academic compute has an economic cost even when no payment is charged.</p>{'<div class="table-scroll"><table><thead><tr><th>Model</th><th>Mean F1</th><th>Output tokens / second</th><th>Hardware</th></tr></thead><tbody>'+speeds+'</tbody></table></div>' if speeds else '<p>No comparable open-model throughput measurements are available in this release yet.</p>'}<h2>Models outside the ranking</h2><p>Pending means evaluation is unfinished. Not evaluated means there is a documented feasibility or availability limitation. Neither is a zero performance score.</p><p>The open-weight roster is selective, not exhaustive. Published parameter counts and active-parameter counts do not establish that a model will run reliably on available hardware. Actual weight files, quantization, inference-runtime support, GPU and host memory, and available single-node allocations determine feasibility. Some recent models therefore remain unevaluated even with access to multi-GPU Hive nodes. Their absence is not evidence about their benchmark quality.</p><ul>{pending or '<li>No additional candidate status has been recorded.</li>'}</ul><h2 id="methods">Methods and limitations</h2><p>The frozen sample uses seed 20260910 and task/item hashes to select 100 texts per task. Texts, reference labels and logical prompts are held fixed. Existing predictions are reused only when their provenance matches. Historical 18-task averages are not combined with these 34-task scores.</p><p>Headline F1 follows the existing task scorer: positive-class F1 for binary tasks, mean positive-class F1 across labels for multi-label tasks, and macro F1 for categorical tasks. Undefined metrics remain unavailable. Malformed outputs count as incorrect and are retained. Infrastructure failures are recorded separately from answer failures.</p><p>Reasoning is disabled where supported, otherwise set to the lowest supported level. The API runs use a 256-token output allowance including reasoning. Model revision, quantization, decoding and runtime details accompany the release; these differences can affect performance. Open weights do not imply a particular license or hardware requirement.</p><p>API costs are not directly comparable with free-to-the-researcher Hive access. Larger multi-GPU models are not evidence of improvement under a single-GPU constraint. This benchmark does not replace validation on the population and coding categories of a new study.</p><h2 id="downloads">Downloads and reproducibility</h2><p>These downloads contain aggregate results and provenance only. Source texts and row-level predictions are withheld pending redistribution review.</p><ul>{links}<li><a href="https://github.com/hhilbig/polsci-open-bench">Benchmark code and task definitions</a></li></ul></main><footer>This is a local preview. Publication requires approval.</footer></div><script id="benchmark-data" type="application/json">{json.dumps(data,ensure_ascii=False,allow_nan=False).replace('<',chr(92)+'u003c')}</script><script src="benchmark.js" defer></script></body></html>'''
+    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Political Science LLM Benchmark | Hanno Hilbig</title><meta name="author" content="Hanno Hilbig"><meta name="description" content="Matched evaluation of language models on {N_TASKS} political science text-coding tasks."><meta name="robots" content="noindex"><link rel="canonical" href="https://www.hannohilbig.com/llm-benchmark/"><link rel="stylesheet" href="styles.css"></head><body><a class="skip-link" href="#main">Skip to content</a><div class="wrapper"><header><h1>Political Science LLM Benchmark</h1><p class="title">{N_TASKS} text-coding tasks · 100 texts per task<br><a href="https://www.hannohilbig.com/">Hanno Hilbig</a>, University of California, Davis</p><nav aria-label="Page sections"><a href="#comparison">Models</a><a href="#tasks">Tasks</a><a href="#methods">Methods</a><a href="#downloads">Downloads</a></nav></header><main id="main" tabindex="-1"><p class="notice">Local preview, not published. Release {esc(data['release_id'])}; status: {esc(data['status'])}. Updated {esc(data['updated_at'])}.</p><p>This benchmark compares language models against human reference labels on the same {N_ITEMS:,} texts. The tasks include political science classification problems; results describe these selected tasks, not every possible research application.</p><p>{takeaway} Check the task-level results before choosing a model. Close aggregate scores need not indicate a meaningful difference.</p><h2 id="comparison">Model comparison</h2><p>Only models with all {N_ITEMS:,} predictions enter this table. F1 balances precision and recall; higher is better. Each task receives equal weight.</p><div class="controls js-only"><label>Model access<select id="kind"><option value="">All</option><option value="API">API</option><option value="open">Open weights</option></select></label><label>Hardware tier<select id="hardware"><option value="">All</option>{hardware}</select></label></div><p id="model-count" role="status" aria-live="polite">{len(models)} models shown.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Model comparison, horizontally scrollable"><table><caption>Equal-task mean F1 and 95% uncertainty intervals</caption><thead><tr><th aria-sort="none"><button data-sort="label">Model ↕</button></th><th aria-sort="descending"><button data-sort="mean_task_f1">F1 ↕</button></th><th>95% intervals</th><th aria-sort="none"><button data-sort="malformed">Malformed ↕</button></th><th>Access / hardware</th></tr></thead><tbody id="model-rows">{''.join(rows)}</tbody></table></div><p class="note">Items: paired resampling of texts within each task. Tasks: resampling of tasks. These estimate different sources of uncertainty, with 2,000 replicates each. The task interval does not establish generalization to all political science tasks.</p><noscript><p>All completed models are shown above. Interactive task selection requires JavaScript; aggregate task and class results are available in the downloads.</p></noscript><h2 id="tasks">Choose by task</h2><div class="controls js-only"><label>Category<select id="category"><option value="">All categories</option>{categories}</select></label><label>Task<select id="task"></select></label></div><p id="task-description">Download the task and class results below for the complete breakdown.</p><div class="table-scroll js-only"><table><caption>Selected task results</caption><thead><tr><th>Model</th><th>F1</th><th>Accuracy</th><th>MCC</th><th>Texts</th></tr></thead><tbody id="task-rows"></tbody></table></div><details><summary>Class support and class F1</summary><p>MCC is the Matthews correlation coefficient. Undefined metrics are unavailable, not zero. Small class counts make class-specific scores unstable.</p><div class="table-scroll"><table><thead><tr><th>Model</th><th>Class</th><th>Reference support</th><th>F1</th></tr></thead><tbody id="class-rows"></tbody></table></div></details><h2>Practical tradeoffs</h2><h3>API quality and cost</h3><p>Cost per 1,000 texts at each provider's standard, non-batch rate. Where a provider bill was available the figure comes from it; otherwise it is token counts times the published price, as marked. OpenAI, Anthropic and Google discount batch requests by 50%. Prices were read in September 2026 and change over time.</p><div class="table-scroll"><table><thead><tr><th>Model</th><th>Mean F1</th><th>Cost per 1,000 texts</th><th>Source</th></tr></thead><tbody>{costs}</tbody></table></div><h3>Open-model quality and throughput</h3><p>Compare throughput only for documented, comparable hardware and inference settings. Academic compute has an economic cost even when no payment is charged.</p>{'<div class="table-scroll"><table><thead><tr><th>Model</th><th>Mean F1</th><th>Output tokens / second</th><th>Hardware</th></tr></thead><tbody>'+speeds+'</tbody></table></div>' if speeds else '<p>No comparable open-model throughput measurements are available in this release yet.</p>'}<h2>Models outside the ranking</h2><p>Pending means evaluation is unfinished. Not evaluated means there is a documented feasibility or availability limitation. Neither is a zero performance score.</p><p>The open-weight roster is selective, not exhaustive. Published parameter counts and active-parameter counts do not establish that a model will run reliably on available hardware. Actual weight files, quantization, inference-runtime support, GPU and host memory, and available single-node allocations determine feasibility. Some recent models therefore remain unevaluated even with access to multi-GPU Hive nodes. Their absence is not evidence about their benchmark quality.</p><ul>{pending or '<li>No additional candidate status has been recorded.</li>'}</ul><h2 id="methods">Methods and limitations</h2><p>The frozen sample uses seed 20260910 and task/item hashes to select 100 texts per task. Texts, reference labels and logical prompts are held fixed. Existing predictions are reused only when their provenance matches. Historical 18-task averages are not combined with these {N_TASKS}-task scores.</p><p>Headline F1 follows the existing task scorer: positive-class F1 for binary tasks, mean positive-class F1 across labels for multi-label tasks, and macro F1 for categorical tasks. Undefined metrics remain unavailable. Malformed outputs count as incorrect and are retained. Infrastructure failures are recorded separately from answer failures.</p><p>Reasoning is disabled where supported, otherwise set to the lowest supported level. The API runs use a 256-token output allowance including reasoning. Model revision, quantization, decoding and runtime details accompany the release; these differences can affect performance. Open weights do not imply a particular license or hardware requirement.</p><p>API costs are not directly comparable with free-to-the-researcher Hive access. Larger multi-GPU models are not evidence of improvement under a single-GPU constraint. This benchmark does not replace validation on the population and coding categories of a new study.</p><h2 id="downloads">Downloads and reproducibility</h2><p>These downloads contain aggregate results and provenance only. Source texts and row-level predictions are withheld pending redistribution review.</p><ul>{links}<li><a href="https://github.com/hhilbig/polsci-open-bench">Benchmark code and task definitions</a></li></ul></main><footer>This is a local preview. Publication requires approval.</footer></div><script id="benchmark-data" type="application/json">{json.dumps(data,ensure_ascii=False,allow_nan=False).replace('<',chr(92)+'u003c')}</script><script src="benchmark.js" defer></script></body></html>'''
 
 def paper_figures(preview, release):
     manifest_path=preview/'figures/figure-data.json'
@@ -494,7 +525,7 @@ byId('summary-category').addEventListener('change',showCategory);showCategory();
 '''
     (preview/'styles.css').write_text((preview/'styles.css').read_text()+'\n.disclosure{margin:1.4rem 0;border-top:1px solid #ddd;padding-top:1rem}.disclosure>summary{cursor:pointer;font-weight:600;color:#0069b4}.disclosure[open]>summary{margin-bottom:1rem}.task-scope{margin-bottom:1rem}.task-scope input{width:auto;margin-right:.4rem}\n')
     (preview/'benchmark.js').write_text('const featuredModels=new Set('+json.dumps(sorted(FEATURED_MODELS))+');\n'+JS+extra_js+'\ndocument.querySelectorAll(\'a[href="#methods"]\').forEach(a=>a.addEventListener("click",()=>{byId("methods").open=true;}));\n')
-    (release_dir/'preview/homepage-link-proposal.html').write_text(HOMEPAGE_LINK_PROPOSAL)
+    (release_dir/'preview/homepage-link-proposal.html').write_text(homepage_link_proposal())
     (release_dir/'preview/sitemap-entry-proposal.xml').write_text(SITEMAP_ENTRY_PROPOSAL)
     verify(release_dir)
     return preview

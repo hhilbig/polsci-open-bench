@@ -27,7 +27,8 @@ def build(release_dir):
     block=source.split('family_map <-')[1].split('long_codebook_tasks <-')[0]
     families=dict(re.findall(r'"([a-z0-9_]+)"\s*,\s*"([^"]+)"',block))
     tasks={r['task']:dict(r) for r in release['task_definitions']}
-    if set(tasks)!=set(families):raise ValueError('Paper taxonomy must cover all 34 tasks')
+    n_tasks=len(tasks)
+    if not set(tasks)<=set(families):raise ValueError('Paper taxonomy must cover every release task')
     items=defaultdict(list)
     for row in panel['rows']:items[row['task']].append(row['item'])
     definitions={t['name']:t for t in load_task_definitions()}
@@ -38,7 +39,7 @@ def build(release_dir):
                  complexity=_coding_complexity(t,effective,words),prompt_words=words)
     models=sorted(data['models'],key=lambda m:-m['mean_task_f1'])
     scores={(r['model'],r['task']):r['headline_f1'] for r in data['task_scores']}
-    if len(scores)!=len(models)*34:raise ValueError('Incomplete model-task coverage')
+    if len(scores)!=len(models)*n_tasks:raise ValueError('Incomplete model-task coverage')
     out=release_dir/'preview/llm-benchmark/figures';out.mkdir(parents=True,exist_ok=True)
     plt.rcParams.update({'font.family':'sans-serif','font.sans-serif':['Helvetica','Arial','DejaVu Sans'],
         'font.size':10,'axes.edgecolor':'#555555','axes.linewidth':.7,'axes.grid':False,
@@ -51,6 +52,7 @@ def build(release_dir):
         for ext in ['svg','pdf','png']:
             meta={'Date':None} if ext=='svg' else {'CreationDate':None,'ModDate':None} if ext=='pdf' else {}
             fig.savefig(out/(stem+'.'+ext),bbox_inches='tight',dpi=150,metadata=meta)
+        caption=caption.replace('{N_TASKS}',str(n_tasks)).replace('{N_TEXTS}',f'{n_tasks*100:,}')
         plt.close(fig);manifest['figures'].append(dict(file=stem,caption=caption,data=rows))
     single=[m for m in models if m['hardware_tier']=='single-gpu']
     panels=[('API models',[m for m in models if m['kind']=='API']),('Open weights · single GPU (1 of 2)',single[:10]),
@@ -66,7 +68,7 @@ def build(release_dir):
         ax.set_ylim(0,1.04);ax.set_xlim(-.6,max(len(group)-.4,2.4));ax.set_ylabel('Mean F1 across tasks')
         ax.set_title(title,loc='left',fontsize=11,fontweight='bold')
     fig.tight_layout(h_pad=2)
-    save(fig,'fig-mean-f1','Large circles show equal-task mean F1; small gray dots show the 34 task scores. All models use the same 3,400 texts. Panels separate API, single-GPU and multiple-GPU models. The two single-GPU panels continue the same ranking. These are point estimates; uncertainty intervals are in the table.',[dict(model=m['model'],mean_f1=m['mean_task_f1']) for m in models])
+    save(fig,'fig-mean-f1','Large circles show equal-task mean F1; small gray dots show the {N_TASKS} task scores. All models use the same {N_TEXTS} texts. Panels separate API, single-GPU and multiple-GPU models. The two single-GPU panels continue the same ranking. These are point estimates; uncertainty intervals are in the table.',[dict(model=m['model'],mean_f1=m['mean_task_f1']) for m in models])
     groups={'API':[m for m in models if m['kind']=='API'],'Open (single GPU)':single}
     best={t:{g:max(scores[m['model'],t] for m in ms) for g,ms in groups.items()} for t in tasks}
     gaps={t:v['API']-v['Open (single GPU)'] for t,v in best.items()}
@@ -75,7 +77,7 @@ def build(release_dir):
     for i,t in enumerate(order):
         c='#009E73' if gaps[t]<0 else '#333333'
         ax.plot([0,gaps[t]],[i,i],color=c,lw=1);ax.scatter(gaps[t],i,color=c,s=28)
-    ax.axvline(0,color='#777777',ls='--',lw=.8);ax.set_yticks(range(34),[t.replace('_',' ') for t in order],fontsize=8)
+    ax.axvline(0,color='#777777',ls='--',lw=.8);ax.set_yticks(range(n_tasks),[t.replace('_',' ') for t in order],fontsize=8)
     ax.invert_yaxis();ax.set_xlabel('Best API minus best single-GPU open F1');fig.tight_layout()
     save(fig,'fig-best-local-api-gap','Best API minus best single-GPU open F1 by task. Negative values favor open models (green); positive values favor APIs (gray). Winners are selected after observing results: this is a descriptive upper bound. The two-GPU Qwen3.8 Flash-Next is excluded from this single-GPU comparison.',[dict(task=t,api_minus_open=gaps[t]) for t in order])
     family_order=['Relevance & Harm','Position & Tone','Events & Actions','Claims & Relations','Issues & Topics']
@@ -133,7 +135,7 @@ def build(release_dir):
         offset=(-90,45) if m['model'].startswith('qwen2_5_32') else (8,12 if i%2==0 else -18)
         ax.annotate(names[m['model']],(x,y),xytext=offset,textcoords='offset points',fontsize=8,
                     arrowprops={'arrowstyle':'-','color':'#999999','lw':.5} if offset==(-90,45) else None)
-    ax.set_xscale('log');ax.margins(x=.5,y=.35);ax.set_xlabel('Generation seconds per item (log scale)');ax.set_ylabel('Mean F1 across 34 tasks');fig.tight_layout()
+    ax.set_xscale('log');ax.margins(x=.5,y=.35);ax.set_xlabel('Generation seconds per item (log scale)');ax.set_ylabel(f'Mean F1 across {n_tasks} tasks');fig.tight_layout()
     note=f'Generation time for {key[3]:,} identical texts on {key[2]}, with matching runtime and concurrency settings. Model load and queue time are excluded. The new runs do not contain the paper’s one-at-a-time versus 10-items-per-prompt comparison. These plots show aggregate generation time per item, not median request latency.'
     save(fig,'fig-speed',note,[dict(model=m['model'],seconds_per_item=1/m['throughput_items_per_second'],mean_f1=m['mean_task_f1']) for m in group])
     group=sorted(group,key=lambda m:-m['throughput_items_per_second']);fig,ax=plt.subplots(figsize=(9,4.5))
@@ -150,13 +152,13 @@ def build(release_dir):
     for ax,(title,group) in zip(axes,[('API models',[m for m in featured if m['kind']=='API']),
                                     ('Open weights',[m for m in featured if m['kind']=='open'])]):
         for i,m in enumerate(group):
-            ax.scatter(i+rng.uniform(-.18,.18,34),[scores[m['model'],t] for t in tasks],s=10,color='#cccccc',alpha=.5)
+            ax.scatter(i+rng.uniform(-.18,.18,n_tasks),[scores[m['model'],t] for t in tasks],s=10,color='#cccccc',alpha=.5)
             ax.scatter(i,m['mean_task_f1'],s=85,color=colors[m['model']],edgecolor='#333333',zorder=3)
             ax.text(i,m['mean_task_f1']+.065,f"{m['mean_task_f1']:.3f}",ha='center',fontsize=9)
         ax.set_xticks(range(len(group)),[names[m['model']] for m in group],rotation=24,ha='right',fontsize=9)
         ax.set_ylim(0,1.04);ax.set_ylabel('F1');ax.set_title(title,loc='left',fontsize=11)
     fig.tight_layout(h_pad=2)
-    save(fig,'fig-recent-mean-f1','Recent models and reference baselines, including the strong completed Llama checkpoints. Large circles show equal-task mean F1; gray dots show all 34 task scores. Each model uses 3,400 texts. Hardware and uncertainty intervals appear in the comparison table.',[dict(model=m['model'],mean_f1=m['mean_task_f1']) for m in featured])
+    save(fig,'fig-recent-mean-f1','Recent models and reference baselines, including the strong completed Llama checkpoints. Large circles show equal-task mean F1; gray dots show all {N_TASKS} task scores. Each model uses {N_TEXTS} texts. Hardware and uncertainty intervals appear in the comparison table.',[dict(model=m['model'],mean_f1=m['mean_task_f1']) for m in featured])
     # Five compact panels preserve the paper's annotation-type comparison.
     fig,axes=plt.subplots(5,1,figsize=(9,14));rows=[]
     for ax,family in zip(axes.flat,family_order):
@@ -179,5 +181,5 @@ def build(release_dir):
 
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('--release-dir',type=Path,default=ROOT/'output/sidecar/refresh_20260910_release')
+    p=argparse.ArgumentParser();p.add_argument('--release-dir',type=Path,default=ROOT/'output/sidecar/refresh_20260910_release_33')
     print(len(build(p.parse_args().release_dir)['figures']),'paper figures generated')

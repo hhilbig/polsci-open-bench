@@ -105124,6 +105124,15 @@
       "task": "wesleyan_creative_ads_2022"
     }
   ],
+  "historical_exclusions": [
+    {
+      "model": "GPT-OSS 120B (MXFP4)",
+      "model_id": "openai/gpt-oss-120b",
+      "reason": "Job 23393692_0 produced a malformed generated channel in an uncheckpointed task batch without an identifiable item. It cannot be assigned to a frozen text and scored incorrect. Job 23415406 completed a second attempt and retained one separate malformed response with an item ID. Its fully audited 3,400-item output remains exploratory because the first failure cannot be scored under the no-answer-quality-retry rule.",
+      "revision": "b5c939de8f754692c1647ca79fbf85e8c1e70f8a",
+      "status": "excluded"
+    }
+  ],
   "manifest": {
     "api_completed_at": "2026-09-14T23:38:51.382508+00:00",
     "api_cost_usd_upper": 44.58635597399993,
@@ -105134,7 +105143,7 @@
     "baseline": "Qwen3.6 27B",
     "bootstrap_replicates": 2000,
     "generator_sha256": "2cc91e0980c03b8119cafa24ccd83c3fdb9ca49b70528dd909b25911c80c8025",
-    "historical_exclusions_sha256": null,
+    "historical_exclusions_sha256": "a894170b46bc4347110d88d78e7856b1b2aa917784ba8ea6f8993fcbb5e2af15",
     "malformed_scorer_sha256": "8130e019706b4e2456a3371dbae11a47755bba779eaf729a697c31a7697d0279",
     "numpy_version": "2.3.5",
     "open_manifest_sha256": "8373189cb654cc8ab8e9349d24f5f3295f86179c0ac84682a2d8a0e757340c60",
