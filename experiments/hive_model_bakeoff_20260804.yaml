@@ -1,0 +1,71 @@
+version: 1
+run_id: hive_model_bakeoff_20260804
+benchmark_commit: 3c7ad0756d447b1d57ed4daf26bbb85f5f296042
+task_scope:
+  tasks_dir: tasks
+  expected_tasks: 34
+  expected_items: 16425
+  sampling_note: >-
+    Use the benchmark's complete fixed release sample. The sample is
+    deterministic but not class-stratified, so per-class estimates must retain
+    their observed support counts.
+
+runtime:
+  vllm_version: 0.26.0
+  python_version: "3.12"
+  max_model_len: 8192
+  gpu_memory_utilization: 0.90
+
+generation:
+  temperature: 0.0
+  max_tokens: 256
+  seed: 20260804
+  enable_thinking: false
+  structured_outputs: json_schema
+  prompt_margin_tokens: 128
+
+promotion_gate:
+  baseline_model_key: qwen3_30b_a3b_instruct_2507_fp8
+  minimum_mean_f1_gain: 0.01
+  equivalence_tolerance: 0.005
+  maximum_parse_error_increase: 0.005
+  material_throughput_ratio: 1.25
+
+models:
+  qwen3_30b_a3b_instruct_2507_fp8:
+    role: verified_baseline
+    model_id: Qwen/Qwen3-30B-A3B-Instruct-2507-FP8
+    revision: 5a5a776300a41aaa681dd7ff0106608ef2bc90db
+    display_name: Qwen3 30B-A3B Instruct 2507 FP8
+    language_model_only: false
+    preferred_partition: high
+    preferred_gpu: 6000_blackwell
+
+  qwen3_6_35b_a3b_fp8:
+    role: throughput_candidate
+    model_id: Qwen/Qwen3.6-35B-A3B-FP8
+    revision: 95a723d08a9490559dae23d0cff1d9466213d989
+    display_name: Qwen3.6 35B-A3B FP8
+    language_model_only: true
+    preferred_partition: high
+    preferred_gpu: 6000_blackwell
+
+  qwen3_6_27b_fp8:
+    role: accuracy_candidate
+    model_id: Qwen/Qwen3.6-27B-FP8
+    revision: e89b16ebf1988b3d6befa7de50abc2d76f26eb09
+    display_name: Qwen3.6 27B FP8
+    language_model_only: true
+    preferred_partition: high
+    preferred_gpu: 6000_blackwell
+
+  gemma4_31b_it_qat_w4a16:
+    role: small_gpu_candidate
+    model_id: google/gemma-4-31B-it-qat-w4a16-ct
+    revision: 52f3f65bc7a02d555763bc923bd1d9094898219d
+    display_name: Gemma 4 31B IT QAT W4A16
+    language_model_only: true
+    preferred_partition: high
+    preferred_gpu: 6000_blackwell
+    secondary_fit_partition: low
+    secondary_fit_gpu: nvidia_rtx_5000_ada_generation

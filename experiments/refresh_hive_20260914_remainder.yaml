@@ -1,0 +1,40 @@
+version: 1
+run_id: refresh_hive_20260914_remainder
+benchmark_commit: 3c7ad0756d447b1d57ed4daf26bbb85f5f296042
+refresh_sample:
+  panel_sha256: 20294ce2229b45dd3d0aa97f5e52f1ebc2292c6bae186475d998e00e8140bf5a
+  stage: remainder
+task_scope:
+  tasks_dir: tasks
+  expected_tasks: 34
+  expected_items: 3332
+runtime:
+  vllm_version: 0.26.0
+  python_version: '3.12'
+  runtime_lock_sha256: 4f46101fa493e38b312af034b8d740c612bd0001bab4cb0f624f4a9e1c49f5b3
+  max_model_len: 16384
+  gpu_memory_utilization: 0.90
+generation:
+  temperature: 0.0
+  max_tokens: 256
+  seed: 20260910
+  enable_thinking: false
+  structured_outputs: json_schema
+  prompt_margin_tokens: 128
+promotion_gate:
+  baseline_model_key: qwen3_8_27b_fp8
+  minimum_mean_f1_gain: 0.01
+  equivalence_tolerance: 0.005
+  maximum_parse_error_increase: 0.005
+  material_throughput_ratio: 1.25
+models:
+  qwen3_8_27b_fp8:
+    role: refresh_candidate_no_accuracy_selection
+    model_id: Qwen/Qwen3.8-27B-FP8
+    revision: 017b9c7af6b5689d5dd426a76e0bc077eb5ca20a
+    display_name: Qwen3.8 27B FP8
+    language_model_only: true
+    llm_kwargs:
+      tensor_parallel_size: 1
+    chat_template_kwargs:
+      enable_thinking: false

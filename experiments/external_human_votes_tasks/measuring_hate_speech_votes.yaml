@@ -1,0 +1,13 @@
+order: 2
+name: measuring_hate_speech_votes
+family: Hate / offensiveness
+source: Measuring Hate Speech (Sachdeva et al. 2022)
+data_file: ../../data/human_votes/external/measuring_hate_speech_votes.csv
+prompt_file: ../../prompts/measuring_hate_speech_votes.txt
+label_kind: categorical
+label_key: label
+labels: [HATE, UNCLEAR, NOT_HATE]
+sampling: {n_v1: 500, n_v2_new: 500, seed: 20260822}
+id: {kind: column, column: source_id}
+text: {template: "Social-media comment:\n{text}\n"}
+ground_truth: {column: gt_label}

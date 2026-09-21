@@ -1,0 +1,13 @@
+order: 1
+name: hatexplain_votes
+family: Hate / offensiveness
+source: HateXplain (Mathew et al. 2021)
+data_file: ../../data/human_votes/external/hatexplain_votes.csv
+prompt_file: ../../prompts/hatexplain_votes.txt
+label_kind: categorical
+label_key: label
+labels: [HATE, OFFENSIVE, NORMAL]
+sampling: {n_v1: 500, n_v2_new: 500, seed: 20260822}
+id: {kind: column, column: source_id}
+text: {template: "Social-media post:\n{text}\n"}
+ground_truth: {column: gt_label}

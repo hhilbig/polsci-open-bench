@@ -1,0 +1,1 @@
+Classify the highlighted trigger into one permitted event type.

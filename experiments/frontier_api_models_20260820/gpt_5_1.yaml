@@ -1,0 +1,14 @@
+schema_version: 1
+checkpoint_id: gpt_5_1_api
+order: 3
+name: gpt-5.1-2025-11-13
+display_name: GPT-5.1
+backend: openai
+compute_class: api
+api_key_env: OPENAI_API_KEY
+expected_response_model: gpt-5.1-2025-11-13
+identity_class: immutable_dated_snapshot
+access_status: accessible
+reasoning_effort: medium
+response_format_type: json_schema
+max_output_tokens: 2000

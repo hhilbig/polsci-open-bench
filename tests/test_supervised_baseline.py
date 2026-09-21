@@ -8,8 +8,10 @@ the section is wrong in a way no test of the model itself would catch. Most of
 what follows checks that reconstruction rather than the classifier.
 """
 import sys
+import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import numpy as np
 import pandas as pd
@@ -128,6 +130,38 @@ class FitTests(unittest.TestCase):
         Y = (rng.random((60, 3)) > 0.5).astype(int)
         pred = sb.fit_predict("multi_binary", X, Y, X)
         self.assertEqual(pred.shape, (60, 3))
+
+
+class EmbeddingCacheTests(unittest.TestCase):
+    def test_qwen_cache_is_revision_pinned_and_reusable(self):
+        class FakeEmbedder:
+            def __init__(self):
+                self.calls = 0
+
+            def encode(self, texts):
+                self.calls += 1
+                return np.ones((len(texts), sb.QWEN3_EMBED_DIM), dtype=np.float16)
+
+        texts = np.array(["a", "b", "c"], dtype=object)
+        rows = np.array([0, 2])
+        fake = FakeEmbedder()
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(sb, "OUT", Path(tmp)):
+            first, covered = sb.cached_embeddings(
+                "task", texts, rows, method="qwen3", embedder=fake
+            )
+            second, covered_again = sb.cached_embeddings(
+                "task", texts, rows, method="qwen3", embedder=None
+            )
+            self.assertEqual(fake.calls, 1)
+            self.assertEqual(first.shape, (2, sb.QWEN3_EMBED_DIM))
+            np.testing.assert_array_equal(first, second)
+            np.testing.assert_array_equal(covered, covered_again)
+            metadata = (Path(tmp) / "embeddings_qwen3_8b" / "task.json").read_text()
+            self.assertIn(sb.QWEN3_EMBED_REVISION, metadata)
+
+    def test_qwen_embedder_rejects_a_non_pinned_snapshot_before_loading_transformers(self):
+        with self.assertRaisesRegex(ValueError, "not the pinned revision"):
+            sb.Qwen3Embedder("/tmp/not-the-pinned-revision")
 
 
 class CurveTests(unittest.TestCase):

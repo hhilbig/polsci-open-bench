@@ -1,0 +1,18 @@
+order: 1
+name: arabic_gsr_assault_presence
+family: External event validation
+source: Arabic Event GSR ASSAULT (Open Event Data)
+data_file: arabic_gsr_assault_presence.csv
+prompt_file: arabic_gsr_assault_presence.txt
+label_kind: categorical
+label_key: event_presence
+labels:
+- EVENT
+- NO_EVENT
+id:
+  kind: column
+  column: source_id
+text:
+  template: '{text}'
+ground_truth:
+  column: gold

@@ -1,0 +1,51 @@
+version: 1
+run_id: refresh_qwen38_flash_next_remainder_20260915
+benchmark_commit: 3c7ad0756d447b1d57ed4daf26bbb85f5f296042
+refresh_sample:
+  panel_sha256: 20294ce2229b45dd3d0aa97f5e52f1ebc2292c6bae186475d998e00e8140bf5a
+  stage: remainder
+hardware:
+  nodes: 1
+  gpu_count: 2
+  gpu_type: 6000_blackwell
+task_scope:
+  tasks_dir: tasks
+  expected_tasks: 34
+  expected_items: 3332
+runtime:
+  vllm_version: 0.1.dev20073+g8e685d198
+  python_version: '3.12'
+  runtime_lock_sha256: 4b721dc970ff456f9c103b83e158fcbd8ec54d714bc01916f802c783a80227be
+  container_image_sha256: 3b1cdfaddb920dc3a4c30bc50307a81a925e3a47ec4d1f96c693a8062327a0d6
+  required_environment:
+    VLLM_PLE_CPU_OFFLOAD: '1'
+  max_model_len: 16384
+  gpu_memory_utilization: 0.85
+generation:
+  temperature: 0.0
+  max_tokens: 256
+  seed: 20260910
+  enable_thinking: false
+  structured_outputs: json_schema
+  prompt_margin_tokens: 128
+promotion_gate:
+  baseline_model_key: qwen3_8_flash_next_fp8
+  minimum_mean_f1_gain: 0.01
+  equivalence_tolerance: 0.005
+  maximum_parse_error_increase: 0.005
+  material_throughput_ratio: 1.25
+models:
+  qwen3_8_flash_next_fp8:
+    role: refresh_candidate_no_accuracy_selection
+    model_id: Qwen/Qwen3.8-Flash-Next-FP8
+    revision: 236dfdf285828023ca3bcd3f37366c58a3469b13
+    display_name: Qwen3.8 Flash-Next FP8
+    quantization: FP8
+    llm_kwargs:
+      tensor_parallel_size: 2
+      max_num_seqs: 256
+      kernel_config:
+        enable_flashinfer_autotune: false
+        moe_backend: triton
+    chat_template_kwargs:
+      enable_thinking: false

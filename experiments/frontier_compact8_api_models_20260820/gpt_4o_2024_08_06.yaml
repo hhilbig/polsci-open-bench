@@ -1,0 +1,15 @@
+schema_version: 1
+checkpoint_id: gpt_4o_2024_08_06_api
+order: 1
+name: gpt-4o-2024-08-06
+display_name: GPT-4o (2024-08-06)
+backend: openai
+compute_class: api
+api_key_env: OPENAI_API_KEY
+expected_response_model: gpt-4o-2024-08-06
+identity_class: immutable_dated_snapshot
+access_status: accessible
+snapshot_release_date: 2024-08-06
+response_format_type: json_schema
+max_output_tokens: 128
+

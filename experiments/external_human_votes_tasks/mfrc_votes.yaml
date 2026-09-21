@@ -1,0 +1,21 @@
+order: 3
+name: mfrc_votes
+family: Moral / claims
+source: Moral Foundations Reddit Corpus (Trager et al. 2026)
+data_file: ../../data/human_votes/external/mfrc_votes.csv
+prompt_file: ../../prompts/mfrc_votes.txt
+label_kind: multi_binary
+labels: [Care, Equality, Proportionality, Loyalty, Authority, Purity, Thin Morality, Non-Moral]
+sampling: {n_v1: 500, n_v2_new: 500, seed: 20260822}
+id: {kind: column, column: source_id}
+text: {template: "Reddit comment:\n{text}\n"}
+ground_truth:
+  columns:
+    Care: gt_Care
+    Equality: gt_Equality
+    Proportionality: gt_Proportionality
+    Loyalty: gt_Loyalty
+    Authority: gt_Authority
+    Purity: gt_Purity
+    Thin Morality: gt_Thin Morality
+    Non-Moral: gt_Non-Moral

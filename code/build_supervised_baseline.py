@@ -17,21 +17,26 @@ input. Scores use `scoring.headline_f1` with the same support-only rule and the
 same pinned label set as `output/summary.csv`, so supervised and LLM numbers are
 directly comparable and the existing paired-by-item bootstrap applies.
 
-Two methods:
+Three methods:
   tfidf  -- TF-IDF + logistic regression, the floor. If frozen embeddings do not
             beat bag-of-words, they are not earning their cost.
   e5     -- frozen intfloat/multilingual-e5-large + logistic regression. Six of
             the tasks are not English, which rules out English-only encoders.
+  qwen3  -- frozen Qwen/Qwen3-Embedding-8B + logistic regression, a stronger
+            multilingual-embedding sensitivity check.
 
 Usage:
   python3 code/build_supervised_baseline.py --method tfidf
   python3 code/build_supervised_baseline.py --embed-only      # cache embeddings
   python3 code/build_supervised_baseline.py --method e5
+  QWEN3_EMBEDDING_SNAPSHOT_PATH=/path/to/pinned/snapshot \
+    python3 code/build_supervised_baseline.py --method qwen3
 """
 from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -55,6 +60,12 @@ EMBED_MODEL = "intfloat/multilingual-e5-large"
 EMBED_DIM = 1024
 EMBED_PREFIX = "query: "          # E5 requires a prefix; symmetric tasks use query:
 EMBED_MAX_TOKENS = 512            # E5's context limit; see the caveat in the report
+
+QWEN3_EMBED_MODEL = "Qwen/Qwen3-Embedding-8B"
+QWEN3_EMBED_REVISION = "1d8ad4ca9b3dd8059ad90a75d4983776a23d44af"
+QWEN3_EMBED_DIM = 4096
+QWEN3_EMBED_MAX_TOKENS = 8192
+EMBEDDING_METHODS = {"e5", "qwen3"}
 
 TRAIN_SIZES = [50, 100, 250, 500, 1000, 2000]
 # Only this many pool rows per task are embedded and drawn from. Two reasons.
@@ -176,33 +187,145 @@ def embed_texts(texts, batch_size=64, device=None):
     return out
 
 
-def cached_embeddings(task_name, texts, rows, force=False):
+class Qwen3Embedder:
+    """One revision-pinned Transformers embedding model reused across all tasks."""
+
+    def __init__(self, snapshot_path):
+        snapshot = Path(snapshot_path).resolve()
+        if snapshot.name.lower() != QWEN3_EMBED_REVISION.lower():
+            raise ValueError(
+                "Qwen3 embedding snapshot is not the pinned revision: "
+                f"expected {QWEN3_EMBED_REVISION}, observed {snapshot}"
+            )
+        import torch
+        from transformers import AutoModel, AutoTokenizer
+
+        self.snapshot_path = snapshot
+        self.torch = torch
+        self.device = "cuda" if torch.cuda.is_available() else (
+            "mps" if torch.backends.mps.is_available() else "cpu"
+        )
+        if self.device == "cpu":
+            raise RuntimeError("Qwen3-Embedding-8B requires a CUDA or MPS accelerator")
+        self.dtype = torch.bfloat16 if self.device == "cuda" else torch.float16
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            str(snapshot), padding_side="left", trust_remote_code=False
+        )
+        self.model = AutoModel.from_pretrained(
+            str(snapshot),
+            torch_dtype=self.dtype,
+            attn_implementation="sdpa",
+            trust_remote_code=False,
+        ).to(self.device).eval()
+        default_batch_size = "16" if self.device == "cuda" else "4"
+        self.batch_size = int(
+            os.environ.get("QWEN3_EMBEDDING_BATCH_SIZE", default_batch_size)
+        )
+
+    def encode(self, texts):
+        chunks = []
+        with self.torch.no_grad():
+            for start in range(0, len(texts), self.batch_size):
+                batch = [str(text) for text in texts[start:start + self.batch_size]]
+                encoded = self.tokenizer(
+                    batch,
+                    padding=True,
+                    truncation=True,
+                    max_length=QWEN3_EMBED_MAX_TOKENS,
+                    return_tensors="pt",
+                ).to(self.device)
+                hidden = self.model(**encoded).last_hidden_state
+                # Left padding makes the final token the last non-padding token.
+                pooled = hidden[:, -1]
+                pooled = self.torch.nn.functional.normalize(pooled, p=2, dim=1)
+                chunks.append(pooled.float().cpu().numpy())
+        arr = np.concatenate(chunks, axis=0) if chunks else np.empty(
+            (0, QWEN3_EMBED_DIM), dtype=np.float32
+        )
+        if arr.shape != (len(texts), QWEN3_EMBED_DIM):
+            raise ValueError(
+                f"unexpected Qwen3 embedding shape {arr.shape}; "
+                f"expected {(len(texts), QWEN3_EMBED_DIM)}"
+            )
+        norms = np.linalg.norm(arr, axis=1, keepdims=True)
+        if np.any(~np.isfinite(norms)) or np.any(norms == 0):
+            raise ValueError("Qwen3 returned a non-finite or zero-norm embedding")
+        return (arr / norms).astype(np.float16)
+
+
+def embedding_config(method):
+    if method == "e5":
+        return {
+            "model": EMBED_MODEL,
+            "revision": None,
+            "dim": EMBED_DIM,
+            "pooling": "mean",
+            "normalized": True,
+            "prefix": EMBED_PREFIX,
+            "max_tokens": EMBED_MAX_TOKENS,
+            "cache_dir": EMBED_DIR,
+        }
+    if method == "qwen3":
+        return {
+            "model": QWEN3_EMBED_MODEL,
+            "revision": QWEN3_EMBED_REVISION,
+            "dim": QWEN3_EMBED_DIM,
+            "pooling": "last_token_transformers",
+            "normalized": True,
+            "prefix": "",
+            "max_tokens": QWEN3_EMBED_MAX_TOKENS,
+            "cache_dir": OUT / "embeddings_qwen3_8b",
+        }
+    raise ValueError(f"unsupported embedding method: {method}")
+
+
+def _atomic_save_npy(path, value):
+    tmp = path.with_name(f"{path.name}.tmp-{os.getpid()}")
+    with tmp.open("wb") as handle:
+        np.save(handle, value)
+    os.replace(tmp, path)
+
+
+def cached_embeddings(task_name, texts, rows, force=False, method="e5", embedder=None):
     """Embeddings for `rows` of the frame, cached with the row index they cover.
 
     A cache covering the whole frame is a valid superset of any row subset, so
     earlier full-frame caches stay usable rather than being recomputed.
     """
-    EMB_DIR.mkdir(parents=True, exist_ok=True)
-    npy = EMB_DIR / f"{task_name}.f16.npy"
-    idx_path = EMB_DIR / f"{task_name}.rows.npy"
-    meta = EMB_DIR / f"{task_name}.json"
+    config = embedding_config(method)
+    cache_dir = config["cache_dir"]
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    npy = cache_dir / f"{task_name}.f16.npy"
+    idx_path = cache_dir / f"{task_name}.rows.npy"
+    meta = cache_dir / f"{task_name}.json"
     if npy.exists() and meta.exists() and not force:
         info = json.loads(meta.read_text())
         arr = np.load(npy)
         covered = np.load(idx_path) if idx_path.exists() else np.arange(arr.shape[0])
-        if (info.get("model") == EMBED_MODEL and arr.shape[1] == EMBED_DIM
+        if (info.get("model") == config["model"]
+                and info.get("revision") == config["revision"]
+                and arr.shape[1] == config["dim"]
                 and np.isin(rows, covered).all()):
             return arr, covered
         print(f"  [{task_name}] cache does not cover the needed rows, recomputing")
-    arr = embed_texts([texts[i] for i in rows])
-    np.save(npy, arr)
-    np.save(idx_path, np.asarray(rows))
-    meta.write_text(json.dumps({
-        "model": EMBED_MODEL, "dim": EMBED_DIM, "pooling": "mean",
-        "normalized": True, "prefix": EMBED_PREFIX,
-        "max_tokens": EMBED_MAX_TOKENS, "n_texts": int(len(rows)),
-        "n_frame": int(len(texts)),
-    }, indent=2))
+    if method == "e5":
+        arr = embed_texts([texts[i] for i in rows])
+    else:
+        if embedder is None:
+            raise ValueError("qwen3 embedding cache miss requires a loaded embedder")
+        arr = embedder.encode([texts[i] for i in rows])
+    _atomic_save_npy(npy, arr)
+    _atomic_save_npy(idx_path, np.asarray(rows))
+    metadata = {key: value for key, value in config.items() if key != "cache_dir"}
+    if embedder is not None:
+        metadata.update(
+            device=str(getattr(embedder, "device", "unknown")),
+            dtype=str(getattr(embedder, "dtype", "unknown")),
+        )
+    metadata.update(n_texts=int(len(rows)), n_frame=int(len(texts)))
+    meta_tmp = meta.with_name(f"{meta.name}.tmp-{os.getpid()}")
+    meta_tmp.write_text(json.dumps(metadata, indent=2) + "\n")
+    os.replace(meta_tmp, meta)
     return arr, np.asarray(rows)
 
 
@@ -261,7 +384,7 @@ def run_task(task, method, embeddings=None, covered=None):
     # Pin the scored label set from the test gold, matching how summary.csv is built.
     pinned = scored_labels(task, scoring_frame(task, gold_test, gold_test), support_only=True)
 
-    if method == "e5":
+    if method in EMBEDDING_METHODS:
         # `embeddings` holds only the rows in `covered`; map frame index -> position.
         position = {int(r): i for i, r in enumerate(covered)}
         X = embeddings.astype(np.float32)
@@ -311,7 +434,7 @@ def run_task(task, method, embeddings=None, covered=None):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--method", choices=["tfidf", "e5"], default="tfidf")
+    ap.add_argument("--method", choices=["tfidf", "e5", "qwen3"], default="tfidf")
     ap.add_argument("--embed-only", action="store_true")
     ap.add_argument("--force-embed", action="store_true")
     ap.add_argument("--only-task")
@@ -321,14 +444,27 @@ def main():
     tasks = [t for t in load_task_definitions(active_only=True)
              if not args.only_task or t["name"] == args.only_task]
 
-    if args.embed_only or args.method == "e5":
+    embedder = None
+    if args.method == "qwen3":
+        snapshot_path = os.environ.get("QWEN3_EMBEDDING_SNAPSHOT_PATH")
+        if not snapshot_path:
+            raise SystemExit(
+                "QWEN3_EMBEDDING_SNAPSHOT_PATH must point to the pinned Hugging Face snapshot"
+            )
+        embedder = Qwen3Embedder(snapshot_path)
+
+    if args.embed_only or args.method in EMBEDDING_METHODS:
         for task in tasks:
             _, texts, test_idx, pool_idx, _ = task_split(task)
             if len(pool_idx) == 0:
                 print(f"[skip] {task['name']}: no training remainder")
                 continue
             rows = embed_row_indices(test_idx, pool_idx)
-            arr, _ = cached_embeddings(task["name"], texts, rows, force=args.force_embed)
+            arr, _ = cached_embeddings(
+                task["name"], texts, rows, force=args.force_embed,
+                method=args.method if args.method in EMBEDDING_METHODS else "e5",
+                embedder=embedder,
+            )
             print(f"[embed] {task['name']:38s} {arr.shape} of {len(texts)} frame rows")
         if args.embed_only:
             return
@@ -340,10 +476,13 @@ def main():
             print(f"[skip] {task['name']}: no training remainder")
             continue
         emb = cov = None
-        if args.method == "e5":
+        if args.method in EMBEDDING_METHODS:
             # NB: not `rows` -- that name is the result accumulator below.
             embed_rows = embed_row_indices(task_split(task)[2], pool_idx)
-            emb, cov = cached_embeddings(task["name"], texts, embed_rows)
+            emb, cov = cached_embeddings(
+                task["name"], texts, embed_rows, method=args.method,
+                embedder=embedder,
+            )
         got = run_task(task, args.method, embeddings=emb, covered=cov)
         rows.extend(got)
         done = [r for r in got if not np.isnan(r["headline_f1"])]

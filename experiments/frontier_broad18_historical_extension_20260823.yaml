@@ -1,0 +1,132 @@
+version: 1
+run_id: frontier_broad18_historical_extension_20260823
+benchmark_commit: 3c7ad0756d447b1d57ed4daf26bbb85f5f296042
+
+task_scope:
+  tasks_dir: tasks
+  expected_tasks: 18
+  expected_items: 3600
+
+execution:
+  protocol: compact_direct
+  panel_manifest: experiments/frontier_broad_18.yaml
+  panel_id: frontier_broad_18
+  output_root: output/sidecar/frontier_2026/broad18/historical_extension
+  expected_models: 5
+  expected_items: 3600
+  pilot_items: 16
+  remainder_items: 3584
+  pilot_selection: first_requests_in_manifest_order
+  combine_pilot_with_remainder: true
+  rerun_pilot_items: false
+  max_malformed_rate: 0.05
+  exactly_at_malformed_limit_passes: true
+  selective_retries: false
+  partition_selection: live_sbatch_test
+  required_gpu_gres: 6000_blackwell:1
+  required_gpu_name_fragment: RTX PRO 6000 Blackwell
+  expected_gpu_capacity_mib: 97887
+  reject_oom: true
+  reject_over_capacity: true
+  require_exact_snapshot_path: true
+  require_offline_inference: true
+
+runtime:
+  vllm_version: 0.26.0
+  python_version: "3.12"
+  runtime_lock_sha256: 4f46101fa493e38b312af034b8d740c612bd0001bab4cb0f624f4a9e1c49f5b3
+  runtime_lock_path: /nfs/hive/scratch/hhilbig/polsci-bakeoff-vllm-0.26.0-py312-cuda130-matched-v2.freeze.txt
+  max_model_len: 8192
+  gpu_memory_utilization: 0.90
+  cuda_toolkit_meta_version: "13.0.2"
+  cuda_component_versions:
+    nvidia-cuda-cccl: "13.0.85"
+    nvidia-cuda-crt: "13.0.88"
+    nvidia-cuda-nvcc: "13.0.88"
+    nvidia-cuda-nvrtc: "13.0.88"
+    nvidia-cuda-runtime: "13.0.96"
+    nvidia-nvvm: "13.0.88"
+
+generation:
+  temperature: 0.0
+  max_tokens: 256
+  seed: 20260820
+  enable_thinking: false
+  structured_outputs: json_schema
+  prompt_margin_tokens: 128
+
+models:
+  qwen1_5_72b_chat_awq:
+    role: historical_candidate
+    model_id: Qwen/Qwen1.5-72B-Chat-AWQ
+    revision: 6909dcb756186bbc97bf009ab958d640f9defd3e
+    display_name: Qwen1.5 72B Chat AWQ
+    artifact_publication_date: 2024-02-03
+    artifact_publication_source: https://huggingface.co/Qwen/Qwen1.5-72B-Chat-AWQ/commit/6909dcb756186bbc97bf009ab958d640f9defd3e
+    quantization: AWQ 4-bit
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell
+
+  qwen1_5_32b_chat:
+    role: matched_size_historical_anchor
+    model_id: Qwen/Qwen1.5-32B-Chat
+    revision: 0997b012af6ddd5465d40465a8415535b2f06cfc
+    display_name: Qwen1.5 32B Chat BF16
+    artifact_publication_date: 2024-04-30
+    artifact_publication_source: https://huggingface.co/Qwen/Qwen1.5-32B-Chat/commit/0997b012af6ddd5465d40465a8415535b2f06cfc
+    quantization: BF16
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell
+
+  qwen2_72b_instruct_awq:
+    role: historical_candidate
+    model_id: Qwen/Qwen2-72B-Instruct-AWQ
+    revision: cdbb90d7a1fda3a1f6d7d280b7c92f39e1129d3f
+    display_name: Qwen2 72B Instruct AWQ
+    artifact_publication_date: 2024-06-03
+    artifact_publication_source: https://huggingface.co/Qwen/Qwen2-72B-Instruct-AWQ/commit/cdbb90d7a1fda3a1f6d7d280b7c92f39e1129d3f
+    quantization: AWQ 4-bit
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell
+
+  llama3_70b_instruct_fp8:
+    role: historical_candidate
+    model_id: RedHatAI/Meta-Llama-3-70B-Instruct-FP8
+    revision: 87b86c042b8d131484c691754b3e49202c19175a
+    display_name: Llama 3 70B Instruct FP8
+    artifact_publication_date: 2024-06-26
+    artifact_publication_source: https://huggingface.co/RedHatAI/Meta-Llama-3-70B-Instruct-FP8/commit/87b86c042b8d131484c691754b3e49202c19175a
+    quantization: FP8
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell
+
+  llama3_1_nemotron_70b_fp8_dynamic:
+    role: omitted_historical_contender
+    model_id: RedHatAI/Llama-3.1-Nemotron-70B-Instruct-HF-FP8-dynamic
+    revision: 855e3b87e62e74773d3618ed0a740f2e359a2a40
+    display_name: Llama 3.1 Nemotron 70B FP8 Dynamic
+    artifact_publication_date: 2024-10-17
+    artifact_publication_source: https://huggingface.co/RedHatAI/Llama-3.1-Nemotron-70B-Instruct-HF-FP8-dynamic/commit/855e3b87e62e74773d3618ed0a740f2e359a2a40
+    quantization: FP8 dynamic
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell

@@ -1,0 +1,5 @@
+Code the moral content of the Reddit comment. Return `true` for every moral category that is present and `false` otherwise.
+
+Categories: Care, Equality, Proportionality, Loyalty, Authority, Purity, Thin Morality, and Non-Moral. `Non-Moral` means that no moral concern is expressed.
+
+Return JSON only with exactly these eight Boolean fields.

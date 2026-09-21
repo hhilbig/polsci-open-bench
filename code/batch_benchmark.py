@@ -39,6 +39,11 @@ from pathlib import Path
 import httpx
 import pandas as pd
 from model_registry import add_model_loading_args, load_model_definitions_from_args
+from panel_manifest import (
+    assert_panel_checkout,
+    load_panel_manifest,
+    validate_panel_checkpoint_frame,
+)
 from run_registry import DEFAULT_LEDGER, DEFAULT_STATUS_MD, append_event, render_markdown
 from task_registry import (DEFAULT_SAMPLE_N_V1, add_task_loading_args,
                            load_task_definitions_from_args)
@@ -338,7 +343,14 @@ def classify_anthropic_batched(client, model, system_prompt, batch, task_def):
 
 # --------- Orchestration ---------
 
-def run_cell(task, model_def, model_clients, batch_size, items):
+def run_cell(
+    task,
+    model_def,
+    model_clients,
+    batch_size,
+    items,
+    checkpoint_metadata=None,
+):
     """Run one (task, model, batch_size) cell. Returns list of per-item row dicts."""
     system_prompt = Path(task["prompt_path"]).read_text()
     rows = []
@@ -380,6 +392,8 @@ def run_cell(task, model_def, model_clients, batch_size, items):
                 "parse_error": err,
                 "raw_content_preview": content[:200],
             }
+            if checkpoint_metadata:
+                row.update(checkpoint_metadata)
             for k, v in pred.items():
                 row[f"pred_{k}"] = v
             for k, v in batch[j]["gt"].items():
@@ -399,14 +413,21 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     add_task_loading_args(ap)
     add_model_loading_args(ap)
+    ap.add_argument(
+        "--panel-manifest",
+        help="Frozen multi-task panel manifest; validates exact task inputs before inference.",
+    )
     ap.add_argument("--only-task", help="Restrict to one task by name")
     ap.add_argument("--only-model", help="Restrict to one model by name")
     ap.add_argument("--batch-sizes", default=",".join(str(b) for b in BATCH_SIZES_DEFAULT),
                     help="Comma-separated list of batch sizes")
     ap.add_argument("--N", type=int, default=None,
                     help="Cap N items per task (use for smoke tests; items remain deterministic)")
-    ap.add_argument("--output", default=str(OUT / "predictions_batched.csv"),
-                    help="Output CSV path (default: output/predictions_batched.csv)")
+    ap.add_argument(
+        "--output",
+        default=None,
+        help="Output CSV path (default: canonical output, or frontier sidecar in panel mode).",
+    )
     ap.add_argument("--resume", action="store_true",
                     help="Skip cells already present in the output CSV")
     ap.add_argument("--only-new-items", action="store_true",
@@ -433,11 +454,49 @@ def main():
 
     batch_sizes = [int(x) for x in args.batch_sizes.split(",")]
 
-    tasks = load_task_definitions_from_args(args)
+    panel = None
+    task_source_args = [args.task_manifest, args.task_dir, args.tasks_dir]
+    if args.panel_manifest:
+        if any(task_source_args):
+            ap.error(
+                "--panel-manifest cannot be combined with --task-manifest, "
+                "--task-dir, or --tasks-dir"
+            )
+        if args.only_new_items or args.N is not None:
+            ap.error("--N and --only-new-items cannot be combined with --panel-manifest")
+        panel = load_panel_manifest(args.panel_manifest)
+        assert_panel_checkout(panel, OUT.parent)
+        tasks = list(panel.tasks)
+        print(
+            f"[panel] {panel.panel_id}: {panel.expected_tasks} tasks, "
+            f"{panel.expected_items} items, sha256={panel.panel_sha256}",
+            flush=True,
+        )
+    else:
+        # New runs cover the active benchmark only; held-out tasks are skipped.
+        tasks = load_task_definitions_from_args(args, active_only=True)
     if args.only_task:
         tasks = [t for t in tasks if t["name"] == args.only_task]
         if not tasks:
             print(f"Unknown task: {args.only_task}"); return
+
+    if args.output is None:
+        args.output = str(
+            OUT / "sidecar" / "frontier_2026" / "batched_predictions.csv"
+            if panel
+            else OUT / "predictions_batched.csv"
+        )
+    Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+
+    panel_run_metadata = (
+        {
+            "panel_id": panel.panel_id,
+            "panel_sha256": panel.panel_sha256,
+            "panel_manifest": str(panel.manifest_path),
+        }
+        if panel
+        else {}
+    )
 
     models = load_model_definitions_from_args(args)
     if args.only_model:
@@ -481,6 +540,7 @@ def main():
                     runner="batch_benchmark.py",
                     output=args.output,
                     note="No runnable models after filtering unavailable API models.",
+                    **panel_run_metadata,
                 )
                 if args.render_run_status:
                     render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
@@ -493,6 +553,12 @@ def main():
     all_rows = []
     if args.resume and out_path.exists():
         prev = pd.read_csv(out_path)
+        if panel:
+            validate_panel_checkpoint_frame(
+                prev,
+                panel,
+                cell_columns=("model", "batch_size"),
+            )
         for _, r in prev[["task", "model", "batch_size"]].drop_duplicates().iterrows():
             existing.add((str(r["task"]), str(r["model"]), int(r["batch_size"])))
         all_rows = prev.to_dict("records")
@@ -524,6 +590,7 @@ def main():
             total_cells=total_cells,
             skipped_cells=len(existing) if args.resume else 0,
             note=args.run_note,
+            **panel_run_metadata,
         )
         if args.render_run_status:
             render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
@@ -567,7 +634,14 @@ def main():
 
                     print(f"\n  --- {m['name']} × {task['name']} × b={b} ---", flush=True)
                     t0 = time.perf_counter()
-                    rows = run_cell(task, m, model_clients, b, items)
+                    rows = run_cell(
+                        task,
+                        m,
+                        model_clients,
+                        b,
+                        items,
+                        checkpoint_metadata=panel.row_metadata(task["name"]) if panel else None,
+                    )
                     cell_time = time.perf_counter() - t0
                     n_parse_err = sum(1 for r in rows if r.get("parse_error"))
                     print(f"    CELL DONE: {len(rows)} rows in {cell_time:.1f}s, "
@@ -590,6 +664,7 @@ def main():
                             rows_written=len(all_rows),
                             output=str(out_path),
                             merge_into=args.merge_into,
+                            **panel_run_metadata,
                         )
                         if args.render_run_status:
                             render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
@@ -607,6 +682,7 @@ def main():
                 completed_cells=completed_cells,
                 total_cells=total_cells,
                 rows_written=len(all_rows),
+                **panel_run_metadata,
             )
             if args.render_run_status:
                 render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
@@ -635,6 +711,7 @@ def main():
                 completed_cells=completed_cells,
                 total_cells=total_cells,
                 rows_written=len(all_rows),
+                **panel_run_metadata,
             )
             if args.render_run_status:
                 render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
@@ -656,6 +733,7 @@ def main():
             completed_cells=completed_cells,
             total_cells=total_cells,
             rows_written=len(all_rows),
+            **panel_run_metadata,
         )
         if args.render_run_status:
             render_markdown(args.run_ledger, DEFAULT_STATUS_MD)

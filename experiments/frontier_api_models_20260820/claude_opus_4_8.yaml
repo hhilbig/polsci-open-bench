@@ -1,0 +1,13 @@
+schema_version: 1
+checkpoint_id: claude_opus_4_8_api
+order: 9
+name: claude-opus-4-8
+display_name: Claude Opus 4.8
+backend: anthropic
+compute_class: api
+api_key_env: ANTHROPIC_API_KEY
+expected_response_model: claude-opus-4-8
+identity_class: fixed_canonical_snapshot
+access_status: accessible
+thinking_mode: disabled
+max_output_tokens: 2000

@@ -1,0 +1,108 @@
+version: 1
+run_id: frontier_hive_pending_20260820
+benchmark_commit: 3c7ad0756d447b1d57ed4daf26bbb85f5f296042
+task_scope:
+  tasks_dir: tasks
+  expected_tasks: 34
+  expected_items: 16425
+runtime:
+  vllm_version: 0.26.0
+  python_version: "3.12"
+  runtime_lock_sha256: "4f46101fa493e38b312af034b8d740c612bd0001bab4cb0f624f4a9e1c49f5b3"
+  max_model_len: 8192
+  gpu_memory_utilization: 0.90
+  cuda_toolkit_meta_version: "13.0.2"
+  cuda_component_versions:
+    nvidia-cuda-cccl: "13.0.85"
+    nvidia-cuda-crt: "13.0.88"
+    nvidia-cuda-nvcc: "13.0.88"
+    nvidia-cuda-nvrtc: "13.0.88"
+    nvidia-cuda-runtime: "13.0.96"
+    nvidia-nvvm: "13.0.88"
+generation:
+  temperature: 0.0
+  max_tokens: 256
+  seed: 20260820
+  enable_thinking: false
+  structured_outputs: json_schema
+  prompt_margin_tokens: 128
+promotion_gate:
+  baseline_model_key: qwen3_6_27b_fp8
+  minimum_mean_f1_gain: 0.01
+  equivalence_tolerance: 0.005
+  maximum_parse_error_increase: 0.005
+  material_throughput_ratio: 1.25
+models:
+  gpt_oss_20b_mxfp4:
+    role: historical_candidate
+    model_id: openai/gpt-oss-20b
+    revision: 6cee5e81ee83917806bbde320786a8fb61efebee
+    display_name: GPT-OSS 20B MXFP4
+    language_model_only: true
+    llm_kwargs:
+      tensor_parallel_size: 1
+    chat_template_kwargs:
+      reasoning_effort: medium
+    preferred_partition: high
+    preferred_gpu: 6000_blackwell
+
+  gpt_oss_120b_mxfp4:
+    role: historical_candidate
+    model_id: openai/gpt-oss-120b
+    revision: b5c939de8f754692c1647ca79fbf85e8c1e70f8a
+    display_name: GPT-OSS 120B MXFP4
+    language_model_only: true
+    llm_kwargs:
+      tensor_parallel_size: 1
+    chat_template_kwargs:
+      reasoning_effort: medium
+    preferred_partition: high
+    preferred_gpu: 6000_blackwell
+
+  qwen3_next_80b_a3b_fp8:
+    role: historical_candidate
+    model_id: Qwen/Qwen3-Next-80B-A3B-Instruct-FP8
+    revision: c5f5f263bdd5cc134092897864e8905d8fe7b928
+    display_name: Qwen3-Next 80B-A3B Instruct FP8
+    language_model_only: true
+    llm_kwargs:
+      tensor_parallel_size: 1
+      # Qwen3-Next uses recurrent/Mamba cache blocks. vLLM's default of 1,024
+      # sequences exceeds the 500 blocks available on this one-GPU runtime.
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_partition: high
+    preferred_gpu: 6000_blackwell
+
+  ministral_3_14b_bf16:
+    role: historical_candidate
+    model_id: mistralai/Ministral-3-14B-Instruct-2512-BF16
+    revision: 29439f81c2be264d8d393273f99e7db9c0961120
+    display_name: Ministral 3 14B Instruct BF16
+    language_model_only: true
+    launch_eligible: false
+    provenance_note: >-
+      Revision 29439f81c2be264d8d393273f99e7db9c0961120 resolves only in
+      mistralai/Ministral-3-14B-Instruct-2512, whose artifact is FP8; it does
+      not resolve in the requested official BF16 repository.
+    llm_kwargs:
+      tensor_parallel_size: 1
+      tokenizer_mode: mistral
+    chat_template_kwargs:
+      reasoning_effort: none
+    preferred_partition: high
+    preferred_gpu: 6000_blackwell
+
+  qwen3_5_35b_a3b_fp8:
+    role: historical_candidate
+    model_id: Qwen/Qwen3.5-35B-A3B-FP8
+    revision: 9d1823d2dee688a6b25e77009dc727688c44936e
+    display_name: Qwen3.5 35B-A3B FP8
+    language_model_only: true
+    llm_kwargs:
+      tensor_parallel_size: 1
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_partition: high
+    preferred_gpu: 6000_blackwell

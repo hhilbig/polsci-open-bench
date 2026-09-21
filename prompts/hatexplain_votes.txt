@@ -1,0 +1,7 @@
+Classify the social-media post using exactly one label:
+
+- `HATE`: attacks a person or group based on identity.
+- `OFFENSIVE`: abusive or insulting, but not identity-based hate speech.
+- `NORMAL`: neither hate speech nor offensive abuse.
+
+Return JSON only: {"label": "HATE"}

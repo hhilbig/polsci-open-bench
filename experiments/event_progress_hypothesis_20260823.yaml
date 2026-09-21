@@ -1,0 +1,48 @@
+schema_version: 1
+frozen_at: "2026-08-23"
+hypothesis: >-
+  Later open checkpoints improve event-presence and event-type coding more than
+  non-event social-science coding tasks.
+primary_contrast: event_tasks_minus_all_other_tasks
+discovery_rule:
+  event_task: >-
+    The gold label identifies whether a described event occurred or assigns an
+    event to a type based on observable actions. Topic, stance, sentiment,
+    relevance, causal-relation, and tone labels are excluded.
+  model_comparison: qwen3_6_27b_fp8_minus_llama3_1_70b_fp8
+uncertainty_unit: dataset_source_family
+external_inclusion:
+  - public item-level text and gold labels
+  - explicit event-presence or event-type outcome
+  - no source overlap with the existing 34-task repository
+  - fixed test split or deterministic sample available
+  - license permits non-commercial research evaluation
+external_candidates:
+  - id: maven_event_presence
+    source: https://github.com/THU-KEG/MAVEN-dataset
+    evaluation_file: mneb/maven validation conversion
+    immutable_revision: c66136ce40fd2fa2efc245bbdbcf45f148d0c2bc
+    source_sha256: 9cc57860e8e80cc632ca3211f068aeb38e558ab9066d853bbbfca8ae1dc55c80
+    status: eligible_pending_build
+  - id: rams_event_type
+    source: https://nlp.jhu.edu/rams/
+    evaluation_file: RAMS_1.0b.tar.gz test.jsonlines
+    source_sha256: 2178fde397d060f3501b71d48c882f74ef2a2d176cfd5073edcda496d844c951
+    status: eligible_pending_build
+  - id: arabic_event_gsr_assault
+    source: https://github.com/openeventdata/arabic_event_gsr
+    immutable_revision: d8ff100bda1c15a89ef752c89d7ffad0c1600a92
+    source_sha256: 3a54ab330d896ba2fe1252ca5ca2f1d458c5a374b4a5f95f92d3b5da205b4268
+    status: eligible_pending_build
+  - id: arabic_event_gsr_protest
+    source: https://github.com/openeventdata/arabic_event_gsr
+    immutable_revision: d8ff100bda1c15a89ef752c89d7ffad0c1600a92
+    source_sha256: 88dfc95b3a96ad9d2cf2ec008fdbbd75380247fee91561d6d975a91d95ea6736
+    status: eligible_pending_build
+  - id: case2021_protest_detection
+    source: https://github.com/emerging-welfare/case-2021-shared-task
+    status: ineligible_application_required
+notes:
+  - The hypothesis and inclusion rules are frozen before external model outcomes are generated.
+  - The two Arabic GSR tasks count as one source family for uncertainty.
+  - Existing category results remain exploratory and are not confirmatory evidence.

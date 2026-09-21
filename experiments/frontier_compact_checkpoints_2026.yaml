@@ -1,0 +1,455 @@
+schema_version: 1
+registry_id: frontier_compact_checkpoints_2026
+benchmark_commit: 3c7ad0756d447b1d57ed4daf26bbb85f5f296042
+compact_manifest: experiments/frontier_compact_8.yaml
+open_run_config: experiments/frontier_compact8_hive_20260820.yaml
+api_roster: experiments/frontier_compact8_api_20260820.yaml
+public_label: Best tested checkpoints on a frozen eight-task political-science classification benchmark.
+public_caveat: Compact and non-exhaustive; not a claim about the global model frontier.
+window:
+  start: 2024-08-01
+  end: 2026-07-15
+
+checkpoints:
+  - checkpoint_id: llama3_1_70b_instruct_fp8_dynamic_hive
+    display_name: Llama 3.1 70B Instruct FP8 Dynamic
+    series: open_hive
+    provider: Meta / Red Hat AI
+    model_id: RedHatAI/Meta-Llama-3.1-70B-Instruct-FP8-dynamic
+    identity: 019d944e8e566c43939ea83775a27197ebb9b559
+    plot_date: 2024-08-23
+    date_basis: artifact_publication_date
+    release_source: https://huggingface.co/RedHatAI/Meta-Llama-3.1-70B-Instruct-FP8-dynamic/commit/019d944e8e566c43939ea83775a27197ebb9b559
+    quantization: FP8 dynamic
+    immutable: true
+    reasoning: disabled
+    result_status: completed
+    result:
+      source_protocol: compact8
+      model_key: llama3_1_70b_instruct_fp8_dynamic
+      predictions_path: output/sidecar/frontier_2026/compact8/hive/llama3_1_70b_instruct_fp8_dynamic/predictions.csv
+      metadata_path: output/sidecar/frontier_2026/compact8/hive/llama3_1_70b_instruct_fp8_dynamic/run_metadata.json
+
+  - checkpoint_id: qwen2_5_32b_instruct_bf16_hive
+    display_name: Qwen2.5 32B Instruct BF16
+    series: open_hive
+    provider: Qwen
+    model_id: Qwen/Qwen2.5-32B-Instruct
+    identity: 70e8dfb9ad18a7d499f765fe206ff065ed8ca197
+    plot_date: 2024-09-19
+    date_basis: artifact_publication_date
+    release_source: https://huggingface.co/Qwen/Qwen2.5-32B-Instruct/commit/70e8dfb9ad18a7d499f765fe206ff065ed8ca197
+    selection_basis: external_historical_frontier_candidate
+    selection_source: https://epoch.ai/data-insights/consumer-gpu-model-gap
+    quantization: BF16
+    immutable: true
+    reasoning: disabled
+    result_status: completed
+    result:
+      source_protocol: compact8
+      model_key: qwen2_5_32b_instruct_bf16
+      predictions_path: output/sidecar/frontier_2026/compact8/hive_expanded_20260820/qwen2_5_32b_instruct_bf16/predictions.csv
+      metadata_path: output/sidecar/frontier_2026/compact8/hive_expanded_20260820/qwen2_5_32b_instruct_bf16/run_metadata.json
+
+  - checkpoint_id: qwen2_5_72b_instruct_fp8_dynamic_hive
+    display_name: Qwen2.5 72B Instruct FP8 Dynamic
+    series: open_hive
+    provider: Qwen / Red Hat AI
+    model_id: RedHatAI/Qwen2.5-72B-Instruct-FP8-dynamic
+    identity: 4d9910ef10cf92b072dad8ce7c2a2929fac4fe0f
+    plot_date: 2024-12-02
+    date_basis: artifact_publication_date
+    release_source: https://huggingface.co/RedHatAI/Qwen2.5-72B-Instruct-FP8-dynamic/commit/4d9910ef10cf92b072dad8ce7c2a2929fac4fe0f
+    selection_basis: targeted_historical_contender
+    selection_source: https://huggingface.co/RedHatAI/Qwen2.5-72B-Instruct-FP8-dynamic
+    quantization: FP8 dynamic
+    immutable: true
+    reasoning: disabled
+    result_status: completed
+    result:
+      source_protocol: compact8
+      model_key: qwen2_5_72b_instruct_fp8_dynamic
+      predictions_path: output/sidecar/frontier_2026/compact8/hive_targeted_20260820/qwen2_5_72b_instruct_fp8_dynamic/predictions.csv
+      metadata_path: output/sidecar/frontier_2026/compact8/hive_targeted_20260820/qwen2_5_72b_instruct_fp8_dynamic/run_metadata.json
+
+  - checkpoint_id: gpt_4o_2024_08_06_api
+    display_name: GPT-4o (2024-08-06)
+    series: api
+    provider: OpenAI
+    model_id: gpt-4o-2024-08-06
+    identity: gpt-4o-2024-08-06
+    plot_date: 2024-08-06
+    date_basis: immutable_snapshot_date
+    release_source: https://developers.openai.com/api/docs/models/gpt-4o
+    quantization: provider managed
+    immutable: true
+    reasoning: none
+    result_status: pending
+
+  - checkpoint_id: gpt_4o_2024_11_20_api
+    display_name: GPT-4o (2024-11-20)
+    series: api
+    provider: OpenAI
+    model_id: gpt-4o-2024-11-20
+    identity: gpt-4o-2024-11-20
+    plot_date: 2024-11-20
+    date_basis: immutable_snapshot_date
+    release_source: https://developers.openai.com/api/docs/models/gpt-4o
+    quantization: provider managed
+    immutable: true
+    reasoning: none
+    result_status: pending
+
+  - checkpoint_id: llama3_3_70b_instruct_fp8_dynamic_hive
+    display_name: Llama 3.3 70B Instruct FP8 Dynamic
+    series: open_hive
+    provider: Meta / Red Hat AI
+    model_id: RedHatAI/Llama-3.3-70B-Instruct-FP8-dynamic
+    identity: 9069d043f499121b771d7df1c86cb414e66880c6
+    plot_date: 2024-12-11
+    date_basis: artifact_publication_date
+    release_source: https://huggingface.co/RedHatAI/Llama-3.3-70B-Instruct-FP8-dynamic/commit/9069d043f499121b771d7df1c86cb414e66880c6
+    quantization: FP8 dynamic
+    immutable: true
+    reasoning: disabled
+    result_status: completed
+    result:
+      source_protocol: compact8
+      model_key: llama3_3_70b_instruct_fp8_dynamic
+      predictions_path: output/sidecar/frontier_2026/compact8/hive/llama3_3_70b_instruct_fp8_dynamic/predictions.csv
+      metadata_path: output/sidecar/frontier_2026/compact8/hive/llama3_3_70b_instruct_fp8_dynamic/run_metadata.json
+
+  - checkpoint_id: deepseek_r1_distill_qwen_32b_bf16_hive
+    display_name: DeepSeek R1 Distill Qwen 32B BF16
+    series: open_hive
+    provider: DeepSeek
+    model_id: deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
+    identity: ca24ee48c0532a014ddea4c32437a6f4be981ab2
+    plot_date: 2025-01-22
+    date_basis: artifact_publication_date
+    release_source: https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B/commit/ca24ee48c0532a014ddea4c32437a6f4be981ab2
+    selection_basis: external_historical_frontier_candidate
+    selection_source: https://epoch.ai/data-insights/consumer-gpu-model-gap
+    quantization: BF16
+    immutable: true
+    reasoning: constrained_direct_classification
+    result_status: completed
+    result:
+      source_protocol: compact8
+      model_key: deepseek_r1_distill_qwen_32b_bf16
+      predictions_path: output/sidecar/frontier_2026/compact8/hive_expanded_20260820/deepseek_r1_distill_qwen_32b_bf16/predictions.csv
+      metadata_path: output/sidecar/frontier_2026/compact8/hive_expanded_20260820/deepseek_r1_distill_qwen_32b_bf16/run_metadata.json
+
+  - checkpoint_id: deepseek_r1_distill_llama_70b_fp8_dynamic_hive
+    display_name: DeepSeek R1 Distill Llama 70B FP8 Dynamic
+    series: open_hive
+    provider: DeepSeek / Red Hat AI
+    model_id: RedHatAI/DeepSeek-R1-Distill-Llama-70B-FP8-dynamic
+    identity: e5626ac0aad8ed4233206041bb041138dcca3f8d
+    plot_date: 2025-02-22
+    date_basis: artifact_publication_date
+    release_source: https://huggingface.co/RedHatAI/DeepSeek-R1-Distill-Llama-70B-FP8-dynamic/commit/e5626ac0aad8ed4233206041bb041138dcca3f8d
+    selection_basis: targeted_historical_contender
+    selection_source: https://huggingface.co/RedHatAI/DeepSeek-R1-Distill-Llama-70B-FP8-dynamic
+    quantization: FP8 dynamic
+    immutable: true
+    reasoning: constrained_direct_classification
+    result_status: failed
+    failure_reason: Full compact run produced 880 malformed rows out of 4,000 (22.0%) after xgrammar rejected generated tokens; exceeds the frozen 5% reliability limit.
+
+  - checkpoint_id: mistral_small_3_1_24b_bf16_hive
+    display_name: Mistral Small 3.1 24B BF16
+    series: open_hive
+    provider: Mistral AI
+    model_id: mistralai/Mistral-Small-3.1-24B-Instruct-2503
+    identity: 4b8dd8aae705887db5295fcbff4aedbb92d682eb
+    plot_date: 2025-04-08
+    date_basis: artifact_publication_date
+    release_source: https://huggingface.co/mistralai/Mistral-Small-3.1-24B-Instruct-2503/commit/4b8dd8aae705887db5295fcbff4aedbb92d682eb
+    selection_basis: targeted_historical_contender
+    selection_source: https://huggingface.co/mistralai/Mistral-Small-3.1-24B-Instruct-2503
+    quantization: BF16
+    immutable: true
+    reasoning: disabled
+    result_status: completed
+    result:
+      source_protocol: compact8
+      model_key: mistral_small_3_1_24b_bf16
+      predictions_path: output/sidecar/frontier_2026/compact8/hive_targeted_20260820/mistral_small_3_1_24b_bf16/predictions.csv
+      metadata_path: output/sidecar/frontier_2026/compact8/hive_targeted_20260820/mistral_small_3_1_24b_bf16/run_metadata.json
+
+  - checkpoint_id: gpt_4_1_2025_04_14_api
+    display_name: GPT-4.1 (2025-04-14)
+    series: api
+    provider: OpenAI
+    model_id: gpt-4.1-2025-04-14
+    identity: gpt-4.1-2025-04-14
+    plot_date: 2025-04-14
+    date_basis: immutable_snapshot_date
+    release_source: https://developers.openai.com/api/docs/models/gpt-4.1
+    quantization: provider managed
+    immutable: true
+    reasoning: none
+    result_status: pending
+
+  - checkpoint_id: qwen3_32b_bf16_hive
+    display_name: Qwen3 32B BF16
+    series: open_hive
+    provider: Qwen
+    model_id: Qwen/Qwen3-32B
+    identity: c36b7534bc7164e32375e869644e3f5fee30218f
+    plot_date: 2025-04-28
+    date_basis: artifact_publication_date
+    release_source: https://huggingface.co/Qwen/Qwen3-32B/commit/c36b7534bc7164e32375e869644e3f5fee30218f
+    selection_basis: external_historical_frontier_candidate
+    selection_source: https://epoch.ai/data-insights/consumer-gpu-model-gap
+    quantization: BF16
+    immutable: true
+    reasoning: disabled
+    result_status: completed
+    result:
+      source_protocol: compact8
+      model_key: qwen3_32b_bf16
+      predictions_path: output/sidecar/frontier_2026/compact8/hive_expanded_20260820/qwen3_32b_bf16/predictions.csv
+      metadata_path: output/sidecar/frontier_2026/compact8/hive_expanded_20260820/qwen3_32b_bf16/run_metadata.json
+
+  - checkpoint_id: qwen3_30b_a3b_bf16_hive
+    display_name: Qwen3 30B-A3B BF16
+    series: open_hive
+    provider: Qwen
+    model_id: Qwen/Qwen3-30B-A3B
+    identity: 4c446470ba0aec43e22ac1128f9ffd915f338ba3
+    plot_date: 2025-04-30
+    date_basis: artifact_publication_date
+    release_source: https://huggingface.co/Qwen/Qwen3-30B-A3B/commit/4c446470ba0aec43e22ac1128f9ffd915f338ba3
+    quantization: BF16
+    immutable: true
+    reasoning: disabled
+    result_status: completed
+    result:
+      source_protocol: compact8
+      model_key: qwen3_30b_a3b_bf16
+      predictions_path: output/sidecar/frontier_2026/compact8/hive/retry_20260820_nvrtc/qwen3_30b_a3b_bf16/predictions.csv
+      metadata_path: output/sidecar/frontier_2026/compact8/hive/retry_20260820_nvrtc/qwen3_30b_a3b_bf16/run_metadata.json
+
+  - checkpoint_id: gemma3_27b_it_fp8_dynamic_hive
+    display_name: Gemma 3 27B IT FP8 Dynamic
+    series: open_hive
+    provider: Google / Red Hat AI
+    model_id: RedHatAI/gemma-3-27b-it-FP8-dynamic
+    identity: 306078afe860ef87821018f28078ecf762f31455
+    plot_date: 2025-06-09
+    date_basis: artifact_publication_date
+    release_source: https://huggingface.co/RedHatAI/gemma-3-27b-it-FP8-dynamic/commit/306078afe860ef87821018f28078ecf762f31455
+    selection_basis: targeted_historical_contender
+    selection_source: https://huggingface.co/RedHatAI/gemma-3-27b-it-FP8-dynamic
+    quantization: FP8 dynamic
+    immutable: true
+    reasoning: disabled
+    result_status: completed
+    result:
+      source_protocol: compact8
+      model_key: gemma3_27b_it_fp8_dynamic
+      predictions_path: output/sidecar/frontier_2026/compact8/hive_targeted_20260820/gemma3_27b_it_fp8_dynamic/predictions.csv
+      metadata_path: output/sidecar/frontier_2026/compact8/hive_targeted_20260820/gemma3_27b_it_fp8_dynamic/run_metadata.json
+
+  - checkpoint_id: gpt_oss_120b_mxfp4_hive
+    display_name: GPT-OSS 120B MXFP4
+    series: open_hive
+    provider: OpenAI
+    model_id: openai/gpt-oss-120b
+    identity: b5c939de8f754692c1647ca79fbf85e8c1e70f8a
+    plot_date: 2025-08-26
+    date_basis: artifact_publication_date
+    release_source: https://huggingface.co/openai/gpt-oss-120b/commit/b5c939de8f754692c1647ca79fbf85e8c1e70f8a
+    selection_basis: targeted_historical_contender
+    selection_source: https://huggingface.co/openai/gpt-oss-120b
+    quantization: MXFP4
+    immutable: true
+    reasoning: low
+    result_status: completed
+    result:
+      source_protocol: compact8
+      model_key: gpt_oss_120b_mxfp4
+      predictions_path: output/sidecar/frontier_2026/compact8/hive_targeted_20260820/gpt_oss_120b_mxfp4/predictions.csv
+      metadata_path: output/sidecar/frontier_2026/compact8/hive_targeted_20260820/gpt_oss_120b_mxfp4/run_metadata.json
+
+  - checkpoint_id: gpt_5_2025_08_07_api
+    display_name: GPT-5 (2025-08-07)
+    series: api
+    provider: OpenAI
+    model_id: gpt-5-2025-08-07
+    identity: gpt-5-2025-08-07
+    plot_date: 2025-08-07
+    date_basis: immutable_snapshot_date
+    release_source: https://developers.openai.com/api/docs/models/gpt-5
+    quantization: provider managed
+    immutable: true
+    reasoning: minimal
+    result_status: pending
+
+  - checkpoint_id: qwen3_next_80b_a3b_fp8_hive
+    display_name: Qwen3-Next 80B-A3B Instruct FP8
+    series: open_hive
+    provider: Qwen
+    model_id: Qwen/Qwen3-Next-80B-A3B-Instruct-FP8
+    identity: c5f5f263bdd5cc134092897864e8905d8fe7b928
+    plot_date: 2025-09-22
+    date_basis: artifact_publication_date
+    release_source: https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct-FP8/commit/c5f5f263bdd5cc134092897864e8905d8fe7b928
+    quantization: FP8
+    immutable: true
+    reasoning: disabled
+    result_status: completed
+    result:
+      source_protocol: legacy_panel18
+      model_key: qwen3_next_80b_a3b_fp8
+      predictions_path: output/sidecar/frontier_2026/compact8/reused_legacy/qwen3_next_80b_a3b_fp8/predictions.csv
+      metadata_path: output/sidecar/frontier_2026/compact8/reused_legacy/qwen3_next_80b_a3b_fp8/run_metadata.json
+      observed_gpu_capacity_mib: 97887
+
+  - checkpoint_id: gpt_5_2_2025_12_11_api
+    display_name: GPT-5.2 (2025-12-11)
+    series: api
+    provider: OpenAI
+    model_id: gpt-5.2-2025-12-11
+    identity: gpt-5.2-2025-12-11
+    plot_date: 2025-12-11
+    date_basis: immutable_snapshot_date
+    release_source: https://developers.openai.com/api/docs/models/gpt-5.2
+    quantization: provider managed
+    immutable: true
+    reasoning: none
+    result_status: pending
+
+  - checkpoint_id: glm4_7_flash_hive
+    display_name: GLM-4.7-Flash BF16
+    series: open_hive
+    provider: Z.ai
+    model_id: zai-org/GLM-4.7-Flash
+    identity: 7dd20894a642a0aa287e9827cb1a1f7f91386b67
+    plot_date: 2026-01-19
+    date_basis: artifact_publication_date
+    release_source: https://huggingface.co/zai-org/GLM-4.7-Flash/commit/7dd20894a642a0aa287e9827cb1a1f7f91386b67
+    quantization: BF16
+    immutable: true
+    reasoning: disabled
+    result_status: completed
+    result:
+      source_protocol: legacy_full34
+      model_key: glm4_7_flash
+      predictions_path: output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805/glm4_7_flash/predictions.csv
+      metadata_path: output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805/glm4_7_flash/run_metadata.json
+      observed_gpu_capacity_mib: 97887
+
+  - checkpoint_id: qwen3_5_35b_a3b_fp8_hive
+    display_name: Qwen3.5 35B-A3B FP8
+    series: open_hive
+    provider: Qwen
+    model_id: Qwen/Qwen3.5-35B-A3B-FP8
+    identity: 9d1823d2dee688a6b25e77009dc727688c44936e
+    plot_date: 2026-02-25
+    date_basis: artifact_publication_date
+    release_source: https://huggingface.co/Qwen/Qwen3.5-35B-A3B-FP8/commit/9d1823d2dee688a6b25e77009dc727688c44936e
+    selection_basis: external_historical_frontier_candidate
+    selection_source: https://artificialanalysis.ai/models/qwen3-5-35b-a3b-non-reasoning/
+    quantization: FP8
+    immutable: true
+    reasoning: disabled
+    result_status: completed
+    result:
+      source_protocol: legacy_panel18
+      model_key: qwen3_5_35b_a3b_fp8
+      predictions_path: output/sidecar/frontier_2026/hive_panels/qwen3_5_35b_a3b_fp8/predictions.csv
+      metadata_path: output/sidecar/frontier_2026/hive_panels/qwen3_5_35b_a3b_fp8/run_metadata.json
+      observed_gpu_capacity_mib: 97887
+
+  - checkpoint_id: mistral_small_4_119b_nvfp4_hive
+    display_name: Mistral Small 4 119B-A6.5B NVFP4
+    series: open_hive
+    provider: Mistral AI
+    model_id: mistralai/Mistral-Small-4-119B-2603-NVFP4
+    identity: b1a9048590131d38491bd23a7c9f6ed0962f0358
+    plot_date: 2026-03-16
+    date_basis: artifact_publication_date
+    release_source: https://huggingface.co/mistralai/Mistral-Small-4-119B-2603-NVFP4/commit/a469fba86fd20adcc7d024b7d5ba21d23c44a3f1
+    selection_basis: targeted_historical_contender
+    selection_source: https://huggingface.co/mistralai/Mistral-Small-4-119B-2603-NVFP4
+    quantization: NVFP4
+    immutable: true
+    reasoning: none
+    result_status: completed
+    result:
+      source_protocol: legacy_full34
+      model_key: mistral_small_4_119b_nvfp4
+      predictions_path: output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805/mistral_small_4_119b_nvfp4/predictions.csv
+      metadata_path: output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805/mistral_small_4_119b_nvfp4/run_metadata.json
+      observed_gpu_capacity_mib: 97887
+
+  - checkpoint_id: gpt_5_4_2026_03_05_api
+    display_name: GPT-5.4 (2026-03-05)
+    series: api
+    provider: OpenAI
+    model_id: gpt-5.4-2026-03-05
+    identity: gpt-5.4-2026-03-05
+    plot_date: 2026-03-05
+    date_basis: immutable_snapshot_date
+    release_source: https://developers.openai.com/api/docs/models/gpt-5.4
+    quantization: provider managed
+    immutable: true
+    reasoning: none
+    result_status: pending
+
+  - checkpoint_id: qwen3_6_27b_fp8_hive
+    display_name: Qwen3.6 27B FP8
+    series: open_hive
+    provider: Qwen
+    model_id: Qwen/Qwen3.6-27B-FP8
+    identity: e89b16ebf1988b3d6befa7de50abc2d76f26eb09
+    plot_date: 2026-04-21
+    date_basis: artifact_publication_date
+    release_source: https://huggingface.co/Qwen/Qwen3.6-27B-FP8/commit/e89b16ebf1988b3d6befa7de50abc2d76f26eb09
+    quantization: FP8
+    immutable: true
+    reasoning: disabled
+    result_status: completed
+    result:
+      source_protocol: legacy_full34
+      model_key: qwen3_6_27b_fp8
+      predictions_path: output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805/qwen3_6_27b_fp8/predictions.csv
+      metadata_path: output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805/qwen3_6_27b_fp8/run_metadata.json
+      observed_gpu_capacity_mib: 97887
+
+  - checkpoint_id: gemma4_31b_it_qat_w4a16_hive
+    display_name: Gemma 4 31B IT QAT W4A16
+    series: open_hive
+    provider: Google
+    model_id: google/gemma-4-31B-it-qat-w4a16-ct
+    identity: 52f3f65bc7a02d555763bc923bd1d9094898219d
+    plot_date: 2026-06-04
+    date_basis: artifact_publication_date
+    release_source: https://huggingface.co/google/gemma-4-31B-it-qat-w4a16-ct/commit/52f3f65bc7a02d555763bc923bd1d9094898219d
+    quantization: QAT W4A16
+    immutable: true
+    reasoning: disabled
+    result_status: completed
+    result:
+      source_protocol: legacy_full34
+      model_key: gemma4_31b_it_qat_w4a16
+      predictions_path: output/sidecar/hive_model_bakeoff_20260804/gemma4_31b_it_qat_w4a16/predictions.csv
+      metadata_path: output/sidecar/hive_model_bakeoff_20260804/gemma4_31b_it_qat_w4a16/run_metadata.json
+      observed_gpu_capacity_mib: 97887
+
+  - checkpoint_id: claude_sonnet_5_api
+    display_name: Claude Sonnet 5
+    series: api
+    provider: Anthropic
+    model_id: claude-sonnet-5
+    identity: claude-sonnet-5
+    plot_date: 2026-06-30
+    date_basis: immutable_snapshot_date
+    release_source: https://platform.claude.com/docs/en/about-claude/models/overview
+    quantization: provider managed
+    immutable: true
+    reasoning: disabled
+    result_status: pending

@@ -1,0 +1,102 @@
+schema_version: 1
+report_type: frontier_compact8_api_cost_approval
+benchmark_manifest: experiments/frontier_compact_8.yaml
+panel_id: frontier_compact_8
+panel_sha256: 0156f302f138fdd8c89b392a1506d029f55d211123d1634194cb4ca714f31647
+expected_task_count: 8
+expected_request_count: 4000
+pilot_size: 16
+remainder_size: 3984
+hard_budget_usd: 50
+drop_policy:
+  - gpt_5_4_2026_03_05_api
+  - gpt_4o_2024_11_20_api
+output_root: output/sidecar/frontier_2026/compact8/api_preflight
+checked_at: 2026-08-20T00:00:00Z
+check_method: official_provider_model_and_lifecycle_documentation
+submission_tested: false
+sources:
+  openai_models: https://developers.openai.com/api/docs/models
+  openai_pricing: https://developers.openai.com/api/docs/pricing
+  anthropic_models: https://platform.claude.com/docs/en/about-claude/models/overview
+  anthropic_lifecycle: https://platform.claude.com/docs/en/about-claude/model-deprecations
+  anthropic_batch_pricing: https://platform.claude.com/docs/en/build-with-claude/batch-processing
+checkpoints:
+  gpt_4o_2024_08_06_api:
+    order: 1
+    model_id: gpt-4o-2024-08-06
+    provider: OpenAI
+    snapshot_release_date: 2024-08-06
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: immutable_dated_snapshot
+    model_manifest: experiments/frontier_compact8_api_models_20260820/gpt_4o_2024_08_06.yaml
+    preflight_required: true
+    staged_preflight_required: true
+  gpt_4o_2024_11_20_api:
+    order: 2
+    model_id: gpt-4o-2024-11-20
+    provider: OpenAI
+    snapshot_release_date: 2024-11-20
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: immutable_dated_snapshot
+    model_manifest: experiments/frontier_compact8_api_models_20260820/gpt_4o_2024_11_20.yaml
+    preflight_required: true
+    staged_preflight_required: true
+  gpt_4_1_2025_04_14_api:
+    order: 3
+    model_id: gpt-4.1-2025-04-14
+    provider: OpenAI
+    snapshot_release_date: 2025-04-14
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: immutable_dated_snapshot
+    model_manifest: experiments/frontier_compact8_api_models_20260820/gpt_4_1_2025_04_14.yaml
+    preflight_required: true
+    staged_preflight_required: true
+  gpt_5_2025_08_07_api:
+    order: 4
+    model_id: gpt-5-2025-08-07
+    provider: OpenAI
+    snapshot_release_date: 2025-08-07
+    access_status: accessible
+    lifecycle_status: deprecated
+    identity_class: immutable_dated_snapshot
+    model_manifest: experiments/frontier_compact8_api_models_20260820/gpt_5_2025_08_07.yaml
+    preflight_required: true
+    staged_preflight_required: true
+    note: Official lifecycle documentation schedules shutdown for 2026-12-11.
+  gpt_5_2_2025_12_11_api:
+    order: 5
+    model_id: gpt-5.2-2025-12-11
+    provider: OpenAI
+    snapshot_release_date: 2025-12-11
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: immutable_dated_snapshot
+    model_manifest: experiments/frontier_compact8_api_models_20260820/gpt_5_2_2025_12_11.yaml
+    preflight_required: true
+    staged_preflight_required: true
+  gpt_5_4_2026_03_05_api:
+    order: 6
+    model_id: gpt-5.4-2026-03-05
+    provider: OpenAI
+    snapshot_release_date: 2026-03-05
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: immutable_dated_snapshot
+    model_manifest: experiments/frontier_compact8_api_models_20260820/gpt_5_4_2026_03_05.yaml
+    preflight_required: true
+    staged_preflight_required: true
+  claude_sonnet_5_api:
+    order: 7
+    model_id: claude-sonnet-5
+    provider: Anthropic
+    snapshot_release_date: 2026-06-30
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: fixed_canonical_snapshot
+    model_manifest: experiments/frontier_compact8_api_models_20260820/claude_sonnet_5.yaml
+    preflight_required: true
+    staged_preflight_required: true

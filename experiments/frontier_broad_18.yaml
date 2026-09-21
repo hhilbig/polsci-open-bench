@@ -1,0 +1,314 @@
+schema_version: 2
+panel_id: frontier_broad_18
+benchmark_commit: 3c7ad0756d447b1d57ed4daf26bbb85f5f296042
+expected_tasks: 18
+expected_items: 3600
+task_item_keys_sha256: d7317d91c9ba05736c8f90920513a9c7ed2f8d667d608250d099b91003f88c30
+scorer:
+  version: headline_f1_v1
+  task_weighting: equal
+  binary: positive_class_f1
+  categorical: configured_label_macro_f1
+  multi_binary: mean_positive_class_f1
+bootstrap:
+  unit: within_task_items
+  paired: true
+  iterations: 10000
+  seed: 20260820
+  confidence_level: 0.95
+  interval: percentile
+  interpretation: item_level_uncertainty_conditional_on_fixed_tasks
+  task_sensitivity:
+    task_bootstrap_iterations: 10000
+    leave_one_task_out: true
+execution:
+  order: manifest_task_then_item
+  pilot_selection: first_requests
+  pilot_items: 16
+reliability_gate:
+  max_malformed_rate: 0.05
+  exactly_at_max_passes: true
+  selective_retry_malformed: false
+strata:
+  annotation_type:
+    claims: 4
+    issues: 4
+    relevance: 4
+    events: 3
+    position: 3
+  complexity:
+    low: 9
+    medium: 6
+    high: 3
+tasks:
+- name: burnham_covid_threat_minimization
+  expected_items: 200
+  fingerprint_sha256: 7a86efd4b234a0a61848182b14dc1decf09bccf64817235271546b5fe24e18f1
+  manifest_sha256: ed7f2bf3b830b5c9b39f3af9ef11c1b63b7659a34f0c6f42802f8790abb90721
+  prompt_sha256: e43abfda793415c46aca22bff49f282f25624b86f12bb29ec8743220aa8c91c9
+  schema_sha256: fad7b9d9c624f14b6a71ce797aa08439a90984c6b7c449bf311476130bbff00d
+  item_keys_sha256: 8779051bb8c65276f741cf824c6e9ee23d8126639989060760cbdf11d2580b4c
+  gold_labels_sha256: df9e44fb1721fac44b7584a64b629bcfec82f2881bdeff2be3a4789ca25fab38
+  rendered_inputs_sha256: 64a728acf2158baf28bc8d9b999c1d0d9956075be44b3ede5fdaf64bf2853813
+  source_fingerprint_sha256: 53c2f2afcc9264cb8608b02f96a0b2652cbe0390708e00d2aa6e8364d89ed655
+  selection:
+    method: hash_rank_sha256_v1
+    seed: 20260821
+  annotation_type: claims
+  complexity: low
+- name: burnham_polnli_entailment
+  expected_items: 200
+  fingerprint_sha256: 10caf1e0af3d1ea5a10a3f3ead7706831f6aef5552ee28e862eac1cbf1ae44d6
+  manifest_sha256: a036345dbc0d4883d123dec3f99007be596bfaeffb47a96cf0fbc5e5cf0912c6
+  prompt_sha256: 102227f3cc626e9315c17a745f3b381979d3aed6d5f75c77b5d92f5607ebf7ca
+  schema_sha256: e3384c2a78dbc6d350ae6c74c2f008a60861fe4f3eb7371c28b70f7fb6952928
+  item_keys_sha256: 1b739521ad45cde42512a7d28757e14bc67e16d9940b0848db28c5d07e2d2548
+  gold_labels_sha256: e2d6be71d0cf140071b2b9f670ece09d6148126c56d4a798e72d18cafc847bf3
+  rendered_inputs_sha256: 6a54b9dcab0bf7145c9981cc84d85431e1f81d4be2f0f030ce272deaf447b58d
+  source_fingerprint_sha256: bd1c212f49b13117f15dca0debaab1e78c36f10b125b45b174198880cdc385ae
+  selection:
+    method: hash_rank_sha256_v1
+    seed: 20260821
+  annotation_type: claims
+  complexity: low
+- name: burnham_polnli_event_entailment
+  expected_items: 200
+  fingerprint_sha256: 490d7c34256e20049a1c2edd9220f1e0a2ce7cc4a57a77a08aff43b1cbf7dc10
+  manifest_sha256: 7e5bc207eeb5e72e4b44d2581012223c7269d9219250da968dbfb9e8f9353e38
+  prompt_sha256: d12f9b0568b6702c49e798ee5c1e053deb9848feb410081daa919269f4add711
+  schema_sha256: e3384c2a78dbc6d350ae6c74c2f008a60861fe4f3eb7371c28b70f7fb6952928
+  item_keys_sha256: b2471fe0a07ae4249d5b84792c0ec0950b659852549a90e8519b52d0815d71cd
+  gold_labels_sha256: 34ea7028ff0bf0e383b903c8a232279152d1822e63f85cf985d2821729e283cd
+  rendered_inputs_sha256: a55dd2eed3699ace37898a8a43ae9b7dfddb3683a371cde1cab5a3a16a2ae922
+  source_fingerprint_sha256: 4f494edaa572ed860ef5ac2e672d96aca90960991afb95ad760948868606aa3f
+  selection:
+    method: hash_rank_sha256_v1
+    seed: 20260821
+  annotation_type: claims
+  complexity: low
+- name: burnham_trump_stance
+  expected_items: 200
+  fingerprint_sha256: 7579c86ac959152f7e025fcf2ec31bf39d7b0a7de6a06194c3e9a51707f07582
+  manifest_sha256: 0440e2cbef33a76661851363656266ef0214f2ffcd739d9231def40b47e6d079
+  prompt_sha256: eced0572f82934f51d51ec07fca5832086251560c69154b5b17e697cb880df70
+  schema_sha256: bdc3a32115d6dc5cccd5238e98b1720d2447b1f0ba228efea4a1e0347e3d5773
+  item_keys_sha256: c3ccc25f327e7c68d7f77a2914d5925e32d7fa0683c8b0ce4d2025c417832816
+  gold_labels_sha256: d9c7ab48043593ef1635d537247d17121871eae51b3f23f45acbec3d3ccb2c6a
+  rendered_inputs_sha256: 4c72d648b4484edb67da7da4ca92f5cf0f0c62111e9bb072ea5bb048c61f1f37
+  source_fingerprint_sha256: 1077c1e2ef1c9d1596b6f8d4662e6aed51137605f488885cd917e81025dc77ec
+  selection:
+    method: hash_rank_sha256_v1
+    seed: 20260821
+  annotation_type: position
+  complexity: low
+- name: cap_crs_policy_topic
+  expected_items: 200
+  fingerprint_sha256: f67d4600545a4b18c9bfac4ef3d9cbaa6621dcb9eeaa5df8a0c195cad6f496a3
+  manifest_sha256: 59ec321c57de41ca4463f036b592ddf4fde0f0daa7b5e4c17b648c6ca1694ec2
+  prompt_sha256: 7b4656b38d68eaa3c1c17854622e604640b470b3c378319b9e86c9cf6f13b135
+  schema_sha256: a1443045527b9e85038f5eddbe4a444db8c1994457b9f59235ff25a5c367d66f
+  item_keys_sha256: 8cd3c2d95703f624c66c554c2b5597ab4ce221796430ee1bfb30cf7200d97863
+  gold_labels_sha256: 3b6734d4e611383b40248548e89507eca7408eb6d5e0cf9d53d8d546e62a99c0
+  rendered_inputs_sha256: 7a500af988575438c77118e7177759361fccdf1ae09009cb6b7be5b51a8c2399
+  source_fingerprint_sha256: 52c0c82bf1c542be10c67cfc1919d01b7ac28765b51bd5fc80023aa3edd8d6c4
+  selection:
+    method: hash_rank_sha256_v1
+    seed: 20260821
+  annotation_type: issues
+  complexity: high
+- name: cap_party_platform_policy_topic
+  expected_items: 200
+  fingerprint_sha256: 66da1454f7b57340c62f14a40ab74bbbe12aabe37278ab3b9c06081892bdb37d
+  manifest_sha256: 17811d072725c52aac4acd80ce63b1bb92a46d8328101b9f21959c57bc57cf78
+  prompt_sha256: d4370e858f59be2049b2aa76637718d598b4efeb3ca569a9f4b232141c5e360b
+  schema_sha256: a1443045527b9e85038f5eddbe4a444db8c1994457b9f59235ff25a5c367d66f
+  item_keys_sha256: e4aaf0c2404b9acd61d4719c65170a3bb88c7ff3651a082b03edab3528b59435
+  gold_labels_sha256: 77c66eb57f0cd424a8d03f9c59e643f523639c16f90360d9fb817d0daf652860
+  rendered_inputs_sha256: 08d05cf53f338c2f493858f66723f65c1585df4fc18011af1561dbc7f5c034c9
+  source_fingerprint_sha256: 7dda47b117fecf47557790a02440164b17290d1b8f0631920d809827e37b7638
+  selection:
+    method: hash_rank_sha256_v1
+    seed: 20260821
+  annotation_type: issues
+  complexity: high
+- name: chae_semeval_stance
+  expected_items: 200
+  fingerprint_sha256: 6e30cc24c901c351fe5875d766331db1d2a3a8589abe7dc96ff5e0443721f52b
+  manifest_sha256: f806d978426b80cd7765d07f840719a9c37b23e7f4dd72a7546d34f61b551dea
+  prompt_sha256: bc6b1775ed33a5d0b5c44d91261822c4d1a9a99e83b096e2d33b5d1ee770b4f6
+  schema_sha256: 8b10dfed0a5bf98aad262e3e58c1f89bb36e56fb2c8452490f0659a8387300a7
+  item_keys_sha256: 95b1c209248f57f48b5fb0f028ee58bf37e7c7da9ca905b563abbbba11672288
+  gold_labels_sha256: b105d1b7cba5d7cf7b46d22aeecf78d6bf89d8d6eec6da73d1afb21b46da60f1
+  rendered_inputs_sha256: 89480345ddca5098736a1ecb92b661c723ae4e67cda2a2c2a5304e4921236e2a
+  source_fingerprint_sha256: 96b44f18ff9d7771498c8a51d8b983bad59fa3d33a154d6ff06e0b4d9e71344c
+  selection:
+    method: hash_rank_sha256_v1
+    seed: 20260821
+  annotation_type: position
+  complexity: low
+- name: dicocco_manifesto_populism
+  expected_items: 200
+  fingerprint_sha256: 9c9ebe7f22db6d0c126118d21deb52c68dbe98138008f598782d1591dfd54072
+  manifest_sha256: d95500466e8b074dcfffff4ea75030266205cf706bc3c899f5da50171c99b674
+  prompt_sha256: 0c3f2a1394465f284e6502539c6c651fd9bfe4952f5c014d0e1d360cb49d82d8
+  schema_sha256: 52744ff0e4bb4a2c1083dab2fc261a4e885ed371087ad1c449b640cc687c7b13
+  item_keys_sha256: 665ab9a5882a5d4ca3bb0ceac09ef44a493cf0b58abe380f6cfe8a8edc77bb90
+  gold_labels_sha256: 1c53210470083f1236a107fa5a5859332aa9ce562c5f6e70b36a11c8a68991d2
+  rendered_inputs_sha256: d5e238fae9ec3a418090dd328bc17c8f43874b97c3b883c3aee26cde89e438d9
+  source_fingerprint_sha256: a2807e04ffeb5f49516b44d74407adbd9ee58be393c95b54cbb3e484a44a8157
+  selection:
+    method: hash_rank_sha256_v1
+    seed: 20260821
+  annotation_type: claims
+  complexity: low
+- name: douglass_icbe_sentence_event_type
+  expected_items: 200
+  fingerprint_sha256: 25faea3603b89abc4b685138063d862471fe702b46946db8857c21ecafced433
+  manifest_sha256: d479cd39832b0b8124c1dc5fae75f372331c61970cd24fe7d50a156f2140685f
+  prompt_sha256: 1f4c0e27e9c6b5d42bf24e4e63da3d2702a33607dd0045175f3a6cd535d94079
+  schema_sha256: 380735c6834e477d8f4fb3bd2e2eec3caac26c4cd65f23a61c2e3e1f5636cb6e
+  item_keys_sha256: f3a04b42a4d4c9cc6ac786c5042e3971985844c385997a74dd1620c093b6b5f6
+  gold_labels_sha256: 0a5b7fc56108a18f0bc479ba81e031f4b500b476b719f8845f1ca46adf5e8bac
+  rendered_inputs_sha256: ddea75e897dd25f29a82535a624a079f317bbcb03b40398c103304c9904b3a18
+  source_fingerprint_sha256: 5568e756174cd6ec599d21c0863060affbd179731482c4fabd641561b9313085
+  selection:
+    method: hash_rank_sha256_v1
+    seed: 20260821
+  annotation_type: events
+  complexity: medium
+- name: erlich_ati_topics
+  expected_items: 200
+  fingerprint_sha256: 713f8fbefa1a1adbc1b35522b643afc6d65db81c44fc40c36601d518dc657df8
+  manifest_sha256: ec974824f390d52de1e78c6da8f67f5821f85ea7aa38e88e978406531b9d7be8
+  prompt_sha256: 2b96ee5e53c2b8947baae569c786ee039d2cc14c7a4f5d5f9a0b172dbfb186a4
+  schema_sha256: 9c3b8d97a7e3bba24758fafe1111520cdafc4712db968ed7095d623d44280d8d
+  item_keys_sha256: 40d5b7e6d4f1b0d5d1e4706377313516bf4d07153483d479f3741fc810ed576e
+  gold_labels_sha256: e9a01632736e9be150380b821d204852451a66032e95f9ad89fa8333728368f2
+  rendered_inputs_sha256: 6764e65f37ea77094f4415317ecaf6656076a10b5bbd80cde04bdc2ab73ac872
+  source_fingerprint_sha256: 058a8af719bbe1f6f6e7539556a057a77bd2a58a629c0788a314e6de1450ddf0
+  selection:
+    method: hash_rank_sha256_v1
+    seed: 20260821
+  annotation_type: issues
+  complexity: high
+- name: gilardi_relevance
+  expected_items: 200
+  fingerprint_sha256: 07dce4752912f9698755f0b4b19effe1b9ce3716e1f3103c1398aa7db3dfed63
+  manifest_sha256: 2e6b1b27512d7686fd94d83a08c5588ffef0803199e7fa6ed49a4ccd64d51692
+  prompt_sha256: 5b732cc16dfadb4fdad85818a82035474a07b5e6b561ee286874b1c68b4252f6
+  schema_sha256: db979757f8c47e80008f8bc70695cdb0c67ba8df54d5b2061a281e6b56236e11
+  item_keys_sha256: 39b9484679f1b85bd67ac7707fb4af4338ba73a4889320344c72e0ae3fb7f981
+  gold_labels_sha256: 00b0a1626e963ce1b46c2872e9ee8a3c36f1263f4f1b1fc935da45a0eb64716e
+  rendered_inputs_sha256: a72adae871886a78e27279cec03c6b39a278a1b3e115b65e4e6815384c2b81aa
+  source_fingerprint_sha256: 02befd614e93dda40b144943eff4d03a49a1a8c33f2860bac721cbe0bf577fc9
+  selection:
+    method: hash_rank_sha256_v1
+    seed: 20260821
+  annotation_type: relevance
+  complexity: medium
+- name: gilardi_stance
+  expected_items: 200
+  fingerprint_sha256: f33a673898da7095e5f8312f069d154808ab446fc455303a4df6239e23eaa96e
+  manifest_sha256: 8a6038db178b98ecdfc8d92b370c07a08966f722229e560b5a87d37252da8485
+  prompt_sha256: 0d7629c30da009680a629f65cc561c76edc6af8196326454bfc6c526c854042b
+  schema_sha256: fbd6124a791847fa9af1bb37e25cec65f45f331e152a915d6e42b3a8626d9e4b
+  item_keys_sha256: bb6b69372e0a0e0f2926fc6f056b7de139d869c0a693ebfcd5abb5188eb8d496
+  gold_labels_sha256: de9056ba44efb626ae8c9f2513a14019eef3c1658a54ea9265964337c2164d41
+  rendered_inputs_sha256: f35968b77a5f242edf34a573299bc5467bdb4f6f6cc5ef66c7bba130fe68950f
+  source_fingerprint_sha256: 9777dd62dcba75d0004159b1d7abaa06ab0ed7d3278e6cb53fd65d4680e3ad3b
+  selection:
+    method: hash_rank_sha256_v1
+    seed: 20260821
+  annotation_type: position
+  complexity: medium
+- name: halterman_keith_bfrs
+  expected_items: 200
+  fingerprint_sha256: c717a9320d1f5911a5e2c62aefeb438c090a6e13496ab7b3df3698d9b617ec98
+  manifest_sha256: 4060ee68bc0b26c77ede7a6549c0a0019e249ad7215f6a91c8f74554427a6072
+  prompt_sha256: b48eae4457fc07a93923a22f527ead3bf8f6cdfbd4bf923140507c3723b12456
+  schema_sha256: e98522c7e4e2581b810a142a9aa0a804911ae0e277b45c118cc0aa28e7e2d850
+  item_keys_sha256: dc0c3c69c973af2aa059fc001d06de021c7e13502bf0ae801645b07ff667fb60
+  gold_labels_sha256: ad6028fab38278536f034260b2a9bb00711e5db3fcaf82136e3baca2861b7403
+  rendered_inputs_sha256: 91c106251674f198215968d9e383b4a52376472d2a57324c8a200729ab8ce62a
+  source_fingerprint_sha256: c543c103d778bc0a3c24cfb6124f2b1044ff2b8782a27cad98775c83e44916cd
+  selection:
+    method: hash_rank_sha256_v1
+    seed: 20260821
+  annotation_type: events
+  complexity: medium
+- name: haunss_papea_fgz_forms
+  expected_items: 200
+  fingerprint_sha256: 54998892e422c922f3ab4ab732963b9614ee8c721fc47539b238cb947d335f0f
+  manifest_sha256: 111f8f240561f6c0a7636866a0933f5101a07157997d25d325f621d3d3c0cfbd
+  prompt_sha256: cd61a13666ba90b6d4410e2c27390fdd316a232018e510a5950efe15db677f6d
+  schema_sha256: 20a85514444002504189043d97e83e1e4d1474c26bc76605baa18c858a31616b
+  item_keys_sha256: d8141aa3f1218412f606f95a4d84f8885986e085bf5863aac219e2fe05cadc90
+  gold_labels_sha256: d089d65bc3cadccfb863c02b58d53e6c900e8cdadc394e4d9c5cb890f92add15
+  rendered_inputs_sha256: 8a655df4b74fd51c09d46454d910645c60fe3d481c91d1dab9ecfc2fd325ef81
+  source_fingerprint_sha256: 8531f43d190a1df31b7efd547d8c3c7acc6767169407608a23a38fed8283dbab
+  selection:
+    method: hash_rank_sha256_v1
+    seed: 20260821
+  annotation_type: events
+  complexity: medium
+- name: muller_fujimura_campaign_policy_area
+  expected_items: 200
+  fingerprint_sha256: d0559f9531c47c5afb35ed0f33b471fee60dda870a8103a1a1cd630b11b0c6ba
+  manifest_sha256: 31a12f118e760be5eaf837f2118372853c035a63efef34168b40eafd07eb29bf
+  prompt_sha256: eaac809e2ecb44b47c2c2bbd4a53088ead0952bb53b38c7d4ecd7aea9a928863
+  schema_sha256: 7202d935fe08534fbe1268f458dd243b49bbd2f77db5e348938d42e865e2fe52
+  item_keys_sha256: b22bb92295eee2a50463ac9b2091ef6ec32ef834f6cf6a22b025a263111c673b
+  gold_labels_sha256: 672518b1bbef6978f7a564871d0179ade93354d21e4d04b7ab38d4580eac63f8
+  rendered_inputs_sha256: 3b16debe5e797aad347c9d04d20e04c6b9714978ff628c2a8db75be80135b64e
+  source_fingerprint_sha256: 95602497eaaf9c571abb8866f309fe8898dc312a18d8ff9821869ddae9dde3e8
+  selection:
+    method: hash_rank_sha256_v1
+    seed: 20260821
+  annotation_type: issues
+  complexity: medium
+- name: rheault_line_of_fire_incivility
+  expected_items: 200
+  fingerprint_sha256: 96763af5b0595ccac205db8fbde553bd8e691cdcef49195e22a0e3b220972793
+  manifest_sha256: cb10e8b4b7749fcced6aa1155d3d0334d0757f105ef1a47f251e5a1642a93fc7
+  prompt_sha256: 8d08cca7a68984253add1c02fcf344c01f045ed4ddd9981b0de9f53280a5e723
+  schema_sha256: e7b9524e78d44254d24887885d5bfe3a46413b6198fc537fe3275647a6c79a89
+  item_keys_sha256: 3e6afd9965068d557ddda3148c8174efdc17310016701272359ff31f02d668ce
+  gold_labels_sha256: 4a03f2f8928784565f6c0bd5daefeae581b97f09e58a334787d49e111182f80b
+  rendered_inputs_sha256: 9690d3784bfd2bf0a1acaf72896b2b174725bf982cca318d07022b1c07d6762f
+  source_fingerprint_sha256: 3fdaab9d61430a1c5e88807a31a439e5f7ff859a664e533921aa8395e97328a9
+  selection:
+    method: hash_rank_sha256_v1
+    seed: 20260821
+  annotation_type: relevance
+  complexity: low
+- name: theocharis_dynamics_incivility
+  expected_items: 200
+  fingerprint_sha256: d60fa4e930a9ad378776e641031b11806f3742b29b7292550d348248db1019b5
+  manifest_sha256: 2dee0288a850bcbedf656797361a3cb45d075af37db8cc4448f6e06a00b16871
+  prompt_sha256: ffb9db3bef3cb66ae31d06f43dd4f2c6af43e7c9db3ee15a6f0416b772bee256
+  schema_sha256: e7b9524e78d44254d24887885d5bfe3a46413b6198fc537fe3275647a6c79a89
+  item_keys_sha256: 9dd79686bb45079745eb2dab043e8567c6d6a133a6354bb69a956b91c0709dfa
+  gold_labels_sha256: 07c35cbcf4c1bf34dd215d7b7d9d9cce3e6d409a3cde8b8ded911e4b068107d4
+  rendered_inputs_sha256: cf28855dc1b5c3e29a9411aef88c4d5c91cbcdf836d1b360900c277e08a673f7
+  source_fingerprint_sha256: 0d7ac8f7deeb4c486a6d5fee29449a506caff8647569592fcee079d0841f105e
+  selection:
+    method: hash_rank_sha256_v1
+    seed: 20260821
+  annotation_type: relevance
+  complexity: low
+- name: twitcivility_impoliteness
+  expected_items: 200
+  fingerprint_sha256: 1f7f33aad45cc403e7f02afcfde4e83eb36793f8e2432abb771c3ac445fcb40e
+  manifest_sha256: 3ac86bd87a9e1f65a8731ed918c16ac279e80d6fd35c722b2e632f06c8878ef1
+  prompt_sha256: e180b108e6d8973a21bd0f5981a2fcba4757fe72493ba878365bd9fba7ec11b9
+  schema_sha256: 0fa07a4f4834e5c0424c0f3216c551d1456404ba90ef1da7a7c03ed0ba5a747a
+  item_keys_sha256: 24b0b93968cf5bef802702bade5c61d355cf3d375a44b4cd55efd67b379fc8b5
+  gold_labels_sha256: 23d943abe73225b1a62b3985c7b14b66d489005912374fd0839cad095586a31b
+  rendered_inputs_sha256: e36d61686adf5075fcaf25fcb233873f10fe69caca92d8722f23a995ead0ca7a
+  source_fingerprint_sha256: c6958e26f199b195a1f10db41d77ca1fc5cb2cfb5933b05b1ca28963c964c6bb
+  selection:
+    method: hash_rank_sha256_v1
+    seed: 20260821
+  annotation_type: relevance
+  complexity: low
+

@@ -1,0 +1,7 @@
+Judge whether the social-media comment is hate speech using exactly one label:
+
+- `HATE`: hate speech.
+- `UNCLEAR`: uncertain or borderline.
+- `NOT_HATE`: not hate speech.
+
+Return JSON only: {"label": "HATE"}

@@ -1,0 +1,62 @@
+schema_version: 1
+currency: USD
+verified_at: 2026-08-20T14:22:26Z
+models:
+  gpt-5-2025-08-07: &openai_gpt5
+    provider: openai
+    batch_input_usd_per_million_tokens: 0.625
+    batch_output_usd_per_million_tokens: 5.00
+    input_token_safety_multiplier: 1.10
+    estimated_output_tokens_per_request: 64
+    tokenizer:
+      type: tiktoken
+      encoding: o200k_base
+      package_version: 0.12.0
+    source_url: https://developers.openai.com/api/docs/pricing
+    effective_date: 2026-08-20
+  gpt-5.1-2025-11-13:
+    <<: *openai_gpt5
+  gpt-5.2-2025-12-11:
+    <<: *openai_gpt5
+    batch_input_usd_per_million_tokens: 0.875
+    batch_output_usd_per_million_tokens: 7.00
+  gpt-5.4-2026-03-05:
+    <<: *openai_gpt5
+    batch_input_usd_per_million_tokens: 1.25
+    batch_output_usd_per_million_tokens: 7.50
+  gpt-5.6-sol:
+    <<: *openai_gpt5
+    batch_input_usd_per_million_tokens: 2.50
+    batch_output_usd_per_million_tokens: 15.00
+  claude-sonnet-4-5-20250929: &anthropic_sonnet45
+    provider: anthropic
+    batch_input_usd_per_million_tokens: 1.50
+    batch_output_usd_per_million_tokens: 7.50
+    input_token_safety_multiplier: 1.00
+    estimated_output_tokens_per_request: 64
+    tokenizer:
+      type: anthropic_token_count
+      endpoint: messages.count_tokens
+      sdk_version: 0.78.0
+    source_url: https://platform.claude.com/docs/en/build-with-claude/batch-processing
+    effective_date: 2026-08-20
+  claude-opus-4-5-20251101: &anthropic_opus
+    <<: *anthropic_sonnet45
+    batch_input_usd_per_million_tokens: 2.50
+    batch_output_usd_per_million_tokens: 12.50
+  claude-opus-4-6:
+    <<: *anthropic_opus
+  claude-opus-4-7:
+    <<: *anthropic_opus
+  claude-opus-4-8:
+    <<: *anthropic_opus
+  claude-fable-5:
+    <<: *anthropic_opus
+    batch_input_usd_per_million_tokens: 5.00
+    batch_output_usd_per_million_tokens: 25.00
+  claude-sonnet-5:
+    <<: *anthropic_sonnet45
+    batch_input_usd_per_million_tokens: 1.00
+    batch_output_usd_per_million_tokens: 5.00
+  claude-opus-5:
+    <<: *anthropic_opus

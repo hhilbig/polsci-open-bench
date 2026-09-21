@@ -1,0 +1,578 @@
+schema_version: 1
+registry_id: frontier_checkpoints_2026
+benchmark_commit: 3c7ad0756d447b1d57ed4daf26bbb85f5f296042
+panel_manifest: experiments/frontier_panel_18.yaml
+api_availability_manifest: experiments/frontier_api_availability_20260820.yaml
+window:
+  start: 2025-07-28
+  end: 2026-08-20
+  evaluation_cutoff: 2026-08-20
+
+hardware_tiers:
+  hive_98gb:
+    display_name: One 98 GB-class Hive GPU
+    ceiling_mib: 97887
+    qualification: single_gpu_revision_pinned_run
+  api:
+    display_name: Tested available API
+    qualification: provider_model_identity_verified
+
+runtime_profiles:
+  hive_vllm_0_26_0_cuda13:
+    runtime: vLLM 0.26.0; Python 3.12; CUDA 13.0; max model length 8192
+    provenance: exact runtime-lock SHA-256 is verified from each Hive run metadata file
+  canonical_api_runtime_unrecorded:
+    runtime: provider API client runtime not retained in canonical output provenance
+    provenance: exact logical predictions are hash-pinned; runtime remains an explicit limitation
+  provider_api_runtime_to_be_pinned:
+    runtime: provider SDK and returned model identity pending
+    provenance: must be replaced by immutable request-manifest provenance before evaluation
+
+checkpoints:
+  - checkpoint_id: qwen3_30b_a3b_instruct_2507_fp8_hive
+    display_name: Qwen3 30B-A3B Instruct 2507 FP8
+    family: open_weight
+    provider: Qwen
+    model_id: Qwen/Qwen3-30B-A3B-Instruct-2507-FP8
+    revision: 5a5a776300a41aaa681dd7ff0106608ef2bc90db
+    release_date: 2025-07-28
+    release_source: https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507-FP8
+    quantization: FP8
+    hardware_tier: hive_98gb
+    hardware_qualification: confirmed
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: disabled
+    runtime_profile: hive_vllm_0_26_0_cuda13
+    observed_peak_memory_mib: 88266
+    result_status: full34_confirmed
+    result:
+      source_kind: hive_task_metrics
+      model_key: qwen3_30b_a3b_instruct_2507_fp8
+      task_metrics_path: output/sidecar/hive_model_bakeoff_20260804/comparison/task_metrics.csv
+      predictions_path: output/sidecar/hive_model_bakeoff_20260804/qwen3_30b_a3b_instruct_2507_fp8/predictions.csv
+      metadata_path: output/sidecar/hive_model_bakeoff_20260804/qwen3_30b_a3b_instruct_2507_fp8/run_metadata.json
+      evaluated_at: 2026-08-04
+
+  - checkpoint_id: gpt_oss_20b_mxfp4_hive
+    display_name: GPT-OSS 20B MXFP4
+    family: open_weight
+    provider: OpenAI
+    model_id: openai/gpt-oss-20b
+    revision: 6cee5e81ee83917806bbde320786a8fb61efebee
+    release_date: 2025-08-04
+    base_model_release_date: 2025-08-05
+    artifact_release_date: 2025-08-04
+    release_source: https://huggingface.co/openai/gpt-oss-20b
+    quantization: MXFP4
+    hardware_tier: hive_98gb
+    hardware_qualification: failed_parser_pilot
+    immutable: true
+    historical_lag_eligible: false
+    reasoning: medium
+    runtime_profile: hive_vllm_0_26_0_cuda13
+    observed_peak_memory_mib: 88312
+    result_status: failed_parser_pilot
+    evaluation_date: 2026-08-20
+    evidence_source_kind: hive_fit_parser_pilot
+    pilot_rows: 16
+    pilot_malformed_rate: 1.0
+    pilot_reliability_pass: false
+    pilot_model_identity_verified: true
+    pilot_predictions_sha256: 3aa901cf606c6765739f38fc7b3cc984dbc54378c6c9f2d6f775023c9261c64a
+    pilot_metadata_sha256: 38f92cdde93ba0cb981d09b16a98e6dfe33a7e0d4d9de45f30dfef00076177ac
+    pilot_evidence_path: output/sidecar/frontier_2026/hive_pilots/gpt_oss_20b_mxfp4
+
+  - checkpoint_id: gpt_oss_120b_mxfp4_hive
+    display_name: GPT-OSS 120B MXFP4
+    family: open_weight
+    provider: OpenAI
+    model_id: openai/gpt-oss-120b
+    revision: b5c939de8f754692c1647ca79fbf85e8c1e70f8a
+    release_date: 2025-08-04
+    base_model_release_date: 2025-08-05
+    artifact_release_date: 2025-08-04
+    release_source: https://huggingface.co/openai/gpt-oss-120b
+    quantization: MXFP4
+    hardware_tier: hive_98gb
+    hardware_qualification: failed_parser_pilot
+    immutable: true
+    historical_lag_eligible: false
+    reasoning: medium
+    runtime_profile: hive_vllm_0_26_0_cuda13
+    observed_peak_memory_mib: 97244
+    result_status: failed_parser_pilot
+    evaluation_date: 2026-08-20
+    evidence_source_kind: hive_fit_parser_pilot
+    pilot_rows: 16
+    pilot_malformed_rate: 1.0
+    pilot_reliability_pass: false
+    pilot_model_identity_verified: true
+    pilot_predictions_sha256: 354b33eb1501fe7398f5270fc23d481c5d1149b79c587e3e53a5857923913868
+    pilot_metadata_sha256: 9a6543c17b82b2590a283d659da65bea1ffddf63a178b04527ad5eb71d4e34eb
+    pilot_evidence_path: output/sidecar/frontier_2026/hive_pilots/gpt_oss_120b_mxfp4
+
+  - checkpoint_id: qwen3_next_80b_a3b_fp8_hive
+    display_name: Qwen3-Next 80B-A3B Instruct FP8
+    family: open_weight
+    provider: Qwen
+    model_id: Qwen/Qwen3-Next-80B-A3B-Instruct-FP8
+    revision: c5f5f263bdd5cc134092897864e8905d8fe7b928
+    release_date: 2025-09-22
+    base_model_release_date: 2025-09-22
+    artifact_release_date: 2025-09-22
+    release_source: https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct-FP8
+    quantization: FP8
+    hardware_tier: hive_98gb
+    hardware_qualification: pending
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: disabled
+    runtime_profile: hive_vllm_0_26_0_cuda13
+    observed_peak_memory_mib:
+    result_status: pending_fit_pilot
+
+  - checkpoint_id: ministral_3_14b_bf16_hive
+    display_name: Ministral 3 14B Instruct BF16
+    family: open_weight
+    provider: Mistral AI
+    model_id: mistralai/Ministral-3-14B-Instruct-2512-BF16
+    revision: 29439f81c2be264d8d393273f99e7db9c0961120
+    release_date: 2025-12-02
+    base_model_release_date: 2025-12-02
+    release_source: https://huggingface.co/mistralai/Ministral-3-14B-Instruct-2512-BF16
+    quantization: BF16
+    hardware_tier: hive_98gb
+    hardware_qualification: failed_provenance_mismatch
+    immutable: false
+    historical_lag_eligible: false
+    reasoning: disabled
+    runtime_profile: hive_vllm_0_26_0_cuda13
+    observed_peak_memory_mib:
+    result_status: failed_provenance_mismatch
+    identity_note: Requested revision resolves only in the FP8 repository, not in the official BF16 repository.
+
+  - checkpoint_id: glm_4_7_flash_bf16_hive
+    display_name: GLM-4.7-Flash BF16
+    family: open_weight
+    provider: Z.ai
+    model_id: zai-org/GLM-4.7-Flash
+    revision: 7dd20894a642a0aa287e9827cb1a1f7f91386b67
+    release_date: 2026-01-19
+    release_source: https://huggingface.co/zai-org/GLM-4.7-Flash
+    quantization: BF16
+    hardware_tier: hive_98gb
+    hardware_qualification: confirmed
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: disabled
+    runtime_profile: hive_vllm_0_26_0_cuda13
+    observed_peak_memory_mib: 92844
+    result_status: full34_confirmed
+    result:
+      source_kind: hive_task_metrics
+      model_key: glm4_7_flash
+      task_metrics_path: output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805/comparison/task_metrics.csv
+      predictions_path: output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805/glm4_7_flash/predictions.csv
+      metadata_path: output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805/glm4_7_flash/run_metadata.json
+      evaluated_at: 2026-08-05
+
+  - checkpoint_id: qwen3_5_35b_a3b_fp8_hive
+    display_name: Qwen3.5 35B-A3B FP8
+    family: open_weight
+    provider: Qwen
+    model_id: Qwen/Qwen3.5-35B-A3B-FP8
+    revision: 9d1823d2dee688a6b25e77009dc727688c44936e
+    release_date: 2026-02-25
+    base_model_release_date: 2026-02-24
+    artifact_release_date: 2026-02-25
+    release_source: https://huggingface.co/Qwen/Qwen3.5-35B-A3B-FP8
+    quantization: FP8
+    hardware_tier: hive_98gb
+    hardware_qualification: confirmed
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: disabled
+    runtime_profile: hive_vllm_0_26_0_cuda13
+    observed_peak_memory_mib: 88568
+    result_status: panel_only
+    evaluation_date: 2026-08-20
+    evidence_source_kind: hive_fit_parser_pilot
+    pilot_rows: 16
+    pilot_malformed_rate: 0.0
+    pilot_reliability_pass: true
+    pilot_model_identity_verified: true
+    pilot_predictions_sha256: 4b4a8dd89288099b4fd0bad2766dfcaff29e60976291b9ebef94b966af318cd4
+    pilot_metadata_sha256: ee66245ae26864a8d5e44253bd54f2c2c1bd10ef79c724ab4c84cb73d443813f
+    pilot_evidence_path: output/sidecar/frontier_2026/hive_pilots/qwen3_5_35b_a3b_fp8
+    result:
+      source_kind: hive_task_metrics
+      model_key: qwen3_5_35b_a3b_fp8
+      task_metrics_path: output/sidecar/frontier_2026/hive_panels/qwen3_5_35b_a3b_fp8/task_metrics.csv
+      predictions_path: output/sidecar/frontier_2026/hive_panels/qwen3_5_35b_a3b_fp8/predictions.csv
+      metadata_path: output/sidecar/frontier_2026/hive_panels/qwen3_5_35b_a3b_fp8/run_metadata.json
+      evaluated_at: 2026-08-20
+
+  - checkpoint_id: mistral_small_4_119b_nvfp4_hive
+    display_name: Mistral Small 4 119B NVFP4
+    family: open_weight
+    provider: Mistral AI
+    model_id: mistralai/Mistral-Small-4-119B-2603-NVFP4
+    revision: b1a9048590131d38491bd23a7c9f6ed0962f0358
+    release_date: 2026-03-03
+    release_source: https://huggingface.co/mistralai/Mistral-Small-4-119B-2603-NVFP4
+    quantization: NVFP4
+    hardware_tier: hive_98gb
+    hardware_qualification: confirmed
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: none
+    runtime_profile: hive_vllm_0_26_0_cuda13
+    observed_peak_memory_mib: 92550
+    result_status: full34_confirmed
+    result:
+      source_kind: hive_task_metrics
+      model_key: mistral_small_4_119b_nvfp4
+      task_metrics_path: output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805/comparison/task_metrics.csv
+      predictions_path: output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805/mistral_small_4_119b_nvfp4/predictions.csv
+      metadata_path: output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805/mistral_small_4_119b_nvfp4/run_metadata.json
+      evaluated_at: 2026-08-05
+
+  - checkpoint_id: qwen3_6_35b_a3b_fp8_hive
+    display_name: Qwen3.6 35B-A3B FP8
+    family: open_weight
+    provider: Qwen
+    model_id: Qwen/Qwen3.6-35B-A3B-FP8
+    revision: 95a723d08a9490559dae23d0cff1d9466213d989
+    release_date: 2026-04-15
+    release_source: https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8
+    quantization: FP8
+    hardware_tier: hive_98gb
+    hardware_qualification: confirmed
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: disabled
+    runtime_profile: hive_vllm_0_26_0_cuda13
+    observed_peak_memory_mib: 88570
+    result_status: full34_confirmed
+    result:
+      source_kind: hive_task_metrics
+      model_key: qwen3_6_35b_a3b_fp8
+      task_metrics_path: output/sidecar/hive_model_bakeoff_20260804/comparison/task_metrics.csv
+      predictions_path: output/sidecar/hive_model_bakeoff_20260804/qwen3_6_35b_a3b_fp8/predictions.csv
+      metadata_path: output/sidecar/hive_model_bakeoff_20260804/qwen3_6_35b_a3b_fp8/run_metadata.json
+      evaluated_at: 2026-08-04
+
+  - checkpoint_id: qwen3_6_27b_fp8_hive
+    display_name: Qwen3.6 27B FP8
+    family: open_weight
+    provider: Qwen
+    model_id: Qwen/Qwen3.6-27B-FP8
+    revision: e89b16ebf1988b3d6befa7de50abc2d76f26eb09
+    release_date: 2026-04-21
+    release_source: https://huggingface.co/Qwen/Qwen3.6-27B-FP8
+    quantization: FP8
+    hardware_tier: hive_98gb
+    hardware_qualification: confirmed
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: disabled
+    runtime_profile: hive_vllm_0_26_0_cuda13
+    observed_peak_memory_mib: 89578
+    result_status: full34_confirmed
+    result:
+      source_kind: hive_task_metrics
+      model_key: qwen3_6_27b_fp8
+      task_metrics_path: output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805/comparison/task_metrics.csv
+      predictions_path: output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805/qwen3_6_27b_fp8/predictions.csv
+      metadata_path: output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805/qwen3_6_27b_fp8/run_metadata.json
+      evaluated_at: 2026-08-05
+
+  - checkpoint_id: gemma4_31b_qat_hive
+    display_name: Gemma 4 31B QAT W4A16
+    family: open_weight
+    provider: Google
+    model_id: google/gemma-4-31B-it-qat-w4a16-ct
+    revision: 52f3f65bc7a02d555763bc923bd1d9094898219d
+    release_date: 2026-06-04
+    release_source: https://huggingface.co/google/gemma-4-31B-it-qat-w4a16-ct
+    quantization: QAT W4A16
+    hardware_tier: hive_98gb
+    hardware_qualification: confirmed
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: disabled
+    runtime_profile: hive_vllm_0_26_0_cuda13
+    observed_peak_memory_mib: 92122
+    result_status: full34_confirmed
+    result:
+      source_kind: hive_task_metrics
+      model_key: gemma4_31b_it_qat_w4a16
+      task_metrics_path: output/sidecar/hive_model_bakeoff_20260804/comparison/task_metrics.csv
+      predictions_path: output/sidecar/hive_model_bakeoff_20260804/gemma4_31b_it_qat_w4a16/predictions.csv
+      metadata_path: output/sidecar/hive_model_bakeoff_20260804/gemma4_31b_it_qat_w4a16/run_metadata.json
+      evaluated_at: 2026-08-04
+
+  - checkpoint_id: gpt_5_2025_08_07_api
+    display_name: GPT-5
+    family: api
+    provider: OpenAI
+    model_id: gpt-5-2025-08-07
+    release_date: 2025-08-07
+    release_source: https://developers.openai.com/api/docs/models/gpt-5
+    quantization: provider_managed
+    hardware_tier: api
+    hardware_qualification: confirmed
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: medium
+    result_status: pending
+
+  - checkpoint_id: claude_sonnet_4_5_api
+    display_name: Claude Sonnet 4.5
+    family: api
+    provider: Anthropic
+    model_id: claude-sonnet-4-5-20250929
+    release_date: 2025-09-29
+    release_source: https://www.anthropic.com/news/claude-sonnet-4-5
+    quantization: provider_managed
+    hardware_tier: api
+    hardware_qualification: confirmed
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: disabled
+    result_status: pending
+
+  - checkpoint_id: gpt_5_1_api
+    display_name: GPT-5.1
+    family: api
+    provider: OpenAI
+    model_id: gpt-5.1-2025-11-13
+    release_date: 2025-11-13
+    release_source: https://openai.com/index/gpt-5-1-for-developers/
+    quantization: provider_managed
+    hardware_tier: api
+    hardware_qualification: confirmed
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: medium
+    result_status: pending
+
+  - checkpoint_id: claude_opus_4_5_api
+    display_name: Claude Opus 4.5
+    family: api
+    provider: Anthropic
+    model_id: claude-opus-4-5-20251101
+    release_date: 2025-11-24
+    release_source: https://www.anthropic.com/news/claude-opus-4-5
+    quantization: provider_managed
+    hardware_tier: api
+    hardware_qualification: confirmed
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: disabled
+    result_status: pending
+
+  - checkpoint_id: gpt_5_2_api
+    display_name: GPT-5.2
+    family: api
+    provider: OpenAI
+    model_id: gpt-5.2-2025-12-11
+    release_date: 2025-12-11
+    release_source: https://openai.com/index/introducing-gpt-5-2/
+    quantization: provider_managed
+    hardware_tier: api
+    hardware_qualification: confirmed
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: medium
+    result_status: pending
+
+  - checkpoint_id: claude_opus_4_6_api
+    display_name: Claude Opus 4.6
+    family: api
+    provider: Anthropic
+    model_id: claude-opus-4-6
+    release_date: 2026-02-05
+    release_source: https://www.anthropic.com/news/claude-opus-4-6
+    quantization: provider_managed
+    hardware_tier: api
+    hardware_qualification: confirmed
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: disabled
+    result_status: pending
+
+  - checkpoint_id: claude_sonnet_4_6_api
+    display_name: Claude Sonnet 4.6
+    family: api
+    provider: Anthropic
+    model_id: claude-sonnet-4-6
+    release_date: 2026-02-17
+    release_source: https://www.anthropic.com/news/claude-sonnet-4-6
+    quantization: provider_managed
+    hardware_tier: api
+    hardware_qualification: confirmed
+    immutable: false
+    historical_lag_eligible: false
+    reasoning: disabled
+    result_status: full34_confirmed
+    result:
+      source_kind: canonical_summary
+      model_key: claude-sonnet-4-6
+      task_metrics_path: output/summary_legacy_all_labels.csv
+      predictions_path: output/predictions.csv
+      predictions_sha256: 10876ddea0db5693ef405edab5c2974b4b5e64cf17b90187d6f7b12b4efa3050
+      evaluated_at: 2026-06-13
+      identity_note: Returned snapshot identity was not retained; exclude from historical frontiers and lags.
+
+  - checkpoint_id: gpt_5_4_api
+    display_name: GPT-5.4
+    family: api
+    provider: OpenAI
+    model_id: gpt-5.4-2026-03-05
+    release_date: 2026-03-05
+    release_source: https://openai.com/index/introducing-gpt-5-4/
+    quantization: provider_managed
+    hardware_tier: api
+    hardware_qualification: confirmed
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: medium
+    result_status: pending
+
+  - checkpoint_id: claude_opus_4_7_api
+    display_name: Claude Opus 4.7
+    family: api
+    provider: Anthropic
+    model_id: claude-opus-4-7
+    release_date: 2026-04-16
+    release_source: https://www.anthropic.com/news/claude-opus-4-7
+    quantization: provider_managed
+    hardware_tier: api
+    hardware_qualification: confirmed
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: disabled
+    result_status: pending
+
+  - checkpoint_id: gpt_5_5_api
+    display_name: GPT-5.5
+    family: api
+    provider: OpenAI
+    model_id: gpt-5.5
+    release_date: 2026-04-24
+    release_source: https://openai.com/index/introducing-gpt-5-5/
+    quantization: provider_managed
+    hardware_tier: api
+    hardware_qualification: confirmed
+    immutable: false
+    historical_lag_eligible: false
+    reasoning: medium
+    result_status: full34_confirmed
+    result:
+      source_kind: canonical_summary
+      model_key: gpt-5.5
+      task_metrics_path: output/summary_legacy_all_labels.csv
+      predictions_path: output/predictions.csv
+      predictions_sha256: 10876ddea0db5693ef405edab5c2974b4b5e64cf17b90187d6f7b12b4efa3050
+      evaluated_at: 2026-06-13
+      identity_note: Alias response identity was not retained; exclude from historical lags.
+
+  - checkpoint_id: deepseek_v4_pro_api
+    display_name: DeepSeek V4 Pro
+    family: api
+    provider: DeepSeek
+    model_id: deepseek-v4-pro
+    release_date: 2026-04-24
+    release_source: https://cdn.deepseek.com/policies/DeepSeek_Template_for_the_Public_Summary_of_Training_Content_for_GeneralPurpose_AI_model.pdf
+    quantization: provider_managed
+    hardware_tier: api
+    hardware_qualification: confirmed
+    immutable: false
+    historical_lag_eligible: false
+    reasoning: disabled
+    result_status: full34_confirmed
+    result:
+      source_kind: canonical_summary
+      model_key: deepseek-v4-pro
+      task_metrics_path: output/summary_legacy_all_labels.csv
+      predictions_path: output/predictions.csv
+      predictions_sha256: 10876ddea0db5693ef405edab5c2974b4b5e64cf17b90187d6f7b12b4efa3050
+      evaluated_at: 2026-06-13
+      identity_note: Mutable provider endpoint; date this point by evaluation date for display.
+
+  - checkpoint_id: claude_opus_4_8_api
+    display_name: Claude Opus 4.8
+    family: api
+    provider: Anthropic
+    model_id: claude-opus-4-8
+    release_date: 2026-05-28
+    release_source: https://www.anthropic.com/news/claude-opus-4-8
+    quantization: provider_managed
+    hardware_tier: api
+    hardware_qualification: confirmed
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: disabled
+    result_status: pending
+
+  - checkpoint_id: claude_fable_5_api
+    display_name: Claude Fable 5
+    family: api
+    provider: Anthropic
+    model_id: claude-fable-5
+    release_date: 2026-06-09
+    release_source: https://www.anthropic.com/news/claude-fable-5-mythos-5
+    quantization: provider_managed
+    hardware_tier: api
+    hardware_qualification: confirmed
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: disabled
+    result_status: pending
+
+  - checkpoint_id: claude_sonnet_5_api
+    display_name: Claude Sonnet 5
+    family: api
+    provider: Anthropic
+    model_id: claude-sonnet-5
+    release_date: 2026-06-30
+    release_source: https://www.anthropic.com/news/claude-sonnet-5
+    quantization: provider_managed
+    hardware_tier: api
+    hardware_qualification: confirmed
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: disabled
+    result_status: pending
+
+  - checkpoint_id: gpt_5_6_sol_api
+    display_name: GPT-5.6 Sol
+    family: api
+    provider: OpenAI
+    model_id: gpt-5.6-sol
+    release_date: 2026-07-09
+    release_source: https://openai.com/index/gpt-5-6/
+    quantization: provider_managed
+    hardware_tier: api
+    hardware_qualification: confirmed
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: medium
+    result_status: pending
+
+  - checkpoint_id: claude_opus_5_api
+    display_name: Claude Opus 5
+    family: api
+    provider: Anthropic
+    model_id: claude-opus-5
+    release_date: 2026-07-24
+    release_source: https://www.anthropic.com/news/claude-opus-5
+    quantization: provider_managed
+    hardware_tier: api
+    hardware_qualification: confirmed
+    immutable: true
+    historical_lag_eligible: true
+    reasoning: disabled
+    result_status: pending

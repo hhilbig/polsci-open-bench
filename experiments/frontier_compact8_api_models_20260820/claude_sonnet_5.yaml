@@ -1,0 +1,14 @@
+schema_version: 1
+checkpoint_id: claude_sonnet_5_api
+order: 7
+name: claude-sonnet-5
+display_name: Claude Sonnet 5 (thinking disabled)
+backend: anthropic
+compute_class: api
+api_key_env: ANTHROPIC_API_KEY
+expected_response_model: claude-sonnet-5
+identity_class: fixed_canonical_snapshot
+access_status: accessible
+snapshot_release_date: 2026-06-30
+thinking_mode: disabled
+max_output_tokens: 128

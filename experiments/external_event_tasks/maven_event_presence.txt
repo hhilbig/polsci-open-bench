@@ -1,0 +1,1 @@
+Does the sentence describe an event? Return EVENT or NO_EVENT.

@@ -1,0 +1,56 @@
+version: 1
+run_id: frontier_full34_llama31_holdout_20260821
+benchmark_commit: 3c7ad0756d447b1d57ed4daf26bbb85f5f296042
+
+task_scope:
+  tasks_dir: tasks
+  expected_tasks: 34
+  expected_items: 16425
+  sampling_note: Complete fixed release sample; the 16 tasks excluded from Broad18 are the prespecified holdout analysis set.
+
+runtime:
+  vllm_version: 0.26.0
+  python_version: "3.12"
+  runtime_lock_sha256: 4f46101fa493e38b312af034b8d740c612bd0001bab4cb0f624f4a9e1c49f5b3
+  runtime_lock_path: /nfs/hive/scratch/hhilbig/polsci-bakeoff-vllm-0.26.0-py312-cuda130-matched-v2.freeze.txt
+  max_model_len: 8192
+  gpu_memory_utilization: 0.90
+  cuda_toolkit_meta_version: "13.0.2"
+  cuda_component_versions:
+    nvidia-cuda-cccl: "13.0.85"
+    nvidia-cuda-crt: "13.0.88"
+    nvidia-cuda-nvcc: "13.0.88"
+    nvidia-cuda-nvrtc: "13.0.88"
+    nvidia-cuda-runtime: "13.0.96"
+    nvidia-nvvm: "13.0.88"
+
+generation:
+  temperature: 0.0
+  max_tokens: 256
+  seed: 20260820
+  enable_thinking: false
+  structured_outputs: json_schema
+  prompt_margin_tokens: 128
+
+promotion_gate:
+  baseline_model_key: llama3_1_70b_instruct_fp8_dynamic_full34
+  minimum_mean_f1_gain: 0.01
+  equivalence_tolerance: 0.005
+  maximum_parse_error_increase: 0.005
+  material_throughput_ratio: 1.25
+
+models:
+  llama3_1_70b_instruct_fp8_dynamic_full34:
+    role: holdout_historical_baseline
+    model_id: RedHatAI/Meta-Llama-3.1-70B-Instruct-FP8-dynamic
+    revision: 019d944e8e566c43939ea83775a27197ebb9b559
+    display_name: Llama 3.1 70B Instruct FP8 Dynamic, full 34 tasks
+    artifact_publication_date: 2024-08-23
+    artifact_publication_source: https://huggingface.co/RedHatAI/Meta-Llama-3.1-70B-Instruct-FP8-dynamic/commit/019d944e8e566c43939ea83775a27197ebb9b559
+    quantization: FP8 dynamic
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell

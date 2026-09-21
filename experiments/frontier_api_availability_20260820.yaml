@@ -1,0 +1,125 @@
+schema_version: 1
+checked_at: 2026-08-20T14:22:26Z
+check_method: provider_read_only_model_list_and_official_lifecycle_documentation
+submission_tested: false
+sources:
+  openai_models: https://developers.openai.com/api/docs/models
+  openai_deprecations: https://developers.openai.com/api/docs/deprecations
+  anthropic_models: https://platform.claude.com/docs/en/about-claude/models/model-ids-and-versions
+  anthropic_deprecations: https://platform.claude.com/docs/en/about-claude/model-deprecations
+checkpoints:
+  gpt_5_2025_08_07_api:
+    model_id: gpt-5-2025-08-07
+    provider: OpenAI
+    access_status: accessible
+    lifecycle_status: deprecated
+    identity_class: immutable_dated_snapshot
+    preflight_required: true
+    note: Scheduled shutdown 2026-12-11.
+  claude_sonnet_4_5_api:
+    model_id: claude-sonnet-4-5-20250929
+    provider: Anthropic
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: immutable_dated_snapshot
+    preflight_required: true
+  gpt_5_1_api:
+    model_id: gpt-5.1-2025-11-13
+    provider: OpenAI
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: immutable_dated_snapshot
+    preflight_required: true
+  claude_opus_4_5_api:
+    model_id: claude-opus-4-5-20251101
+    provider: Anthropic
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: immutable_dated_snapshot
+    preflight_required: true
+  gpt_5_2_api:
+    model_id: gpt-5.2-2025-12-11
+    provider: OpenAI
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: immutable_dated_snapshot
+    preflight_required: true
+  claude_opus_4_6_api:
+    model_id: claude-opus-4-6
+    provider: Anthropic
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: fixed_canonical_snapshot
+    preflight_required: true
+  claude_sonnet_4_6_api:
+    model_id: claude-sonnet-4-6
+    provider: Anthropic
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: fixed_canonical_snapshot
+    preflight_required: false
+    evidence_status: existing_full_result_missing_returned_identity
+  gpt_5_4_api:
+    model_id: gpt-5.4-2026-03-05
+    provider: OpenAI
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: immutable_dated_snapshot
+    preflight_required: true
+  claude_opus_4_7_api:
+    model_id: claude-opus-4-7
+    provider: Anthropic
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: fixed_canonical_snapshot
+    preflight_required: true
+  gpt_5_5_api:
+    model_id: gpt-5.5
+    provider: OpenAI
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: mutable_alias
+    preflight_required: false
+    evidence_status: existing_full_result_missing_returned_identity
+  deepseek_v4_pro_api:
+    model_id: deepseek-v4-pro
+    provider: DeepSeek
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: mutable_endpoint
+    preflight_required: false
+  claude_opus_4_8_api:
+    model_id: claude-opus-4-8
+    provider: Anthropic
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: fixed_canonical_snapshot
+    preflight_required: true
+  claude_fable_5_api:
+    model_id: claude-fable-5
+    provider: Anthropic
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: fixed_canonical_snapshot
+    preflight_required: true
+  claude_sonnet_5_api:
+    model_id: claude-sonnet-5
+    provider: Anthropic
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: fixed_canonical_snapshot
+    preflight_required: true
+  gpt_5_6_sol_api:
+    model_id: gpt-5.6-sol
+    provider: OpenAI
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: fixed_canonical_snapshot
+    preflight_required: true
+  claude_opus_5_api:
+    model_id: claude-opus-5
+    provider: Anthropic
+    access_status: accessible
+    lifecycle_status: active
+    identity_class: fixed_canonical_snapshot
+    preflight_required: true

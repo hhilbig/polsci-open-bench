@@ -1,0 +1,327 @@
+version: 1
+run_id: frontier_compact8_hive_20260820
+benchmark_commit: 3c7ad0756d447b1d57ed4daf26bbb85f5f296042
+
+task_scope:
+  tasks_dir: tasks
+  expected_tasks: 8
+  expected_items: 4000
+
+execution:
+  protocol: compact_direct
+  panel_manifest: experiments/frontier_compact_8.yaml
+  panel_id: frontier_compact_8
+  output_root: output/sidecar/frontier_2026/compact8/hive
+  expected_models: 17
+  expected_items: 4000
+  pilot_items: 16
+  remainder_items: 3984
+  pilot_selection: first_requests_in_manifest_order
+  combine_pilot_with_remainder: true
+  rerun_pilot_items: false
+  max_malformed_rate: 0.05
+  exactly_at_malformed_limit_passes: true
+  selective_retries: false
+  partition_selection: live_sbatch_test
+  required_gpu_gres: 6000_blackwell:1
+  required_gpu_name_fragment: RTX PRO 6000 Blackwell
+  expected_gpu_capacity_mib: 97887
+  reject_oom: true
+  reject_over_capacity: true
+  require_exact_snapshot_path: true
+  require_offline_inference: true
+
+runtime:
+  vllm_version: 0.26.0
+  python_version: "3.12"
+  runtime_lock_sha256: 4f46101fa493e38b312af034b8d740c612bd0001bab4cb0f624f4a9e1c49f5b3
+  runtime_lock_path: /nfs/hive/scratch/hhilbig/polsci-bakeoff-vllm-0.26.0-py312-cuda130-matched-v2.freeze.txt
+  max_model_len: 8192
+  gpu_memory_utilization: 0.90
+  cuda_toolkit_meta_version: "13.0.2"
+  cuda_component_versions:
+    nvidia-cuda-cccl: "13.0.85"
+    nvidia-cuda-crt: "13.0.88"
+    nvidia-cuda-nvcc: "13.0.88"
+    nvidia-cuda-nvrtc: "13.0.88"
+    nvidia-cuda-runtime: "13.0.96"
+    nvidia-nvvm: "13.0.88"
+
+generation:
+  temperature: 0.0
+  max_tokens: 256
+  seed: 20260820
+  enable_thinking: false
+  structured_outputs: json_schema
+  prompt_margin_tokens: 128
+
+models:
+  llama3_1_70b_instruct_fp8_dynamic:
+    role: historical_candidate
+    model_id: RedHatAI/Meta-Llama-3.1-70B-Instruct-FP8-dynamic
+    revision: 019d944e8e566c43939ea83775a27197ebb9b559
+    display_name: Llama 3.1 70B Instruct FP8 Dynamic
+    artifact_publication_date: 2024-08-23
+    artifact_publication_source: https://huggingface.co/RedHatAI/Meta-Llama-3.1-70B-Instruct-FP8-dynamic/commit/019d944e8e566c43939ea83775a27197ebb9b559
+    quantization: FP8 dynamic
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell
+
+  qwen2_5_32b_instruct_bf16:
+    role: externally_selected_historical_candidate
+    model_id: Qwen/Qwen2.5-32B-Instruct
+    revision: 70e8dfb9ad18a7d499f765fe206ff065ed8ca197
+    display_name: Qwen2.5 32B Instruct BF16
+    artifact_publication_date: 2024-09-19
+    artifact_publication_source: https://huggingface.co/Qwen/Qwen2.5-32B-Instruct/commit/70e8dfb9ad18a7d499f765fe206ff065ed8ca197
+    selection_source: https://epoch.ai/data-insights/consumer-gpu-model-gap
+    quantization: BF16
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell
+
+  qwen2_5_72b_instruct_fp8_dynamic:
+    role: targeted_historical_contender
+    model_id: RedHatAI/Qwen2.5-72B-Instruct-FP8-dynamic
+    revision: 4d9910ef10cf92b072dad8ce7c2a2929fac4fe0f
+    display_name: Qwen2.5 72B Instruct FP8 Dynamic
+    artifact_publication_date: 2024-12-02
+    artifact_publication_source: https://huggingface.co/RedHatAI/Qwen2.5-72B-Instruct-FP8-dynamic/commit/4d9910ef10cf92b072dad8ce7c2a2929fac4fe0f
+    quantization: FP8 dynamic
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell
+
+  llama3_3_70b_instruct_fp8_dynamic:
+    role: historical_candidate
+    model_id: RedHatAI/Llama-3.3-70B-Instruct-FP8-dynamic
+    revision: 9069d043f499121b771d7df1c86cb414e66880c6
+    display_name: Llama 3.3 70B Instruct FP8 Dynamic
+    artifact_publication_date: 2024-12-11
+    artifact_publication_source: https://huggingface.co/RedHatAI/Llama-3.3-70B-Instruct-FP8-dynamic/commit/9069d043f499121b771d7df1c86cb414e66880c6
+    quantization: FP8 dynamic
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell
+
+  deepseek_r1_distill_qwen_32b_bf16:
+    role: externally_selected_historical_candidate
+    model_id: deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
+    revision: ca24ee48c0532a014ddea4c32437a6f4be981ab2
+    display_name: DeepSeek R1 Distill Qwen 32B BF16
+    artifact_publication_date: 2025-01-22
+    artifact_publication_source: https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B/commit/ca24ee48c0532a014ddea4c32437a6f4be981ab2
+    selection_source: https://epoch.ai/data-insights/consumer-gpu-model-gap
+    quantization: BF16
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell
+
+  deepseek_r1_distill_llama_70b_fp8_dynamic:
+    role: targeted_historical_contender
+    model_id: RedHatAI/DeepSeek-R1-Distill-Llama-70B-FP8-dynamic
+    revision: e5626ac0aad8ed4233206041bb041138dcca3f8d
+    display_name: DeepSeek R1 Distill Llama 70B FP8 Dynamic
+    artifact_publication_date: 2025-02-22
+    artifact_publication_source: https://huggingface.co/RedHatAI/DeepSeek-R1-Distill-Llama-70B-FP8-dynamic/commit/e5626ac0aad8ed4233206041bb041138dcca3f8d
+    quantization: FP8 dynamic
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell
+
+  mistral_small_3_1_24b_bf16:
+    role: targeted_historical_contender
+    model_id: mistralai/Mistral-Small-3.1-24B-Instruct-2503
+    revision: 4b8dd8aae705887db5295fcbff4aedbb92d682eb
+    display_name: Mistral Small 3.1 24B BF16
+    artifact_publication_date: 2025-04-08
+    artifact_publication_source: https://huggingface.co/mistralai/Mistral-Small-3.1-24B-Instruct-2503/commit/4b8dd8aae705887db5295fcbff4aedbb92d682eb
+    quantization: BF16
+    language_model_only: true
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+      tokenizer_mode: mistral
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell
+
+  qwen3_32b_bf16:
+    role: externally_selected_historical_candidate
+    model_id: Qwen/Qwen3-32B
+    revision: c36b7534bc7164e32375e869644e3f5fee30218f
+    display_name: Qwen3 32B BF16
+    artifact_publication_date: 2025-04-28
+    artifact_publication_source: https://huggingface.co/Qwen/Qwen3-32B/commit/c36b7534bc7164e32375e869644e3f5fee30218f
+    selection_source: https://epoch.ai/data-insights/consumer-gpu-model-gap
+    quantization: BF16
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell
+
+  qwen3_30b_a3b_bf16:
+    role: historical_candidate
+    model_id: Qwen/Qwen3-30B-A3B
+    revision: 4c446470ba0aec43e22ac1128f9ffd915f338ba3
+    display_name: Qwen3 30B-A3B BF16
+    artifact_publication_date: 2025-04-30
+    artifact_publication_source: https://huggingface.co/Qwen/Qwen3-30B-A3B/commit/4c446470ba0aec43e22ac1128f9ffd915f338ba3
+    initial_weight_upload_source: https://huggingface.co/Qwen/Qwen3-30B-A3B/commit/fd4bf3be3236d0145638d8105f2ee424efeda2e3
+    quantization: BF16
+    llm_kwargs:
+      tensor_parallel_size: 1
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell
+
+  gemma3_27b_it_fp8_dynamic:
+    role: targeted_historical_contender
+    model_id: RedHatAI/gemma-3-27b-it-FP8-dynamic
+    revision: 306078afe860ef87821018f28078ecf762f31455
+    display_name: Gemma 3 27B IT FP8 Dynamic
+    artifact_publication_date: 2025-06-09
+    artifact_publication_source: https://huggingface.co/RedHatAI/gemma-3-27b-it-FP8-dynamic/commit/306078afe860ef87821018f28078ecf762f31455
+    quantization: FP8 dynamic
+    language_model_only: true
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell
+
+  gpt_oss_120b_mxfp4:
+    role: targeted_historical_contender
+    model_id: openai/gpt-oss-120b
+    revision: b5c939de8f754692c1647ca79fbf85e8c1e70f8a
+    display_name: GPT-OSS 120B MXFP4
+    artifact_publication_date: 2025-08-26
+    artifact_publication_source: https://huggingface.co/openai/gpt-oss-120b/commit/b5c939de8f754692c1647ca79fbf85e8c1e70f8a
+    quantization: MXFP4
+    inference_interface: vllm_responses_harmony
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      reasoning_effort: low
+    preferred_gpu: 6000_blackwell
+
+  qwen3_next_80b_a3b_fp8:
+    role: historical_candidate
+    model_id: Qwen/Qwen3-Next-80B-A3B-Instruct-FP8
+    revision: c5f5f263bdd5cc134092897864e8905d8fe7b928
+    display_name: Qwen3-Next 80B-A3B Instruct FP8
+    artifact_publication_date: 2025-09-22
+    artifact_publication_source: https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct-FP8/commit/c5f5f263bdd5cc134092897864e8905d8fe7b928
+    quantization: FP8
+    language_model_only: true
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell
+
+  glm4_7_flash:
+    role: historical_candidate
+    model_id: zai-org/GLM-4.7-Flash
+    revision: 7dd20894a642a0aa287e9827cb1a1f7f91386b67
+    display_name: GLM-4.7-Flash BF16
+    artifact_publication_date: 2026-01-19
+    artifact_publication_source: https://huggingface.co/zai-org/GLM-4.7-Flash/commit/7dd20894a642a0aa287e9827cb1a1f7f91386b67
+    quantization: BF16
+    language_model_only: false
+    llm_kwargs:
+      tensor_parallel_size: 1
+      moe_backend: triton
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell
+
+  qwen3_5_35b_a3b_fp8:
+    role: externally_selected_historical_candidate
+    model_id: Qwen/Qwen3.5-35B-A3B-FP8
+    revision: 9d1823d2dee688a6b25e77009dc727688c44936e
+    display_name: Qwen3.5 35B-A3B FP8
+    artifact_publication_date: 2026-02-25
+    artifact_publication_source: https://huggingface.co/Qwen/Qwen3.5-35B-A3B-FP8/commit/9d1823d2dee688a6b25e77009dc727688c44936e
+    selection_source: https://artificialanalysis.ai/models/qwen3-5-35b-a3b-non-reasoning/
+    quantization: FP8
+    language_model_only: true
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell
+
+  mistral_small_4_119b_nvfp4:
+    role: targeted_historical_contender
+    model_id: mistralai/Mistral-Small-4-119B-2603-NVFP4
+    revision: b1a9048590131d38491bd23a7c9f6ed0962f0358
+    display_name: Mistral Small 4 119B-A6.5B NVFP4
+    artifact_publication_date: 2026-03-16
+    artifact_publication_source: https://huggingface.co/mistralai/Mistral-Small-4-119B-2603-NVFP4/commit/a469fba86fd20adcc7d024b7d5ba21d23c44a3f1
+    quantization: NVFP4
+    language_model_only: true
+    llm_kwargs:
+      tensor_parallel_size: 1
+      tokenizer_mode: mistral
+      attention_backend: TRITON_MLA
+      moe_backend: cutlass
+      linear_backend: cutlass
+    chat_template_kwargs:
+      reasoning_effort: none
+    preferred_gpu: 6000_blackwell
+
+  qwen3_6_27b_fp8:
+    role: historical_candidate
+    model_id: Qwen/Qwen3.6-27B-FP8
+    revision: e89b16ebf1988b3d6befa7de50abc2d76f26eb09
+    display_name: Qwen3.6 27B FP8
+    artifact_publication_date: 2026-04-21
+    artifact_publication_source: https://huggingface.co/Qwen/Qwen3.6-27B-FP8/commit/e89b16ebf1988b3d6befa7de50abc2d76f26eb09
+    quantization: FP8
+    language_model_only: true
+    llm_kwargs:
+      tensor_parallel_size: 1
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell
+
+  gemma4_31b_it_qat_w4a16:
+    role: historical_candidate
+    model_id: google/gemma-4-31B-it-qat-w4a16-ct
+    revision: 52f3f65bc7a02d555763bc923bd1d9094898219d
+    display_name: Gemma 4 31B IT QAT W4A16
+    artifact_publication_date: 2026-06-04
+    artifact_publication_source: https://huggingface.co/google/gemma-4-31B-it-qat-w4a16-ct/commit/52f3f65bc7a02d555763bc923bd1d9094898219d
+    quantization: QAT W4A16
+    language_model_only: true
+    llm_kwargs:
+      tensor_parallel_size: 1
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell

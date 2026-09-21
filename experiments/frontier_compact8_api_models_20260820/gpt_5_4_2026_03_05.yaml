@@ -1,0 +1,16 @@
+schema_version: 1
+checkpoint_id: gpt_5_4_2026_03_05_api
+order: 6
+name: gpt-5.4-2026-03-05
+display_name: GPT-5.4 (2026-03-05, no reasoning)
+backend: openai
+compute_class: api
+api_key_env: OPENAI_API_KEY
+expected_response_model: gpt-5.4-2026-03-05
+identity_class: immutable_dated_snapshot
+access_status: accessible
+snapshot_release_date: 2026-03-05
+reasoning_effort: none
+response_format_type: json_schema
+max_output_tokens: 128
+

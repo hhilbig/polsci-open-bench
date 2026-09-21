@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import re
 from pathlib import Path
@@ -10,6 +9,13 @@ from pathlib import Path
 import pandas as pd
 
 import benchmark
+from api_batch_common import (
+    BatchIntegrityError,
+    RequestManifest,
+    load_request_manifest,
+    load_task_selection,
+    validate_response_model,
+)
 from task_registry import load_task_definitions
 
 
@@ -58,37 +64,76 @@ def restore_anthropic_keys(tool_input: object, task: dict) -> object:
     return restored
 
 
+def _load_collection_manifest(
+    tasks_dir: str | Path,
+    model_name: str | None,
+    manifest_path: str | Path | None = None,
+    panel_manifest_path: str | Path | None = None,
+) -> RequestManifest:
+    tasks = load_task_definitions(tasks_dir=tasks_dir)
+    selection = load_task_selection(tasks, panel_manifest_path)
+    tasks = list(selection.tasks)
+    if manifest_path is not None:
+        return load_request_manifest(
+            manifest_path,
+            tasks,
+            model_name=model_name,
+            provider="anthropic",
+            selection=selection,
+            require_enhanced=selection.is_frozen_panel,
+            require_complete=selection.is_frozen_panel,
+        )
+    if selection.is_frozen_panel:
+        raise BatchIntegrityError(
+            "--panel-manifest requires the authoritative --request-manifest"
+        )
+    if not model_name:
+        raise BatchIntegrityError("model_name is required without a request manifest")
+
+    rows = []
+    lookup = {}
+    row_by_id = {}
+    for task in tasks:
+        for item in task["loader"]():
+            custom_id = f"{task['name']}|{model_name}|{item['item_id']}"
+            row = {
+                "custom_id": custom_id,
+                "task": task["name"],
+                "model": model_name,
+                "item_id": str(item["item_id"]),
+                "requested_model": model_name,
+            }
+            rows.append(row)
+            lookup[custom_id] = (task, item)
+            row_by_id[custom_id] = row
+    return RequestManifest(
+        rows=tuple(rows),
+        row_by_custom_id=row_by_id,
+        lookup=lookup,
+        provider="anthropic",
+        requested_model=model_name,
+        expected_response_model="",
+        model_identity_sha256="",
+        panel_id="",
+        panel_sha256="",
+        task_item_keys_sha256=selection.task_item_keys_sha256,
+    )
+
+
 def build_item_lookup(
     tasks_dir: str | Path,
     model_name: str,
     manifest_path: str | Path | None = None,
+    panel_manifest_path: str | Path | None = None,
 ) -> dict[str, tuple[dict, dict]]:
-    tasks = load_task_definitions(tasks_dir=tasks_dir)
-    if manifest_path is None:
-        lookup = {}
-        for task in tasks:
-            for item in task["loader"]():
-                custom_id = f"{task['name']}|{model_name}|{item['item_id']}"
-                lookup[custom_id] = (task, item)
-        return lookup
-
-    task_lookup = {
-        task["name"]: {str(item["item_id"]): (task, item) for item in task["loader"]()}
-        for task in tasks
-    }
-    lookup = {}
-    with Path(manifest_path).open(newline="") as handle:
-        for row in csv.DictReader(handle):
-            if row["model"] != model_name:
-                raise ValueError(f"Manifest model mismatch: {row['model']} != {model_name}")
-            try:
-                lookup[row["custom_id"]] = task_lookup[row["task"]][row["item_id"]]
-            except KeyError as exc:
-                raise KeyError(
-                    f"Manifest row does not match loaded tasks: {row['custom_id']} "
-                    f"{row['task']} {row['item_id']}"
-                ) from exc
-    return lookup
+    return dict(
+        _load_collection_manifest(
+            tasks_dir,
+            model_name,
+            manifest_path,
+            panel_manifest_path,
+        ).lookup
+    )
 
 
 def response_content(result_line: dict, task: dict) -> tuple[str, int | None, str | None]:
@@ -112,13 +157,27 @@ def response_content(result_line: dict, task: dict) -> tuple[str, int | None, st
     return content, eval_count, None
 
 
+def reported_model(result_line: dict) -> str | None:
+    result = result_line.get("result") or {}
+    message = result.get("message") or {}
+    return message.get("model")
+
+
 def collect(
     batch_jsonl: Path,
     tasks_dir: str | Path,
-    model_name: str,
+    model_name: str | None,
     manifest_path: str | Path | None = None,
+    panel_manifest_path: str | Path | None = None,
 ) -> pd.DataFrame:
-    lookup = build_item_lookup(tasks_dir, model_name, manifest_path)
+    request_manifest = _load_collection_manifest(
+        tasks_dir,
+        model_name,
+        manifest_path,
+        panel_manifest_path,
+    )
+    lookup = request_manifest.lookup
+    resolved_model = request_manifest.requested_model
     rows = []
     seen = set()
     with batch_jsonl.open() as handle:
@@ -129,7 +188,18 @@ def collect(
             custom_id = result["custom_id"]
             if custom_id not in lookup:
                 raise KeyError(f"Unknown custom_id on line {line_no}: {custom_id}")
+            if custom_id in seen:
+                raise BatchIntegrityError(
+                    f"Duplicate custom_id on line {line_no}: {custom_id}"
+                )
             task, item = lookup[custom_id]
+            manifest_row = request_manifest.row_by_custom_id[custom_id]
+            response_model = reported_model(result)
+            validate_response_model(
+                response_model,
+                manifest_row,
+                context=f"line {line_no} {custom_id}",
+            )
             content, eval_count, api_err = response_content(result, task)
             if api_err:
                 preds = {}
@@ -138,12 +208,18 @@ def collect(
                 preds, parse_err = benchmark.parse_content(content, task)
             row = {
                 "task": task["name"],
-                "model": model_name,
+                "model": resolved_model,
                 "item_id": item["item_id"],
                 "latency_s": None,
                 "eval_count": eval_count,
                 "parse_error": parse_err,
                 "raw_content_preview": content[:200],
+                "response_model": response_model,
+                "model_identity_sha256": request_manifest.model_identity_sha256,
+                "panel_id": request_manifest.panel_id,
+                "panel_sha256": request_manifest.panel_sha256,
+                "request_stage": manifest_row.get("request_stage", ""),
+                "request_index": manifest_row.get("request_index", ""),
             }
             if api_err:
                 if task.get("label_key"):
@@ -168,12 +244,34 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Convert Anthropic Message Batch output JSONL into benchmark prediction CSV.")
     parser.add_argument("--batch-jsonl", required=True)
     parser.add_argument("--tasks-dir", default=str(REPO / "tasks"))
-    parser.add_argument("--model", default="claude-sonnet-4-6")
-    parser.add_argument("--manifest", help="Batch manifest CSV mapping Anthropic custom_ids to task items.")
+    parser.add_argument(
+        "--panel-manifest",
+        help="Frozen panel YAML; requires the exact authoritative request manifest.",
+    )
+    parser.add_argument(
+        "--model",
+        default=None,
+        help="Expected model (otherwise read from --request-manifest).",
+    )
+    parser.add_argument(
+        "--request-manifest",
+        "--manifest",
+        dest="request_manifest",
+        help="Prepared request manifest CSV; authoritative for expected responses.",
+    )
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
 
-    df = collect(Path(args.batch_jsonl), args.tasks_dir, args.model, args.manifest)
+    model_name = args.model
+    if model_name is None and args.request_manifest is None:
+        model_name = "claude-sonnet-4-6"
+    df = collect(
+        Path(args.batch_jsonl),
+        args.tasks_dir,
+        model_name,
+        args.request_manifest,
+        args.panel_manifest,
+    )
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out, index=False)

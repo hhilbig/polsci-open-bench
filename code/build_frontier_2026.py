@@ -532,9 +532,14 @@ def _base_row(checkpoint: Mapping[str, Any], panel: PanelSelection) -> dict[str,
 
 
 def _score_malformed_as_incorrect(
-    group: pd.DataFrame, task: Mapping[str, Any]
+    group: pd.DataFrame, task: Mapping[str, Any], support_only: bool = False
 ) -> dict[str, Any]:
-    """Compute frontier metrics over every row, forcing malformed decisions wrong."""
+    """Compute frontier metrics over every row, forcing malformed decisions wrong.
+
+    `support_only` defaults to False so the frozen frontier panels keep resolving
+    to the legacy metric they were built on. The refresh release passes True when
+    rebuilding onto the current task set and metric.
+    """
     scored = group.copy()
     malformed = ~(
         scored["parse_error"].isna()
@@ -564,7 +569,7 @@ def _score_malformed_as_incorrect(
     # flipping it here would silently invalidate the frozen frontier and
     # refresh panels. Migrate deliberately, rebuilding the panels, rather
     # than by inheriting a changed default.
-    metrics = _metrics_for_group(task, scored, support_only=False)
+    metrics = _metrics_for_group(task, scored, support_only=support_only)
     metrics["parse_ok"] = int((~malformed).sum())
     metrics["parse_err_rate"] = float(malformed.mean()) if len(scored) else np.nan
     return metrics

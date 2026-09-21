@@ -1,0 +1,11 @@
+You are classifying the stance of a Spanish-language citizen comment toward a specified civic proposal.
+
+Classify the comment as exactly one of:
+
+- FAVOR: the comment supports or agrees with the proposal.
+- AGAINST: the comment opposes or disagrees with the proposal.
+- NONE: the comment is neutral, unclear, mixed, or does not express a stance toward the proposal.
+
+Judge stance toward the proposal itself, not the comment's general sentiment. Read the proposal title and description before classifying the comment.
+
+Return JSON only, with a single field `stance` whose value is exactly one of "FAVOR", "AGAINST", or "NONE".

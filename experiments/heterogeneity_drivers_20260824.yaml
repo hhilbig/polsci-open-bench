@@ -1,0 +1,91 @@
+version: 1
+analysis_id: heterogeneity_drivers_20260824
+status: exploratory_locked_after_outcome_inspection
+locked_on: 2026-08-24
+interpretation: >-
+  The model outcomes had already been inspected when these hypotheses were
+  recorded. Results are exploratory mechanism tests, not preregistered
+  confirmation. Moderator definitions and directions are fixed here before
+  running the formal source-aware tests.
+seed: 20260824
+permutation_draws: 10000
+
+inputs:
+  task_metadata:
+    path: output/task_length_audit.csv
+    sha256: c3a669014c88dbce6684e83202412f0aa224e843681997dda8f08fb7f9a0620a
+    provenance: Generated in May 2026, before the current frontier comparison.
+  endpoint_deltas:
+    path: output/sidecar/frontier_2026/broad18/holdout_task_deltas.csv
+    sha256: 2b54397d31176b3797d089fa593a368681d0ff8a8fcf72ba3e5ac1cd1d439ac8
+  longitudinal_scores:
+    path: output/sidecar/frontier_2026/broad18/model_by_task.csv
+    sha256: 52b1fc84acdb2016207df68fcbff83e79461530618511dbd357b7341abf787f9
+  llama_predictions:
+    path: output/sidecar/frontier_2026/broad18/holdout16/llama3_1_70b_instruct_fp8_dynamic_full34/predictions.csv
+    sha256: b426872f808d57103aaa2eb6fd43383341815637cee7121e72b837403563d54d
+  qwen_predictions:
+    path: output/sidecar/hive_model_bakeoff_20260804/qwen3_6_27b_fp8/predictions.csv
+    sha256: 903625e5f1a684a09ca091ba51c32204db9b2c7cf0448655040fb742cf986e1e
+
+hypotheses:
+  - id: H1_decision_space
+    status: testable
+    moderator: log_effective_label_count
+    direction: positive
+    claim: >-
+      Later-model gains are larger for tasks with a larger effective decision
+      space.
+    primary_test: >-
+      Source-equal permutation test across the 13 Broad18 source families,
+      using task-specific F1-points-per-year slopes across all 21 checkpoints.
+    sensitivity_tests:
+      - Qwen3.6-minus-Llama3.1 endpoint association across all 34 tasks
+      - Separate Broad18 and held-out-16 rank associations
+      - Comparable dense Qwen and Llama lineage slopes
+      - Leave-one-source-out slope range
+
+  - id: H2_calibration
+    status: testable
+    moderator: binary_output_format
+    direction: lower_positive_rate_for_qwen3_6
+    claim: >-
+      Qwen3.6's relative losses on binary tasks partly reflect a more
+      conservative positive-class threshold rather than uniformly worse
+      discrimination.
+    tests:
+      - Sign test for the direction of task-level positive-rate changes
+      - Task-level precision and recall changes
+      - Binary-versus-nonbinary endpoint contrast under headline F1
+      - The same contrast after symmetric macro-F1 rescoring
+
+  - id: H3_gold_determinacy
+    status: not_testable
+    moderator: comparable_human_vote_entropy_or_agreement
+    direction: negative
+    reason: >-
+      Broad18 does not retain comparable human vote distributions or agreement
+      statistics for enough tasks.
+
+  - id: H4_inferential_depth
+    status: not_testable
+    moderator: blinded_manifest_semantic_pragmatic_rating
+    direction: conditional_on_context_sufficiency
+    reason: >-
+      No outcome-blind independent ratings exist. The current analyst has seen
+      the task results and must not supply the ratings retrospectively.
+
+lineages:
+  qwen_dense_27_32b:
+    - qwen1_5_32b_chat_hive
+    - qwen2_5_32b_instruct_bf16_hive
+    - qwen3_32b_bf16_hive
+    - qwen3_6_27b_fp8_hive
+  qwen_dense_72b:
+    - qwen1_5_72b_chat_awq_hive
+    - qwen2_72b_instruct_awq_hive
+    - qwen2_5_72b_instruct_fp8_dynamic_hive
+  llama_dense_70b:
+    - llama3_70b_instruct_fp8_hive
+    - llama3_1_70b_instruct_fp8_dynamic_hive
+    - llama3_3_70b_instruct_fp8_dynamic_hive

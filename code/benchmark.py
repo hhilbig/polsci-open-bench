@@ -55,6 +55,7 @@ import pandas as pd
 from openai import OpenAI
 from model_registry import (add_model_loading_args, load_model_definitions,
                             load_model_definitions_from_args)
+from panel_manifest import assert_panel_checkout, load_panel_manifest
 from run_registry import DEFAULT_LEDGER, DEFAULT_STATUS_MD, append_event, render_markdown
 from task_registry import (DEFAULT_SAMPLE_N_V1 as N_V1, add_task_loading_args,
                            load_task_definitions,
@@ -376,7 +377,14 @@ def warmup_ollama(model_def):
 
 # --------- Orchestration ---------
 
-def run_task(task, models, model_clients, checkpoint_path, only_new_items=False):
+def run_task(
+    task,
+    models,
+    model_clients,
+    checkpoint_path,
+    only_new_items=False,
+    checkpoint_metadata=None,
+):
     system_prompt = Path(task["prompt_path"]).read_text()
     items = task["loader"]()
     if only_new_items:
@@ -415,6 +423,8 @@ def run_task(task, models, model_clients, checkpoint_path, only_new_items=False)
                     "parse_error": parse_err,
                     "raw_content_preview": r["content"][:200],
                 }
+                if checkpoint_metadata:
+                    row.update(checkpoint_metadata)
                 for k, v in preds.items(): row[f"pred_{k}"] = v
                 for k, v in it["gt"].items(): row[f"gt_{k}"] = v
                 rows.append(row)
@@ -428,6 +438,8 @@ def run_task(task, models, model_clients, checkpoint_path, only_new_items=False)
                     "latency_s": None, "eval_count": None,
                     "parse_error": f"api_error: {e}", "raw_content_preview": "",
                 }
+                if checkpoint_metadata:
+                    row.update(checkpoint_metadata)
                 key = task.get("label_key")
                 if key:
                     row[f"pred_{key}"] = None
@@ -510,10 +522,17 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     add_task_loading_args(ap)
     add_model_loading_args(ap)
+    ap.add_argument(
+        "--panel-manifest",
+        help="Frozen multi-task panel manifest; validates exact task inputs before inference.",
+    )
     ap.add_argument("--only-model", help="Restrict to one model by name")
     ap.add_argument("--only-task",  help="Restrict to one task by name")
-    ap.add_argument("--output",     default=str(OUT / "predictions.csv"),
-                    help="Where to write this run's predictions (default output/predictions.csv).")
+    ap.add_argument(
+        "--output",
+        default=None,
+        help="Where to write this run's predictions (default: canonical output, or frontier sidecar in panel mode).",
+    )
     ap.add_argument("--merge-into", dest="merge_into", default=None,
                     help="After running, merge this run's rows into an existing CSV "
                          "(replacing matching task/model/item_id rows).")
@@ -539,12 +558,50 @@ def main():
 
     OUT.mkdir(parents=True, exist_ok=True)
 
-    tasks = load_task_definitions_from_args(args)
+    panel = None
+    task_source_args = [args.task_manifest, args.task_dir, args.tasks_dir]
+    if args.panel_manifest:
+        if any(task_source_args):
+            ap.error(
+                "--panel-manifest cannot be combined with --task-manifest, "
+                "--task-dir, or --tasks-dir"
+            )
+        if args.only_new_items:
+            ap.error("--only-new-items cannot be combined with --panel-manifest")
+        panel = load_panel_manifest(args.panel_manifest)
+        assert_panel_checkout(panel, REPO)
+        tasks = list(panel.tasks)
+        print(
+            f"[panel] {panel.panel_id}: {panel.expected_tasks} tasks, "
+            f"{panel.expected_items} items, sha256={panel.panel_sha256}",
+            flush=True,
+        )
+    else:
+        # New runs cover the active benchmark only; held-out tasks are skipped.
+        tasks = load_task_definitions_from_args(args, active_only=True)
     if args.only_task:
         tasks = [t for t in tasks if t["name"] == args.only_task]
         if not tasks:
             print(f"Unknown task: {args.only_task}"); return
         print(f"[selective] Running ONLY task: {args.only_task}", flush=True)
+
+    if args.output is None:
+        args.output = str(
+            OUT / "sidecar" / "frontier_2026" / "serial_predictions.csv"
+            if panel
+            else OUT / "predictions.csv"
+        )
+    Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+
+    panel_run_metadata = (
+        {
+            "panel_id": panel.panel_id,
+            "panel_sha256": panel.panel_sha256,
+            "panel_manifest": str(panel.manifest_path),
+        }
+        if panel
+        else {}
+    )
 
     models = load_model_definitions_from_args(args)
     if args.only_model:
@@ -589,6 +646,7 @@ def main():
                     runner="benchmark.py",
                     output=args.output,
                     note="No runnable models after filtering unavailable API models.",
+                    **panel_run_metadata,
                 )
                 if args.render_run_status:
                     render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
@@ -610,6 +668,7 @@ def main():
             tmux_session=args.run_tmux_session,
             cost_cap_usd=args.run_cost_cap_usd,
             note=args.run_note,
+            **panel_run_metadata,
         )
         if args.render_run_status:
             render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
@@ -617,8 +676,14 @@ def main():
     all_rows = []
     try:
         for task_idx, task in enumerate(tasks, start=1):
-            task_rows = run_task(task, models, model_clients, args.output,
-                                 only_new_items=args.only_new_items)
+            task_rows = run_task(
+                task,
+                models,
+                model_clients,
+                args.output,
+                only_new_items=args.only_new_items,
+                checkpoint_metadata=panel.row_metadata(task["name"]) if panel else None,
+            )
             all_rows.extend(task_rows)
             pd.DataFrame(all_rows).to_csv(args.output, index=False)
             # Per-task merge so a mid-run kill preserves completed tasks.
@@ -638,6 +703,7 @@ def main():
                     rows_written=len(all_rows),
                     output=args.output,
                     merge_into=args.merge_into,
+                    **panel_run_metadata,
                 )
                 if args.render_run_status:
                     render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
@@ -652,6 +718,7 @@ def main():
                 output=args.output,
                 merge_into=args.merge_into,
                 error=repr(exc),
+                **panel_run_metadata,
             )
             if args.render_run_status:
                 render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
@@ -671,6 +738,7 @@ def main():
                 merge_into=args.merge_into,
                 error=repr(exc),
                 rows_written=len(all_rows),
+                **panel_run_metadata,
             )
             if args.render_run_status:
                 render_markdown(args.run_ledger, DEFAULT_STATUS_MD)
@@ -692,6 +760,7 @@ def main():
             rows_written=len(all_rows),
             completed_tasks=len(tasks),
             total_tasks=len(tasks),
+            **panel_run_metadata,
         )
         if args.render_run_status:
             render_markdown(args.run_ledger, DEFAULT_STATUS_MD)

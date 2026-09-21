@@ -1,0 +1,18 @@
+order: 1
+name: maven_event_presence
+family: External event validation
+source: MAVEN validation split (Wang et al. 2020)
+data_file: maven_event_presence.csv
+prompt_file: maven_event_presence.txt
+label_kind: categorical
+label_key: event_presence
+labels:
+- EVENT
+- NO_EVENT
+id:
+  kind: column
+  column: source_id
+text:
+  template: '{text}'
+ground_truth:
+  column: gold

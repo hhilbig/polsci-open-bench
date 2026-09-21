@@ -1,0 +1,106 @@
+version: 1
+run_id: frontier_broad18_targeted_ablation_20260821
+benchmark_commit: 3c7ad0756d447b1d57ed4daf26bbb85f5f296042
+
+task_scope:
+  tasks_dir: tasks
+  expected_tasks: 18
+  expected_items: 3600
+
+execution:
+  protocol: broad18_targeted_ablation
+  panel_manifest: experiments/frontier_broad_18.yaml
+  panel_id: frontier_broad_18
+  output_root: output/sidecar/frontier_2026/broad18/targeted_ablation
+  expected_models: 3
+  expected_items: 3600
+  pilot_items: 16
+  remainder_items: 3584
+  pilot_selection: first_requests_in_manifest_order
+  combine_pilot_with_remainder: true
+  rerun_pilot_items: false
+  max_malformed_rate: 0.05
+  exactly_at_malformed_limit_passes: true
+  selective_retries: false
+  partition_selection: live_sbatch_test
+  required_gpu_gres: 6000_blackwell:1
+  required_gpu_name_fragment: RTX PRO 6000 Blackwell
+  expected_gpu_capacity_mib: 97887
+  reject_oom: true
+  reject_over_capacity: true
+  require_exact_snapshot_path: true
+  require_offline_inference: true
+
+runtime:
+  vllm_version: 0.26.0
+  python_version: "3.12"
+  runtime_lock_sha256: 4f46101fa493e38b312af034b8d740c612bd0001bab4cb0f624f4a9e1c49f5b3
+  runtime_lock_path: /nfs/hive/scratch/hhilbig/polsci-bakeoff-vllm-0.26.0-py312-cuda130-matched-v2.freeze.txt
+  max_model_len: 8192
+  gpu_memory_utilization: 0.90
+  cuda_toolkit_meta_version: "13.0.2"
+  cuda_component_versions:
+    nvidia-cuda-cccl: "13.0.85"
+    nvidia-cuda-crt: "13.0.88"
+    nvidia-cuda-nvcc: "13.0.88"
+    nvidia-cuda-nvrtc: "13.0.88"
+    nvidia-cuda-runtime: "13.0.96"
+    nvidia-nvvm: "13.0.88"
+
+generation:
+  temperature: 0.0
+  max_tokens: 1024
+  seed: 20260820
+  enable_thinking: false
+  structured_outputs: json_schema
+  prompt_margin_tokens: 128
+
+models:
+  qwen3_32b_bf16_thinking_off_1024:
+    role: reasoning_mode_control
+    model_id: Qwen/Qwen3-32B
+    revision: c36b7534bc7164e32375e869644e3f5fee30218f
+    display_name: Qwen3 32B BF16, thinking disabled, 1024-token cap
+    artifact_publication_date: 2025-04-28
+    artifact_publication_source: https://huggingface.co/Qwen/Qwen3-32B/commit/c36b7534bc7164e32375e869644e3f5fee30218f
+    quantization: BF16
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false
+    conversation_layout: system_user
+    preferred_gpu: 6000_blackwell
+
+  qwen3_32b_bf16_thinking_on_1024:
+    role: reasoning_mode_treatment
+    model_id: Qwen/Qwen3-32B
+    revision: c36b7534bc7164e32375e869644e3f5fee30218f
+    display_name: Qwen3 32B BF16, thinking enabled, 1024-token cap
+    artifact_publication_date: 2025-04-28
+    artifact_publication_source: https://huggingface.co/Qwen/Qwen3-32B/commit/c36b7534bc7164e32375e869644e3f5fee30218f
+    quantization: BF16
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: true
+    conversation_layout: system_user
+    preferred_gpu: 6000_blackwell
+
+  qwen3_6_27b_fp8_single_user:
+    role: prompt_layout_treatment
+    model_id: Qwen/Qwen3.6-27B-FP8
+    revision: e89b16ebf1988b3d6befa7de50abc2d76f26eb09
+    display_name: Qwen3.6 27B FP8, single-user prompt layout
+    artifact_publication_date: 2026-04-21
+    artifact_publication_source: https://huggingface.co/Qwen/Qwen3.6-27B-FP8/commit/e89b16ebf1988b3d6befa7de50abc2d76f26eb09
+    quantization: FP8
+    language_model_only: true
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false
+    conversation_layout: single_user
+    preferred_gpu: 6000_blackwell

@@ -1,0 +1,96 @@
+version: 1
+benchmark_commit: bb16725c4c888b07d7672646719245f03b2b4b30
+task_scope:
+  tasks_dir: tasks_ext
+  expected_tasks: 1
+  expected_items: 1000
+  sampling_note: Open-weight extension panel, not the published benchmark. One task, yan_bernhard_offensive,
+    drawn at 1,000 items rather than the usual 500 because the positive class is 6.6 percent
+    of the frame and a 500-item draw yields only about 33 offensive replies. Constrained decoding
+    is on, matching the guided arm of the schema-parity experiment.
+runtime:
+  vllm_version: 0.26.0
+  python_version: '3.12'
+  runtime_lock_sha256: 4f46101fa493e38b312af034b8d740c612bd0001bab4cb0f624f4a9e1c49f5b3
+  max_model_len: 8192
+  gpu_memory_utilization: 0.9
+  cuda_toolkit_meta_version: 13.0.2
+  cuda_component_versions:
+    nvidia-cuda-cccl: 13.0.85
+    nvidia-cuda-crt: 13.0.88
+    nvidia-cuda-nvcc: 13.0.88
+    nvidia-cuda-nvrtc: 13.0.88
+    nvidia-cuda-runtime: 13.0.96
+    nvidia-nvvm: 13.0.88
+generation:
+  temperature: 0.0
+  max_tokens: 256
+  seed: 20260918
+  enable_thinking: false
+  prompt_margin_tokens: 128
+  structured_outputs: json_schema
+promotion_gate:
+  baseline_model_key: qwen3_6_27b_fp8
+  minimum_mean_f1_gain: 0.01
+  equivalence_tolerance: 0.005
+  maximum_parse_error_increase: 1.0
+  material_throughput_ratio: 1.25
+models:
+  qwen3_6_27b_fp8:
+    role: schema_parity_arm
+    model_id: Qwen/Qwen3.6-27B-FP8
+    revision: e89b16ebf1988b3d6befa7de50abc2d76f26eb09
+    display_name: Qwen3.6 27B
+    language_model_only: true
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell
+  gemma4_31b_it_qat_w4a16:
+    role: schema_parity_arm
+    model_id: google/gemma-4-31B-it-qat-w4a16-ct
+    revision: 52f3f65bc7a02d555763bc923bd1d9094898219d
+    display_name: Gemma 4 31B IT QAT W4A16
+    artifact_publication_date: 2026-06-04
+    artifact_publication_source: https://huggingface.co/google/gemma-4-31B-it-qat-w4a16-ct/commit/52f3f65bc7a02d555763bc923bd1d9094898219d
+    quantization: QAT W4A16
+    language_model_only: true
+    llm_kwargs:
+      tensor_parallel_size: 1
+    chat_template_kwargs:
+      enable_thinking: false
+    preferred_gpu: 6000_blackwell
+  qwen3_6_35b_a3b_fp8:
+    role: schema_parity_arm
+    model_id: Qwen/Qwen3.6-35B-A3B-FP8
+    revision: 95a723d08a9490559dae23d0cff1d9466213d989
+    display_name: Qwen3.6 35B-A3B FP8
+    language_model_only: true
+    preferred_partition: high
+    preferred_gpu: 6000_blackwell
+    llm_kwargs:
+      tensor_parallel_size: 1
+    chat_template_kwargs:
+      enable_thinking: false
+  qwen3_30b_a3b_instruct_2507_fp8:
+    role: schema_parity_arm
+    model_id: Qwen/Qwen3-30B-A3B-Instruct-2507-FP8
+    revision: 5a5a776300a41aaa681dd7ff0106608ef2bc90db
+    display_name: Qwen3 30B-A3B Instruct 2507 FP8
+    language_model_only: false
+    preferred_partition: high
+    preferred_gpu: 6000_blackwell
+    llm_kwargs:
+      tensor_parallel_size: 1
+    chat_template_kwargs:
+      enable_thinking: false
+run_id: task_ext_20260918_yan_bernhard
+experiment_note: 'New task added 2026-09-18 after the halterman_ccc_protest exclusion. Scored
+  on the four verified Hive checkpoints only: the six published Ollama models cannot be run
+  (mac2 has no ollama service and no pulled models) and the four API models would cost money,
+  so this task carries no local-vs-API comparison and does not enter the 33-task headline.
+  Gold is the majority of three crowd rating slots; slot 3 agrees poorly with slots 1 and
+  2 (kappa 0.27-0.33 against 0.73), so report the unanimity rate (0.809) alongside model scores
+  as a human-ceiling reference.'

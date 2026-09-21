@@ -1,0 +1,30 @@
+order: 1
+name: alia_civic_stance_votes
+family: Sentiment / Stance / Tone
+source: SINAI ALIA 2026
+data_file: ../../data/human_votes/alia_stance_votes.csv
+prompt_file: ../../prompts/alia_civic_stance.txt
+label_kind: categorical
+label_key: stance
+labels:
+  - FAVOR
+  - AGAINST
+  - NONE
+sampling:
+  n_v1: 250
+  n_v2_new: 250
+  seed: 20260422
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Proposal: {target}
+    Proposal description: {description}
+    Citizen comment: {comment}
+  truncations:
+    description:
+      max_chars: 5000
+      suffix: "... [truncated at {max_chars} chars]"
+ground_truth:
+  column: gt_stance

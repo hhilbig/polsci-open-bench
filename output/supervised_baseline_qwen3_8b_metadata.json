@@ -1,0 +1,32 @@
+{
+  "model": "Qwen/Qwen3-Embedding-8B",
+  "revision": "1d8ad4ca9b3dd8059ad90a75d4983776a23d44af",
+  "snapshot_path": "/nfs/hive/scratch/hhilbig/hf/hub/models--Qwen--Qwen3-Embedding-8B/snapshots/1d8ad4ca9b3dd8059ad90a75d4983776a23d44af",
+  "method": "frozen embeddings plus the existing class-weighted logistic regression",
+  "pooling": "last non-padding token",
+  "normalized": true,
+  "max_tokens": 8192,
+  "embedding_dimension": 4096,
+  "training_sizes": [
+    50,
+    100,
+    250,
+    500,
+    1000,
+    2000
+  ],
+  "draws_per_size": 5,
+  "result_sha256": "0d4467ab714b425d45791d5dd41a07591e98c013a1b325143372dc61b6544176",
+  "result_rows": 840,
+  "source_git_head": "acf8c8ff585421a18d6e94af66a80b3a341580c8",
+  "script_sha256": "5e9038aa857d3662f5f7cdffeebbdc089de6756339f649a32e1572b6e15d6fd4",
+  "hostname": "hive-dc-7-5-62",
+  "slurm_job_id": "23834885",
+  "packages": {
+    "torch": "2.11.0+cu130",
+    "transformers": "5.14.1",
+    "numpy": "2.3.5",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.8.0"
+  }
+}

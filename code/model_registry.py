@@ -76,6 +76,8 @@ def _validate_model_manifest(spec: dict, manifest_path: Path):
         raise ValueError(
             f"{manifest_path} has unsupported thinking_mode: {thinking_mode}"
         )
+    if spec.get("max_output_tokens") is not None and int(spec["max_output_tokens"]) < 1:
+        raise ValueError(f"{manifest_path} max_output_tokens must be positive")
 
 
 def _default_compute_class(backend: str) -> str:
@@ -98,6 +100,12 @@ def load_model_definition(manifest_path: Path):
         "reasoning_effort": spec.get("reasoning_effort"),
         "response_format_type": spec.get("response_format_type"),
         "thinking_mode": spec.get("thinking_mode"),
+        "max_output_tokens": (
+            int(spec["max_output_tokens"])
+            if spec.get("max_output_tokens") is not None
+            else None
+        ),
+        "expected_response_model": spec.get("expected_response_model"),
         "cost_per_call_usd": (
             float(spec["cost_per_call_usd"]) if spec.get("cost_per_call_usd") is not None else None
         ),
