@@ -100,8 +100,14 @@ class RefreshBackfillTests(unittest.TestCase):
             args = SimpleNamespace(config=config_path, model_key=model_key, output_dir=root/'result',
                 panel_manifest=None, only_task=None, limit_items=None, force=False, plan_only=False)
             monitor = MagicMock(max_total_used_mib=50000)
+            # Every environment dependency of hive.run is mocked here, and the git
+            # checkout is one of them. Left real, this test passed only while HEAD
+            # was exactly the frozen commit, so it failed on every later commit
+            # for a reason unrelated to run-and-resume, which is what it tests.
+            # The pin itself is tested in test_refresh_hive_selection.
             with patch.dict('os.environ', {'HF_HUB_OFFLINE': '1', 'TRANSFORMERS_OFFLINE': '1',
                 'BAKEOFF_MODEL_SNAPSHOT_PATH': str(snapshot.resolve()), 'SLURM_JOB_NUM_NODES': '1'}), \
+                patch.object(hive, 'assert_benchmark_commit', return_value=config['benchmark_commit']), \
                 patch.object(hive, 'assert_runtime_versions'), patch.object(hive, 'runtime_versions', return_value={'test': 'mocked'}), \
                 patch.object(hive, 'query_gpu', return_value=gpu), patch.object(hive, 'GpuMemoryMonitor', return_value=monitor), \
                 patch.object(hive, 'start_vllm_responses_backend', return_value=(backend, {'inference_interface': 'vllm_responses_harmony'})) as start, \
