@@ -254,6 +254,17 @@ def test_verifier_rejects_overview_figure_that_differs_from_release():
         with unittest.TestCase().assertRaisesRegex(ValueError,'Overview figure'):
             preview.verify(root)
 
+def test_page_has_date_task_list_citation_and_share_tags():
+    definitions=[dict(task='gilardi_stance',source='Gilardi et al. 2023',label_key='stance',label_kind='categorical',labels=['a','b','c']),
+                 dict(task='erlich_ati_topics',source='Erlich et al. 2022',label_key=None,label_kind='multi_binary',labels=['x','y'])]
+    page=preview.render(data(),figures='',definitions=definitions)
+    assert 'Results as of September 2026' in page
+    assert 'gilardi stance</strong> (Gilardi et al. 2023): stance, one of 3 categories.' in page
+    assert '2 yes-or-no labels (x, y)' in page
+    assert '<h2 id="cite">How to cite</h2>' in page and 'training data' in page
+    assert 'property="og:image" content="https://www.hannohilbig.com/llm-benchmark/figures/fig-recent-mean-f1.png"' in page
+    assert preview.DATA_URL in page
+
 def test_ranked_candidate_not_repeated_outside_ranking_and_update_date_is_current():
     release=dict(manifest=dict(release='test',status='pending',api_completed_at='2026-09-10'),
                  models=[dict(model='qwen3_8_27b_fp8',n=3400,tasks=34,mean_task_f1=.7,
