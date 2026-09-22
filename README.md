@@ -36,9 +36,10 @@ and report both performance and the rate of unusable output.
 
 A second panel runs 31 models, 11 commercial APIs and 20 open-weight
 checkpoints, on the same 33 tasks with 100 frozen items per task. Every model
-codes the same 3,300 texts under the same prompts and scorer. The results,
-per-task scores and downloads are at
-[hannohilbig.com/llm-benchmark](https://www.hannohilbig.com/llm-benchmark/).
+codes the same 3,300 texts under the same prompts and scorer. The results are
+at [hannohilbig.com/llm-benchmark](https://www.hannohilbig.com/llm-benchmark/),
+and the release data are in
+[`output/sidecar/refresh_20260910_release_33/`](output/sidecar/refresh_20260910_release_33).
 
 Claude Opus 5 has the highest mean task F1 at 0.714. The best open-weight models
 are Qwen3.8 Flash-Next at 0.675, which needs two GPUs, and Llama 3.1 70B in FP8

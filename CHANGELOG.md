@@ -12,6 +12,25 @@ Two conventions hold throughout:
   reproduces it exactly.
 - **A change that moves a published number says so, with the number.**
 
+## 2026-09-22 Benchmark page published
+
+- The page is live at <https://www.hannohilbig.com/llm-benchmark/>, linked from
+  the Data section of the homepage and in the sitemap. It reports the 33-task,
+  31-model release; the figures and text come from
+  `code/render_refresh_paper_figures.R` and `code/build_refresh_preview.py`.
+- Figures are redrawn in the CLARA house style, models as rows with 95% task
+  intervals, and a new figure plots mean F1 against cost per 1,000 texts for the
+  API models. The speed figure covers 13 open-weight models in two panels, one
+  per group of runs that share texts and settings on the same GPU model.
+- API-versus-open comparisons now use all 19 open models that run on one GPU,
+  not the six featured ones. On that basis an open model matches or beats the
+  best API model on 14 of 33 tasks, the same figure the README reports.
+- The page carries a release date, a collapsed list of the 33 tasks, a citation,
+  a contamination caveat and links to the code and release data. Long tables,
+  the task selector and the paired-comparison widget are gone.
+- Text edits and cuts were approved item by item in
+  `docs/llm_benchmark_page_text_proposals.md`, which records what was applied.
+
 ## 2026-09-21 September panel published with all 31 models on 33 tasks
 
 - The September panel now covers 11 API models and 20 open-weight checkpoints on

@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-09-21
+Last updated: 2026-09-22
 
 ## Current Snapshot
 
@@ -18,9 +18,13 @@ Last updated: 2026-09-21
 
 - 31 models (11 API, 20 open-weight) on the 33 active tasks, 100 frozen items
   per task, in [`output/sidecar/refresh_20260910_release_33/`](../output/sidecar/refresh_20260910_release_33/).
-- Public page: <https://www.hannohilbig.com/llm-benchmark/>, built with
-  `python3 code/build_refresh_figures.py && python3 code/build_refresh_preview.py`
-  and copied to the homepage repo (`hhilbig.github.io/llm-benchmark/`).
+- Public page: <https://www.hannohilbig.com/llm-benchmark/>, published
+  2026-09-22. Rebuild it with
+  `python3 code/build_refresh_figures.py && python3 code/build_refresh_preview.py`,
+  then copy `index.html`, `styles.css`, `benchmark.js` and the referenced figures
+  to `hhilbig.github.io/llm-benchmark/`, removing the `noindex` tag, the preview
+  notice and the preview sentence in the footer. The download files are built and
+  checked but are not published.
 - Rebuild the release (inputs are local sidecar files, not in git):
 
   ```bash
