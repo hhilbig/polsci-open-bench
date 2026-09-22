@@ -224,25 +224,38 @@ p <- overview(all_ids, "label")
 save_figure(p, "fig-mean-f1", "Overall performance, all models", overview_caption,
             models |> select(model, mean_task_f1, task_ci_low, task_ci_high),
             7.5, 0.22 * length(all_ids) + 0.9, "more")
-# Speed of the open models that ran on identical texts and settings.
-tp <- bind_rows(lapply(manifest$throughput$models, as_tibble)) |>
-  left_join(models |> select(model, short_label), by = "model")
+# Speed of open-weight models, in two groups of runs on the same GPU model. Within a
+# group every model coded the same texts with the same settings; across groups the
+# number of texts processed at once differs, so the panels keep separate time axes.
+groups <- manifest$throughput_groups
+stopifnot(length(groups) == 2, length(unique(vapply(groups, function(g) g$hardware, ""))) == 1)
+panel_label <- function(g) sprintf("%s: %s texts, %s", g$label, format(g$items, big.mark = ","), g$concurrency)
+tp <- bind_rows(lapply(groups, function(g) bind_rows(lapply(g$models, as_tibble)) |>
+    mutate(panel = panel_label(g)))) |>
+  left_join(models |> select(model, short_label, mean_f1 = mean_task_f1), by = "model") |>
+  mutate(panel = factor(panel, levels = vapply(groups, panel_label, "")))
+stopifnot(!anyNA(tp$mean_f1), !anyDuplicated(tp$model))
 p <- ggplot(tp, aes(seconds_per_item, mean_f1)) +
   geom_point(color = CLARA_BLUE, size = 2.4) +
   geom_text_repel(aes(label = short_label), size = 3, color = "grey20", min.segment.length = 0,
                   segment.color = "grey70", box.padding = 0.4, seed = 20260921) +
-  scale_x_log10() +
+  facet_wrap(~panel, ncol = 2, scales = "free_x") +
+  scale_x_log10(labels = function(x) format(x, drop0trailing = TRUE)) +
   labs(x = "Generation seconds per text (log scale)", y = sprintf("Mean F1 across %d tasks", n_tasks)) +
-  theme_clara()
-minutes <- tp$seconds_per_item * 1000 / 60
+  theme_clara() + theme(panel.spacing = unit(1.2, "lines"))
+minutes <- tp |> group_by(panel) |> summarise(lo = min(seconds_per_item) * 1000 / 60,
+                                              hi = max(seconds_per_item) * 1000 / 60, n = n())
 speed_caption <- sprintf(paste(
-  "Each point shows one open-weight model: mean F1 against generation time per text. The %s models",
-  "coded the same %s texts on one RTX PRO 6000 GPU with identical settings, and they need between",
-  "%.1f and %.1f minutes per 1,000 texts. Load and queue times are excluded."),
-  tolower(c("None", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten")[nrow(tp) + 1]),
-  format(manifest$throughput$items, big.mark = ","), min(minutes), max(minutes))
+  "Each point shows one open-weight model: mean F1 against generation time per text, on one %s GPU.",
+  "Within each panel, the models coded the same texts with identical settings. The August runs let",
+  "vLLM process as many texts at once as memory allowed, while the September runs processed at most 16,",
+  "so times are comparable within a panel but not across panels. The %d models in the first panel need",
+  "%.1f to %.1f minutes per 1,000 texts, and the %d in the second %.1f to %.1f. Load and queue times",
+  "are excluded."),
+  sub("^NVIDIA ", "", sub(" Max-Q Workstation Edition", "", groups[[1]]$hardware)),
+  minutes$n[1], minutes$lo[1], minutes$hi[1], minutes$n[2], minutes$lo[2], minutes$hi[2])
 save_figure(p, "fig-speed", "Quality and generation time", speed_caption,
-            tp |> select(model, seconds_per_item, mean_f1), 7, 4.4, "more")
+            tp |> transmute(model, panel = as.character(panel), seconds_per_item, mean_f1), 9, 4.4, "more")
 manifest$featured_figures <- entries$featured
 manifest$figures <- entries$more
 write_json(manifest, file.path(out, "figure-data.json"), auto_unbox = TRUE, pretty = TRUE,

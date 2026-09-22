@@ -19,6 +19,40 @@ from task_registry import load_task_definitions
 
 ROOT=Path(__file__).resolve().parents[1]
 COST_TABLE=ROOT/'output/sidecar/jev_sidecar/cost_performance.csv'
+# The August 2026 model comparison on Hive: the page's scores for these six
+# checkpoints come from these same runs, which also record generation time per task.
+AUGUST_RUNS={
+    'gemma4_31b_it_qat_w4a16':'output/sidecar/hive_model_bakeoff_20260804',
+    'qwen3_30b_a3b_instruct_2507_fp8':'output/sidecar/hive_model_bakeoff_20260804',
+    'qwen3_6_35b_a3b_fp8':'output/sidecar/hive_model_bakeoff_20260804',
+    'qwen3_6_27b_fp8':'output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805',
+    'glm4_7_flash':'output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805',
+    'mistral_small_4_119b_nvfp4':'output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805',
+}
+
+
+def august_speeds(release, tasks):
+    """Generation time per text in the August runs, over the active tasks only.
+
+    Every run must be the checkpoint the release scores, on the same GPU model,
+    over the same texts, or the group is not comparable and the build stops.
+    """
+    provenance={m['model']:m['provenance'] for m in release['models']}
+    rows,gpus,texts=[],set(),set()
+    for model,folder in AUGUST_RUNS.items():
+        meta=json.loads((ROOT/folder/model/'run_metadata.json').read_text())
+        found=set(re.findall(r'"revision": "([0-9a-f]{40})"',json.dumps(meta)))
+        if provenance[model]['revision'] not in found:
+            raise ValueError(f'August run for {model} is not the checkpoint in the release')
+        gpus.update(re.findall(r'"name": "(NVIDIA [^"]+)"',json.dumps(meta)))
+        results={k:v for k,v in meta['task_results'].items() if k in tasks}
+        if set(results)!=set(tasks):
+            raise ValueError(f'August run for {model} does not cover every active task')
+        n=sum(v['rows'] for v in results.values());texts.add(n)
+        rows.append(dict(model=model,seconds_per_item=sum(v['generation_seconds'] for v in results.values())/n))
+    if len(gpus)!=1 or len(texts)!=1:
+        raise ValueError('August runs differ in GPU model or number of texts')
+    return dict(label='August runs',items=texts.pop(),hardware=gpus.pop(),concurrency='no limit on texts at a time',models=rows)
 
 
 def short_label(label):
@@ -66,9 +100,10 @@ def build(release_dir):
         'models':[dict(model=m['model'],label=m['label'],short_label=short_label(m['label']),kind=m['kind'],
                        hardware_tier=m['hardware_tier'],mean_task_f1=m['mean_task_f1'],
                        task_ci_low=m['ci_task_low'],task_ci_high=m['ci_task_high']) for m in models],
-        'throughput':dict(items=key[3],hardware=key[2],
-                          models=[dict(model=m['model'],seconds_per_item=1/m['throughput_items_per_second'],
-                                       mean_f1=m['mean_task_f1']) for m in group]),
+        'throughput_groups':[
+            august_speeds(release,tasks),
+            dict(label='September runs',items=key[3],hardware=key[2],concurrency='16 texts at a time',
+                 models=[dict(model=m['model'],seconds_per_item=1/m['throughput_items_per_second']) for m in group])],
         'figures':[],'featured_figures':[],
     }
     (out/'figure-data.json').write_text(json.dumps(manifest,indent=2,ensure_ascii=False,allow_nan=False)+'\n')

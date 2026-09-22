@@ -118,10 +118,9 @@ def test_null_and_zero_distinct():
 
 def test_controls_and_no_external_scripts():
     page=preview.render(data())
-    for identifier in ['pair-model','pair-reference','pair-result']:
-        assert f'id="{identifier}"' in page
+    for identifier in ['pair-model','pair-reference','task']:
+        assert f'id="{identifier}"' not in page
     assert 'src="https://' not in page
-    assert "document.createElement('td')" in preview.JS
     assert 'taskOptions' not in preview.JS
 
 def test_homepage_proposals_follow_current_data_and_sitemap_markup():
@@ -153,7 +152,7 @@ def test_no_javascript_fallbacks():
     with tempfile.TemporaryDirectory() as folder:
         root=Path(folder);(root/'release.json').write_text(json.dumps(release))
         page=(preview.build(root)/'index.html').read_text()
-        assert 'Paired comparisons require JavaScript.' in page
+        assert 'Paired comparisons' not in page
         assert 'that zero says nothing about the model' in page
         assert 'F1 of 0 by convention' in (root/'preview/llm-benchmark/downloads/methodology.md').read_text()
 
@@ -181,7 +180,7 @@ def test_build_preserves_aggregate_download_and_values():
         assert '0.600' in (output/'index.html').read_text()
         first={p.name:p.read_bytes() for p in (output/'downloads').iterdir()};first['index.html']=(output/'index.html').read_bytes();preview.build(root)
         assert first=={**{p.name:p.read_bytes() for p in (output/'downloads').iterdir()},'index.html':(output/'index.html').read_bytes()}
-        assert 'pair-model' in (output/'index.html').read_text()
+        assert 'pair-model' not in (output/'index.html').read_text()
         assert preview.verify(root)['models']==1
         homepage=root/'preview/homepage-link-proposal.html'
         homepage_original=homepage.read_text()
