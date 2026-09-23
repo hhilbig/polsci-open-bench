@@ -1,7 +1,8 @@
 > **Superseded 2026-09-21.** The published release is the 33-task, 31-model
 > panel in `output/sidecar/refresh_20260910_release_33/` (adds Gemini, drops
 > `halterman_ccc_protest`, uses the corrected metric). See the CHANGELOG entry
-> of that date. The text below describes the earlier 34-task preview.
+> of that date. The text below describes the earlier 34-task preview, and its
+> command sequences are superseded by [`docs/update_benchmark_page.md`](update_benchmark_page.md).
 
 # Matched benchmark release and homepage preview
 

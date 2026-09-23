@@ -208,14 +208,20 @@ complexity_plot <- function(ids) {
     labs(x = "Coding complexity", y = "Mean F1") +
     theme_clara()
 }
+# The gap the caption reports, computed rather than typed: best API minus best
+# one-GPU open model on each task, averaged within the medium and high groups.
+complexity_gap <- scores |> filter(hardware_tier %in% c("api", "single-gpu")) |>
+  group_by(task, complexity, group) |> summarise(f1 = max(headline_f1), .groups = "drop") |>
+  pivot_wider(names_from = group, values_from = f1) |>
+  filter(complexity %in% c("Medium", "High")) |> summarise(gap = mean(API - `Open weights`)) |> pull(gap)
 complexity_caption <- sprintf(paste(
   "The gap between API and open models grows with coding complexity. On the %d low-complexity tasks,",
   "the best open model on each task scores as high as the best API model; on medium- and",
-  "high-complexity tasks it trails by about 0.04 F1. High-complexity tasks allow several labels per",
+  "high-complexity tasks it trails by about %.2f F1. High-complexity tasks allow several labels per",
   "text or use at least eight labels in practice, and medium-complexity tasks use at least three labels",
   "or have a prompt of 300 words or more. The number of labels in practice is the exponential of the",
   "entropy of the gold labels, which counts rare labels less than common ones."),
-  sum(meta$complexity == "Low"))
+  sum(meta$complexity == "Low"), complexity_gap)
 p <- complexity_plot(all_ids)
 save_figure(p, "fig-recent-complexity", "Coding complexity", complexity_caption, NULL, 7.5, 3.4, "featured")
 

@@ -21,11 +21,16 @@ from sklearn.metrics import matthews_corrcoef
 
 from build_frontier_2026 import _score_malformed_as_incorrect
 from task_registry import load_task_definitions
+from page_config import load_page_config
+
+CONFIG = load_page_config(check_paths=False)
 
 SEED = 20260910
-SOURCE = Path('output/sidecar/refresh_20260910')
-OUTPUT = Path('output/sidecar/refresh_20260910_release')
-TAXONOMY = Path('output/sidecar/frontier_2026/twitter_figures/full34_task_categories.csv')
+# Paths come from the page config so the release, the figures and the page
+# cannot drift apart; see experiments/benchmark_page.yaml.
+SOURCE = Path(CONFIG.inputs['api_source'])
+OUTPUT = Path(CONFIG.inputs['release_dir'])
+TAXONOMY = Path(CONFIG.inputs['taxonomy'])
 
 
 def sha(path):

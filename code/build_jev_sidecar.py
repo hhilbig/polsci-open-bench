@@ -32,9 +32,12 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from page_config import load_page_config
+
+CONFIG = load_page_config(check_paths=False)
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
-RELEASE = REPO / "output/sidecar/refresh_20260910_release_33"
+RELEASE = CONFIG.release_dir
 LATENCY = REPO / "output/sidecar/latency_sample/latency_summary.csv"
 LEDGERS = (REPO / "output/sidecar/latency_sample/openai_ledger.json",
            REPO / "output/sidecar/latency_sample/deepseek_ledger.json")
@@ -43,10 +46,10 @@ JEV_RESPONSES = REPO / "output/sidecar/refresh_jev_20260918"
 # frozen items through the same request builder, so they join the panel rather
 # than sitting beside it: the task-demeaned axis is a within-task comparison
 # across models, so every model present changes it.
-GEMINI = REPO / "output/sidecar/refresh_gemini_20260920"
+GEMINI = REPO / Path(CONFIG.inputs["api_manifests"][-1]).parent
 GEMINI_COST_USD = {"gemini-3.8-flash": 1.803113, "gemini-3.1-flash-lite": 0.474220}
 GEMINI_ITEMS = 3400
-OUT = REPO / "output/sidecar/jev_sidecar"
+OUT = CONFIG.resolve("cost_table").parent
 PANEL_ITEMS = 3400   # token and cost totals are run-level, over the full panel
 LATENCY_ITEMS = 99   # the sequential timed sample, used for ledger-based cost
 FOCUS = "jev-1.13.0"

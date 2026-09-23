@@ -18,24 +18,17 @@ Last updated: 2026-09-22
 
 - 31 models (11 API, 20 open-weight) on the 33 active tasks, 100 frozen items
   per task, in [`output/sidecar/refresh_20260910_release_33/`](../output/sidecar/refresh_20260910_release_33/).
-- Public page: <https://www.hannohilbig.com/llm-benchmark/>, published
-  2026-09-22. Rebuild it with
-  `python3 code/build_refresh_figures.py && python3 code/build_refresh_preview.py`,
-  then copy `index.html`, `styles.css`, `benchmark.js` and the referenced figures
-  to `hhilbig.github.io/llm-benchmark/`, removing the `noindex` tag, the preview
-  notice and the preview sentence in the footer. The download files are built and
-  checked but are not published.
-- Rebuild the release (inputs are local sidecar files, not in git):
+- Public page: <https://www.hannohilbig.com/llm-benchmark/>, published 2026-09-22.
+- Rebuild and publish it with one entry point:
 
   ```bash
-  python3 code/refresh_gemini.py manifest
-  python3 code/build_refresh_release.py --active-only \
-    --open-manifest output/sidecar/refresh_20260910_release/assembled_open_inputs.json \
-    --api-manifest output/sidecar/refresh_jev_20260918/api_manifest.json \
-    --api-manifest output/sidecar/refresh_gemini_20260920/api_manifest.json \
-    --output output/sidecar/refresh_20260910_release_33
-  python3 code/build_jev_sidecar.py
+  python3 code/update_benchmark_page.py all     # release, figures, page, checks
+  python3 code/update_benchmark_page.py stage   # copy into the homepage repo
   ```
+
+  Everything that changes between updates is in
+  [`experiments/benchmark_page.yaml`](../experiments/benchmark_page.yaml).
+  The runbook is [`docs/update_benchmark_page.md`](update_benchmark_page.md).
 - The roster is frozen and the refresh configs pin `3c7ad07`; see [`TODO.md`](../TODO.md).
 
 ## Benchmark Scope

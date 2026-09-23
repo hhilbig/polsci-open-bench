@@ -11,43 +11,31 @@ import re
 from copy import deepcopy
 from pathlib import Path
 
+from page_config import load_page_config
+
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_RELEASE = ROOT / 'output/sidecar/refresh_20260910_release_33'
+CONFIG = load_page_config()
+DEFAULT_RELEASE = CONFIG.release_dir
 # Standard-rate API costs with their evidence label, shared with the README.
-COST_TABLE = ROOT / 'output/sidecar/jev_sidecar/cost_performance.csv'
+COST_TABLE = CONFIG.resolve('cost_table')
 # Panel size is read from the release (see set_panel), not assumed: the
 # 34-task panel became 33 when halterman_ccc_protest was held out.
 N_TASKS = 34
 N_ITEMS = 3400
-FEATURED_MODELS = frozenset([
-    'gpt-6-astra','gpt-5.6-sol','gpt-5.6-terra','gpt-5.6-luna',
-    'claude-sonnet-5','claude-opus-5','deepseek-v4-flash','deepseek-v4-pro',
-    'jev-1.13.0','gemini-3.8-flash','gemini-3.1-flash-lite',
-    'qwen3_8_27b_fp8','qwen3_8_flash_next_fp8','gemma4_31b_it_qat_w4a16',
-    'mistral_small_4_119b_nvfp4','qwen3_6_27b_fp8',
-    'llama3_1_70b_instruct_fp8_dynamic_full34','llama3_3_70b_instruct_fp8_dynamic'])
+FEATURED_MODELS = CONFIG.featured_models
+LABELS = CONFIG.labels
+PAGE_URL = CONFIG.site['page_url']
+DATA_URL = CONFIG.site['data_url']
+CODE_URL = CONFIG.site['code_url']
+AUTHOR_URL = CONFIG.site['author_url']
+SHARE_IMAGE = PAGE_URL + CONFIG.site['share_image']
+RUNS = CONFIG.runs
+
 def homepage_link_proposal():
     return ('<li><b><a href="llm-benchmark/">Political Science LLM Benchmark</a></b> '
             f'2026. Matched evaluation of language models on {N_TASKS} political-science text-coding tasks.</li>\n')
-SITEMAP_ENTRY_PROPOSAL = ('<url>\n  <loc>https://www.hannohilbig.com/llm-benchmark/</loc>\n'
+SITEMAP_ENTRY_PROPOSAL = (f'<url>\n  <loc>{PAGE_URL}</loc>\n'
                           '  <priority>0.8</priority>\n</url>\n')
-LABELS={'gpt-6-astra':'GPT-6 Astra','gpt-5.6-sol':'GPT-5.6 Sol','gpt-5.6-terra':'GPT-5.6 Terra','gpt-5.6-luna':'GPT-5.6 Luna','claude-sonnet-5':'Claude Sonnet 5','claude-opus-5':'Claude Opus 5','deepseek-v4-flash':'DeepSeek V4 Flash','deepseek-v4-pro':'DeepSeek V4 Pro','jev-1.13.0':'Jev 1.13','gemini-3.8-flash':'Gemini 3.8 Flash','gemini-3.1-flash-lite':'Gemini 3.1 Flash-Lite'}
-LABELS.update({'gemma4_31b_it_qat_w4a16':'Gemma 4 31B (W4A16)','glm4_7_flash':'GLM-4.7-Flash','llama3_1_70b_instruct_fp8_dynamic_full34':'Llama 3.1 70B (FP8)','mistral_small_4_119b_nvfp4':'Mistral Small 4 (NVFP4)','qwen3_30b_a3b_instruct_2507_fp8':'Qwen3 30B-A3B 2507 (FP8)','qwen3_6_27b_fp8':'Qwen3.6 27B (FP8)','qwen3_6_35b_a3b_fp8':'Qwen3.6 35B-A3B (FP8)'})
-LABELS['qwen3_8_27b_fp8']='Qwen3.8 27B (FP8)'
-LABELS['qwen3_8_flash_next_fp8']='Qwen3.8 Flash-Next (FP8)'
-LABELS.update({
-    'deepseek_r1_distill_qwen_32b_bf16':'DeepSeek-R1 Distill Qwen 32B (BF16)',
-    'gemma3_27b_it_fp8_dynamic':'Gemma 3 27B (dynamic FP8)',
-    'llama3_3_70b_instruct_fp8_dynamic':'Llama 3.3 70B (dynamic FP8)',
-    'mistral_small_3_1_24b_bf16':'Mistral Small 3.1 24B (BF16)',
-    'qwen1_5_32b_chat':'Qwen 1.5 32B Chat',
-    'qwen2_5_32b_instruct_bf16':'Qwen 2.5 32B Instruct (BF16)',
-    'qwen2_5_72b_instruct_fp8_dynamic':'Qwen 2.5 72B Instruct (dynamic FP8)',
-    'qwen3_30b_a3b_bf16':'Qwen3 30B-A3B (BF16)',
-    'qwen3_32b_bf16':'Qwen3 32B (BF16)',
-    'qwen3_5_35b_a3b_fp8':'Qwen3.5 35B-A3B (FP8)',
-    'qwen3_next_80b_a3b_fp8':'Qwen3-Next 80B-A3B (FP8)',
-})
 
 CSS = '''
 :root{--text:#222;--muted:#666;--link:#176ca4;--accent:#3498db;--border:#d8d8d8}
@@ -62,6 +50,11 @@ document.documentElement.classList.add('js');
 const byId=id=>document.getElementById(id);
 document.querySelectorAll('a[href="#methods"]').forEach(a=>a.addEventListener('click',()=>{byId('methods').open=true;}));
 '''
+
+def and_list(values):
+    """['a','b','c'] -> 'a, b and c', as the page's prose writes lists."""
+    values=[str(v) for v in values]
+    return values[0] if len(values)<2 else ' and '.join([', '.join(values[:-1]),values[-1]])
 
 def number_word(n):
     return ['no','one','two','three','four','five','six','seven','eight','nine'][n] if 0<=n<10 else str(n)
@@ -292,7 +285,7 @@ def verify(release_dir):
     if (preview/'downloads/methodology.md').read_text() != methodology(release):
         raise ValueError('Public methodology differs from the validated release')
     if ('<meta name="robots" content="noindex">' not in page or
-            '<link rel="canonical" href="https://www.hannohilbig.com/llm-benchmark/">' not in page):
+            f'<link rel="canonical" href="{PAGE_URL}">' not in page):
         raise ValueError('Preview metadata is missing the local noindex or canonical link')
     if (release_dir/'preview/homepage-link-proposal.html').read_text() != homepage_link_proposal():
         raise ValueError('Homepage link proposal differs from the approved preview path')
@@ -375,7 +368,7 @@ def render(data, downloads=(), figures='', definitions=()):
     pending=''.join(f"<li><strong>{esc(r['model'])}</strong>: {esc(r['status'])}. {esc(r['reason'])}</li>" for r in data['candidates'])
     takeaway=lead_sentences(models)
     payload=json.dumps(data,ensure_ascii=False,allow_nan=False).replace('<',chr(92)+'u003c')
-    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Political Science LLM Benchmark | Hanno Hilbig</title><meta name="author" content="Hanno Hilbig"><meta name="description" content="Matched evaluation of language models on {N_TASKS} political science text-coding tasks."><link rel="icon" href="data:,"><meta name="robots" content="noindex"><link rel="canonical" href="https://www.hannohilbig.com/llm-benchmark/"><meta property="og:type" content="website"><meta property="og:title" content="Political Science LLM Benchmark"><meta property="og:description" content="{len(models)} open-weight and commercial language models compared on {N_TASKS} political science text-coding tasks."><meta property="og:url" content="https://www.hannohilbig.com/llm-benchmark/"><meta property="og:image" content="https://www.hannohilbig.com/llm-benchmark/figures/fig-recent-mean-f1.png"><meta name="twitter:card" content="summary_large_image"><link rel="stylesheet" href="styles.css"></head><body><a class="skip-link" href="#main">Skip to content</a><div class="wrapper"><header><h1>Political Science LLM Benchmark</h1><p class="title"><a href="https://www.hannohilbig.com/">Hanno Hilbig</a>, University of California, Davis<br>Results as of {month_year(data["updated_at"])}</p><nav aria-label="Page sections"><a href="#figures">Figures</a><a href="#hardware">Hardware</a><a href="#methods">Methods</a></nav></header><main id="main" tabindex="-1"><p class="notice">Local preview, not published. Release {esc(data['release_id'])}; status: {esc(data['status'])}. Updated {esc(data['updated_at'])}.</p><p>Below, I compare the performance and cost of {len(models)} language models for text classification, {sum(m['kind']=='open' for m in models)} with open weights and {sum(m['kind']=='API' for m in models)} commercial. I use {N_TASKS} coding tasks from political science papers, replication archives and public datasets, covering relevance, stance, tone, events, claims and topics. For each task, every model codes the same 100 texts, and I compare its labels with those of human coders.</p><p>The main result is that the differences between models are small. {takeaway} Differences of a few hundredths in the mean often reverse on individual tasks, so researchers should check the tasks closest to their own before choosing a model.</p>{figures}{task_list(definitions)}<details class="disclosure" id="excluded"><summary>Not evaluated and excluded models</summary><p>The models below are not ranked. Not evaluated means that I could not run the model, for the reason listed. Excluded means that a run finished but violated the benchmark's rules.</p><p>The open-weight models are a selection rather than a complete list. Whether a model runs depends on its weight files, quantization, software support and GPU memory, not only on its size. A missing model therefore says nothing about its quality.</p><ul>{pending or '<li>No additional candidate status has been recorded.</li>'}</ul></details><h2 id="hardware">Where the models ran</h2><ul><li>API models: called through each provider's API between 10 and 20 September 2026. Requests to OpenAI and Anthropic went through their batch endpoints; the other providers received one request per text.</li><li>Open-weight models: each ran on a single NVIDIA RTX PRO 6000 Blackwell GPU with 96 GB of memory on UC Davis's Hive computing cluster, using vLLM 0.26 at temperature 0. Qwen3.8 Flash-Next needed two of these GPUs and a development version of vLLM.</li><li>Settings: reasoning is disabled where a model allows it and otherwise set to its lowest level. Every model may return at most 256 tokens, except Jev 1.13, which returns a choice among the labels rather than free text.</li><li>Not tested: the API models with extended reasoning, which raises cost and response time, and the largest open-weight models (Kimi K3, GLM-5.3 and MiniMax M3), which do not run on this hardware. The top scores on this page may therefore understate what the strongest configurations of these models reach.</li></ul><details class="disclosure" id="methods"><summary>Methods and limitations</summary><p>Sample. For each task, I draw 100 texts by hashing task and item identifiers with seed 20260910. Every model receives the same texts, gold labels and prompts. I reuse earlier predictions only when their inputs and settings match exactly.</p><p>Scoring. For binary tasks, I use the F1 score for the positive class. For tasks with several binary labels, I average the per-label F1 scores. For single-label categorical tasks, I use macro F1, which gives each class equal weight. A class that appears in neither the gold labels nor the predictions receives an F1 of 0 by convention; that zero says nothing about the model. Unusable answers count as incorrect, and I record infrastructure failures separately.</p><p>Limits. These results describe {N_TASKS} tasks. Most tasks come from published datasets, so some texts or labels may have appeared in the models' training data, which would raise their scores; I cannot rule this out. Researchers should validate candidate models on labeled examples from their own task before using them at scale.</p></details><h2 id="cite">How to cite</h2><p class="citation">Hilbig, Hanno. 2026. Political Science LLM Benchmark. Results as of {month_year(data["updated_at"])}. <a href="https://www.hannohilbig.com/llm-benchmark/">https://www.hannohilbig.com/llm-benchmark/</a>.</p></main><footer><a href="https://github.com/hhilbig/polsci-open-bench">Code and task definitions</a> · <a href="{DATA_URL}">Results data</a>. This is a local preview. Publication requires approval.</footer></div><script id="benchmark-data" type="application/json">{payload}</script><script src="benchmark.js" defer></script></body></html>'''
+    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Political Science LLM Benchmark | Hanno Hilbig</title><meta name="author" content="Hanno Hilbig"><meta name="description" content="Matched evaluation of language models on {N_TASKS} political science text-coding tasks."><link rel="icon" href="data:,"><meta name="robots" content="noindex"><link rel="canonical" href="{PAGE_URL}"><meta property="og:type" content="website"><meta property="og:title" content="Political Science LLM Benchmark"><meta property="og:description" content="{len(models)} open-weight and commercial language models compared on {N_TASKS} political science text-coding tasks."><meta property="og:url" content="{PAGE_URL}"><meta property="og:image" content="{SHARE_IMAGE}"><meta name="twitter:card" content="summary_large_image"><link rel="stylesheet" href="styles.css"></head><body><a class="skip-link" href="#main">Skip to content</a><div class="wrapper"><header><h1>Political Science LLM Benchmark</h1><p class="title"><a href="{AUTHOR_URL}">Hanno Hilbig</a>, University of California, Davis<br>Results as of {month_year(data["updated_at"])}</p><nav aria-label="Page sections"><a href="#figures">Figures</a><a href="#hardware">Hardware</a><a href="#methods">Methods</a></nav></header><main id="main" tabindex="-1"><p class="notice">Local preview, not published. Release {esc(data['release_id'])}; status: {esc(data['status'])}. Updated {esc(data['updated_at'])}.</p><p>Below, I compare the performance and cost of {len(models)} language models for text classification, {sum(m['kind']=='open' for m in models)} with open weights and {sum(m['kind']=='API' for m in models)} commercial. I use {N_TASKS} coding tasks from political science papers, replication archives and public datasets, covering relevance, stance, tone, events, claims and topics. For each task, every model codes the same 100 texts, and I compare its labels with those of human coders.</p><p>The main result is that the differences between models are small. {takeaway} Differences of a few hundredths in the mean often reverse on individual tasks, so researchers should check the tasks closest to their own before choosing a model.</p>{figures}{task_list(definitions)}<details class="disclosure" id="excluded"><summary>Not evaluated and excluded models</summary><p>The models below are not ranked. Not evaluated means that I could not run the model, for the reason listed. Excluded means that a run finished but violated the benchmark's rules.</p><p>The open-weight models are a selection rather than a complete list. Whether a model runs depends on its weight files, quantization, software support and GPU memory, not only on its size. A missing model therefore says nothing about its quality.</p><ul>{pending or '<li>No additional candidate status has been recorded.</li>'}</ul></details><h2 id="hardware">Where the models ran</h2><ul><li>API models: called through each provider's API {RUNS['api_window']}. Requests to {RUNS['batch_providers']} went through their batch endpoints; the other providers received one request per text.</li><li>Open-weight models: each ran on a single {RUNS['gpu']} GPU with {RUNS['gpu_memory']} of memory on {RUNS['cluster']}, using {RUNS['runtime']} at temperature 0. {RUNS['multi_gpu_note']}</li><li>Settings: reasoning is disabled where a model allows it and otherwise set to its lowest level. Every model may return at most {RUNS['max_output_tokens']} tokens, except {RUNS['token_limit_exception']}.</li><li>Not tested: the API models with extended reasoning, which raises cost and response time, and the largest open-weight models ({and_list(RUNS['not_run_open'])}), which do not run on this hardware. The top scores on this page may therefore understate what the strongest configurations of these models reach.</li></ul><details class="disclosure" id="methods"><summary>Methods and limitations</summary><p>Sample. For each task, I draw 100 texts by hashing task and item identifiers with seed 20260910. Every model receives the same texts, gold labels and prompts. I reuse earlier predictions only when their inputs and settings match exactly.</p><p>Scoring. For binary tasks, I use the F1 score for the positive class. For tasks with several binary labels, I average the per-label F1 scores. For single-label categorical tasks, I use macro F1, which gives each class equal weight. A class that appears in neither the gold labels nor the predictions receives an F1 of 0 by convention; that zero says nothing about the model. Unusable answers count as incorrect, and I record infrastructure failures separately.</p><p>Limits. These results describe {N_TASKS} tasks. Most tasks come from published datasets, so some texts or labels may have appeared in the models' training data, which would raise their scores; I cannot rule this out. Researchers should validate candidate models on labeled examples from their own task before using them at scale.</p></details><h2 id="cite">How to cite</h2><p class="citation">Hilbig, Hanno. 2026. Political Science LLM Benchmark. Results as of {month_year(data["updated_at"])}. <a href="{PAGE_URL}">{PAGE_URL}</a>.</p></main><footer><a href="{CODE_URL}">Code and task definitions</a> · <a href="{DATA_URL}">Results data</a>. This is a local preview. Publication requires approval.</footer></div><script id="benchmark-data" type="application/json">{payload}</script><script src="benchmark.js" defer></script></body></html>'''
 
 
 def build(release_dir=DEFAULT_RELEASE):

@@ -1,0 +1,116 @@
+# Everything that changes when the public benchmark page is updated.
+#
+# Build and stage the page with code/update_benchmark_page.py, which reads this
+# file. Each value below appears exactly once in the project: the page, the
+# figures and the release build all take them from here.
+#
+# Runbook: docs/update_benchmark_page.md
+schema_version: 1
+page_id: refresh_20260910
+
+inputs:
+  # The scored release the page reports.
+  release_dir: output/sidecar/refresh_20260910_release_33
+  # The frozen sample the release was scored on.
+  panel: output/sidecar/refresh_20260910/panel.json
+  # Task categories used to group the figures.
+  taxonomy: output/sidecar/frontier_2026/twitter_figures/full34_task_categories.csv
+  # Standard-rate API costs, written by code/build_jev_sidecar.py.
+  cost_table: output/sidecar/jev_sidecar/cost_performance.csv
+  # Where the release build takes its API predictions and manifests from.
+  api_source: output/sidecar/refresh_20260910
+  open_manifest: output/sidecar/refresh_20260910_release/assembled_open_inputs.json
+  api_manifests:
+    - output/sidecar/refresh_jev_20260918/api_manifest.json
+    - output/sidecar/refresh_gemini_20260920/api_manifest.json
+  # Runs that recorded generation time per task, keyed by model. Models sharing a
+  # label ran on the same texts with the same settings and share a figure panel.
+  speed_runs:
+    - label: August runs
+      concurrency: no limit on texts at a time
+      models:
+        gemma4_31b_it_qat_w4a16: output/sidecar/hive_model_bakeoff_20260804
+        qwen3_30b_a3b_instruct_2507_fp8: output/sidecar/hive_model_bakeoff_20260804
+        qwen3_6_35b_a3b_fp8: output/sidecar/hive_model_bakeoff_20260804
+        qwen3_6_27b_fp8: output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805
+        glm4_7_flash: output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805
+        mistral_small_4_119b_nvfp4: output/sidecar/hive_model_bakeoff_extension_cuda130_native_cutlass_20260805
+
+site:
+  page_url: https://www.hannohilbig.com/llm-benchmark/
+  data_url: https://github.com/hhilbig/polsci-open-bench/tree/main/output/sidecar/refresh_20260910_release_33
+  code_url: https://github.com/hhilbig/polsci-open-bench
+  author_url: https://www.hannohilbig.com/
+  # Where `update_benchmark_page.py stage` copies the page.
+  homepage_repo: ~/Documents/GitHub/hhilbig.github.io
+  target_dir: llm-benchmark
+  share_image: figures/fig-recent-mean-f1.png
+
+# Models shown in the figures above the fold. Every other model appears in the
+# all-model figure inside the collapsed section.
+featured_models:
+  - claude-opus-5
+  - claude-sonnet-5
+  - gpt-6-astra
+  - gpt-5.6-sol
+  - gpt-5.6-terra
+  - gpt-5.6-luna
+  - deepseek-v4-flash
+  - deepseek-v4-pro
+  - jev-1.13.0
+  - gemini-3.8-flash
+  - gemini-3.1-flash-lite
+  - qwen3_8_27b_fp8
+  - qwen3_8_flash_next_fp8
+  - qwen3_6_27b_fp8
+  - gemma4_31b_it_qat_w4a16
+  - mistral_small_4_119b_nvfp4
+  - llama3_1_70b_instruct_fp8_dynamic_full34
+  - llama3_3_70b_instruct_fp8_dynamic
+
+# Display names. Every ranked model needs one.
+labels:
+  claude-opus-5: Claude Opus 5
+  claude-sonnet-5: Claude Sonnet 5
+  gpt-6-astra: GPT-6 Astra
+  gpt-5.6-sol: GPT-5.6 Sol
+  gpt-5.6-terra: GPT-5.6 Terra
+  gpt-5.6-luna: GPT-5.6 Luna
+  deepseek-v4-flash: DeepSeek V4 Flash
+  deepseek-v4-pro: DeepSeek V4 Pro
+  jev-1.13.0: Jev 1.13
+  gemini-3.8-flash: Gemini 3.8 Flash
+  gemini-3.1-flash-lite: Gemini 3.1 Flash-Lite
+  deepseek_r1_distill_qwen_32b_bf16: DeepSeek-R1 Distill Qwen 32B (BF16)
+  gemma3_27b_it_fp8_dynamic: Gemma 3 27B (dynamic FP8)
+  gemma4_31b_it_qat_w4a16: Gemma 4 31B (W4A16)
+  glm4_7_flash: GLM-4.7-Flash
+  llama3_1_70b_instruct_fp8_dynamic_full34: Llama 3.1 70B (FP8)
+  llama3_3_70b_instruct_fp8_dynamic: Llama 3.3 70B (dynamic FP8)
+  mistral_small_3_1_24b_bf16: Mistral Small 3.1 24B (BF16)
+  mistral_small_4_119b_nvfp4: Mistral Small 4 (NVFP4)
+  qwen1_5_32b_chat: Qwen 1.5 32B Chat
+  qwen2_5_32b_instruct_bf16: Qwen 2.5 32B Instruct (BF16)
+  qwen2_5_72b_instruct_fp8_dynamic: Qwen 2.5 72B Instruct (dynamic FP8)
+  qwen3_30b_a3b_bf16: Qwen3 30B-A3B (BF16)
+  qwen3_30b_a3b_instruct_2507_fp8: Qwen3 30B-A3B 2507 (FP8)
+  qwen3_32b_bf16: Qwen3 32B (BF16)
+  qwen3_5_35b_a3b_fp8: Qwen3.5 35B-A3B (FP8)
+  qwen3_6_27b_fp8: Qwen3.6 27B (FP8)
+  qwen3_6_35b_a3b_fp8: Qwen3.6 35B-A3B (FP8)
+  qwen3_8_27b_fp8: Qwen3.8 27B (FP8)
+  qwen3_8_flash_next_fp8: Qwen3.8 Flash-Next (FP8)
+  qwen3_next_80b_a3b_fp8: Qwen3-Next 80B-A3B (FP8)
+
+# Facts the page states in "Where the models ran". Update them with the runs.
+runs:
+  api_window: between 10 and 20 September 2026
+  batch_providers: OpenAI and Anthropic
+  gpu: NVIDIA RTX PRO 6000 Blackwell
+  gpu_memory: 96 GB
+  cluster: UC Davis's Hive computing cluster
+  runtime: vLLM 0.26
+  multi_gpu_note: Qwen3.8 Flash-Next needed two of these GPUs and a development version of vLLM.
+  max_output_tokens: 256
+  token_limit_exception: Jev 1.13, which returns a choice among the labels rather than free text
+  not_run_open: [Kimi K3, GLM-5.3, MiniMax M3]
