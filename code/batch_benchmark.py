@@ -54,6 +54,7 @@ from benchmark import (  # noqa: E402
     OLLAMA_URL,
     OUT,
     _coerce_binary_label,
+    score_pred,
     augment_system_prompt_for_json_object,
     extra_body_for_openai_model,
     make_anthropic_client,
@@ -90,6 +91,10 @@ def build_user_content(task_def, batch, wrap_results_object=False):
     elif kind == "multi_binary":
         fields = ", ".join([f'"{l}": 0_or_1' for l in labels])
         fmt = f"{{{fields}}}"
+    elif kind == "score":
+        key = task_def["label_key"]
+        lo, hi = task_def["score_range"]
+        fmt = f'{{"{key}": <number from {lo:g} to {hi:g}, or "NA">}}'
     else:
         fmt = "{}"
 
@@ -177,6 +182,8 @@ def _pred_from_obj(obj, task_def):
             if v in task_def["labels"]:
                 return {key: v}, None
             return {key: None}, f"invalid_label: {v!r}"
+        if kind == "score":
+            return score_pred(obj.get(task_def["label_key"]), task_def)
     except ValueError as exc:
         return _empty_pred(task_def), f"invalid_binary_label: {exc}"
     return _empty_pred(task_def), "unknown_label_kind"

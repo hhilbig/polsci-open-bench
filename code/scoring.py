@@ -18,7 +18,8 @@ so published v1 numbers stay reproducible.
 from __future__ import annotations
 
 import numpy as np
-from sklearn.metrics import f1_score
+from scipy.stats import pearsonr, spearmanr
+from sklearn.metrics import cohen_kappa_score, f1_score
 
 
 def _gt_pred_columns(task_def):
@@ -45,6 +46,8 @@ def scored_labels(task_def, frame, support_only=True):
     kind = task_def["label_kind"]
     if kind == "binary":
         return labels
+    if kind == "score":
+        return []
     if kind == "categorical":
         gt_col, _ = _gt_pred_columns(task_def)
         if gt_col not in frame:
@@ -81,6 +84,8 @@ def per_class_f1(task_def, frame, support_only=True, label_subset=None):
     )
 
     out = {}
+    if kind == "score":
+        return out
     if kind == "multi_binary":
         for lbl in labels:
             if lbl not in keep:
@@ -152,6 +157,50 @@ def headline_f1(task_def, frame, support_only=True, label_subset=None):
         if v is not None and not np.isnan(v)
     ]
     return float(np.mean(vals)) if vals else np.nan
+
+
+def score_metrics(task_def, frame):
+    """Agreement with a numeric gold value, for `label_kind: score` tasks.
+
+    Pearson and Spearman correlation and mean absolute error over rows where both
+    the gold value and the prediction are present. These replace F1, which is
+    undefined for a continuous target."""
+    gt_col, pred_col = _gt_pred_columns(task_def)
+    sub = frame[[gt_col, pred_col]].dropna().astype(float)
+    out = {"n_scored": len(sub), "pearson_r": np.nan, "spearman_rho": np.nan, "mae": np.nan}
+    if len(sub) == 0:
+        return out
+    out["mae"] = float((sub[pred_col] - sub[gt_col]).abs().mean())
+    if len(sub) >= 3 and sub[pred_col].nunique() > 1 and sub[gt_col].nunique() > 1:
+        out["pearson_r"] = float(pearsonr(sub[gt_col], sub[pred_col])[0])
+        out["spearman_rho"] = float(spearmanr(sub[gt_col], sub[pred_col])[0])
+    return out
+
+
+def ordinal_metrics(task_def, frame):
+    """Ordinal agreement for categorical tasks flagged `ordinal: true`.
+
+    Labels are mapped to their position in the manifest list, which is the scale
+    order. Quadratic weighted kappa and Spearman correlation give partial credit
+    for near misses, which macro F1 does not; mean absolute error is in scale
+    steps."""
+    gt_col, pred_col = _gt_pred_columns(task_def)
+    position = {str(lbl): i for i, lbl in enumerate(task_def["labels"])}
+    sub = frame[[gt_col, pred_col]].dropna()
+    gt = sub[gt_col].astype(str).map(position)
+    pred = sub[pred_col].astype(str).map(position)
+    ok = gt.notna() & pred.notna()
+    gt, pred = gt[ok].astype(int), pred[ok].astype(int)
+    out = {"weighted_kappa": np.nan, "spearman_rho": np.nan, "mae_steps": np.nan}
+    if len(gt) == 0:
+        return out
+    out["mae_steps"] = float((pred - gt).abs().mean())
+    if gt.nunique() > 1 or pred.nunique() > 1:
+        out["weighted_kappa"] = float(cohen_kappa_score(
+            gt, pred, weights="quadratic", labels=list(range(len(position)))))
+    if len(gt) >= 3 and gt.nunique() > 1 and pred.nunique() > 1:
+        out["spearman_rho"] = float(spearmanr(gt, pred)[0])
+    return out
 
 
 def macro_f1_arrays(gt_arr, pred_arr, labels):

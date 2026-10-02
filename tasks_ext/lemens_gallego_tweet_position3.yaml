@@ -1,0 +1,24 @@
+order: 38
+name: lemens_gallego_tweet_position3
+# Lives in tasks_ext/ until it has model runs. Three-bin stopgap for the 0-100
+# Le Mens and Gallego (2025) tweet ratings; built by
+# code/build_lemens_gallego_tweet_position_task.py.
+family: Ideological position
+source: Le Mens and Gallego 2025
+data_file: ../data/lemens_gallego_tweet_position.csv
+prompt_file: ../prompts/lemens_gallego_tweet_position3.txt
+label_kind: categorical
+ordinal: true
+label_key: position
+labels:
+  - left
+  - center
+  - right
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Tweet: {text}
+ground_truth:
+  column: gt_position3

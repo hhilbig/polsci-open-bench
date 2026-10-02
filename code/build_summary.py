@@ -19,7 +19,8 @@ import pandas as pd
 from sklearn.metrics import f1_score, matthews_corrcoef
 
 from model_registry import add_model_loading_args, load_model_definitions_from_args
-from scoring import headline_f1, macro_f1_arrays, per_class_f1, scored_labels
+from scoring import (headline_f1, macro_f1_arrays, ordinal_metrics, per_class_f1,
+                     score_metrics, scored_labels)
 from task_registry import add_task_loading_args, load_task_definitions_from_args
 
 BOOTSTRAP_ITERS = 1000
@@ -48,6 +49,16 @@ def _metrics_for_group(task_def, g, support_only=True, label_subset=None):
         "mean_latency_s": g.latency_s.mean(),
         "median_latency_s": g.latency_s.median(),
     }
+
+    if kind == "score":
+        # No F1 for a numeric target; headline_f1 stays NaN so score tasks never
+        # enter F1 averages, and the agreement measures are reported instead.
+        row["headline_f1"] = np.nan
+        row["not_applicable_rate"] = (
+            g.parse_error.astype(str).eq("not_applicable").mean() if len(g) else np.nan
+        )
+        row.update(score_metrics(task_def, clean))
+        return row
 
     f1_by_label = per_class_f1(
         task_def, clean, support_only=support_only, label_subset=label_subset
@@ -88,6 +99,8 @@ def _metrics_for_group(task_def, g, support_only=True, label_subset=None):
             )
         except ValueError:
             row["mcc"] = np.nan
+        if task_def.get("ordinal"):
+            row.update(ordinal_metrics(task_def, clean))
         return row
 
     raise ValueError(f"Unknown label_kind: {kind}")
@@ -113,6 +126,8 @@ def _bootstrap_cis(preds, task_defs, support_only=True, label_subsets=None):
             continue
         td = task_defs[task]
         kind = td["label_kind"]
+        if kind == "score":
+            continue  # no F1 to bootstrap
         if label_subsets is not None and task in label_subsets:
             labels = list(label_subsets[task])
         else:

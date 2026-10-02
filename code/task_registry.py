@@ -132,7 +132,7 @@ def ensure_unique_item_ids(items):
     return out
 
 
-def _build_json_schema(label_kind, label_key, labels):
+def _build_json_schema(label_kind, label_key, labels, score_range=None):
     if label_kind == "binary":
         return {
             "type": "object",
@@ -144,6 +144,17 @@ def _build_json_schema(label_kind, label_key, labels):
         return {
             "type": "object",
             "properties": {label_key: {"type": "string", "enum": labels}},
+            "required": [label_key],
+            "additionalProperties": False,
+        }
+    if label_kind == "score":
+        lo, hi = score_range
+        return {
+            "type": "object",
+            "properties": {label_key: {"anyOf": [
+                {"type": "number", "minimum": lo, "maximum": hi},
+                {"type": "string", "enum": ["NA"]},
+            ]}},
             "required": [label_key],
             "additionalProperties": False,
         }
@@ -192,6 +203,8 @@ def _build_gt(row, label_kind, label_key, labels, gt_spec):
         return {label_key: int(row[gt_spec["column"]])}
     if label_kind == "categorical":
         return {label_key: str(row[gt_spec["column"]])}
+    if label_kind == "score":
+        return {label_key: float(row[gt_spec["column"]])}
     columns = gt_spec.get("columns", {})
     if not columns:
         columns = {label: f"gt_{label}" for label in labels}
@@ -328,8 +341,28 @@ def load_task_definition(manifest_path: Path):
     elif label_kind == "multi_binary":
         if not labels:
             raise ValueError(f"{manifest_path} multi_binary task needs labels")
+    elif label_kind == "score":
+        # A numeric answer in a fixed range, scored by correlation and error
+        # with a numeric gold value rather than by F1.
+        if not label_key:
+            raise ValueError(f"{manifest_path} score task missing label_key")
+        labels = [label_key]
     else:
         raise ValueError(f"{manifest_path} unsupported label_kind: {label_kind}")
+
+    score_range = None
+    if label_kind == "score":
+        score_range = spec.get("score_range")
+        if not (isinstance(score_range, list) and len(score_range) == 2
+                and float(score_range[0]) < float(score_range[1])):
+            raise ValueError(f"{manifest_path} score task needs score_range: [low, high]")
+        score_range = [float(score_range[0]), float(score_range[1])]
+
+    # `ordinal: true` marks a categorical task whose labels are listed in scale
+    # order, so summaries can add ordinal agreement next to macro F1.
+    ordinal = bool(spec.get("ordinal", False))
+    if ordinal and label_kind != "categorical":
+        raise ValueError(f"{manifest_path}: ordinal is only supported for categorical tasks")
 
     data_path = _manifest_default_path(manifest_path, spec.get("data_file", ""), "data.csv")
     prompt_path = _manifest_default_path(manifest_path, spec.get("prompt_file", ""), "prompt.txt")
@@ -347,7 +380,9 @@ def load_task_definition(manifest_path: Path):
         "label_kind": label_kind,
         "labels": labels,
         "label_key": label_key,
-        "json_schema": _build_json_schema(label_kind, label_key, labels),
+        "score_range": score_range,
+        "ordinal": ordinal,
+        "json_schema": _build_json_schema(label_kind, label_key, labels, score_range),
         "sampling": sampling,
         "loader": _make_loader(
             data_path=data_path,

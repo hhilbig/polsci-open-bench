@@ -21,7 +21,7 @@ If you use `--task-dir`, the directory should contain at least:
 
 Required fields:
 
-- `label_kind`: `binary`, `categorical`, or `multi_binary`
+- `label_kind`: `binary`, `categorical`, `multi_binary`, or `score` (a number in a fixed range, scored by Pearson and Spearman correlation and mean absolute error instead of F1)
 - `text.template`: Python-style format string using CSV column names such as `{text}` or `{case}`
 - `ground_truth`: label column definition
 
@@ -33,7 +33,9 @@ Common optional fields:
 - `data_file`: relative or absolute path to the task CSV
 - `prompt_file`: relative or absolute path to the prompt text file
 - `labels`: required for `categorical` and `multi_binary`
-- `label_key`: required for `binary` and `categorical`
+- `label_key`: required for `binary`, `categorical`, and `score`
+- `score_range`: `[low, high]`, required for `score`; a model answer of "NA" is counted as not applicable and left out of scoring
+- `ordinal: true`: for `categorical` tasks whose `labels` are listed in scale order; summaries then add quadratic weighted kappa, Spearman correlation, and mean absolute error in scale steps next to macro F1
 - `id.kind`: `column` or `generated`
 - `id.column`: source id column when `id.kind: column`
 - `id.prefix`: prefix such as `item` or `semeval` when `id.kind: generated`

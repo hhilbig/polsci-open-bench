@@ -7,6 +7,7 @@ source: Benoit et al. 2016
 data_file: ../data/benoit_manifesto_social_position.csv
 prompt_file: ../prompts/benoit_manifesto_social_position.txt
 label_kind: categorical
+ordinal: true
 label_key: social_position
 labels:
   - very liberal

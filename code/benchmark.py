@@ -111,6 +111,45 @@ def _coerce_binary_label(value):
     raise ValueError(f"not a binary label: {value!r}")
 
 
+NOT_APPLICABLE = {"na", "n/a", "not applicable", "none", "null", ""}
+
+
+def _coerce_score(value, score_range):
+    """Return a float inside score_range, or None for an explicit "not applicable".
+
+    Raises ValueError for anything else, including numbers outside the range."""
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        raise ValueError(f"not a score: {value!r}")
+    if isinstance(value, str):
+        normalized = value.strip().strip(" \"'.,!").lower()
+        if normalized in NOT_APPLICABLE:
+            return None
+        value = normalized
+    try:
+        score = float(value)
+    except (TypeError, ValueError):
+        raise ValueError(f"not a score: {value!r}")
+    lo, hi = score_range
+    if not (lo <= score <= hi) or score != score:
+        raise ValueError(f"score out of range: {value!r}")
+    return score
+
+
+def score_pred(value, task):
+    """(pred_dict, err) for a score task; "not applicable" is recorded as an error
+    so it is excluded from scoring and counted, as in the source paper."""
+    k = task["label_key"]
+    try:
+        score = _coerce_score(value, task["score_range"])
+    except ValueError as exc:
+        return {k: None}, f"invalid_score: {exc}"
+    if score is None:
+        return {k: None}, "not_applicable"
+    return {k: score}, None
+
+
 def _normalize_json_prediction(obj):
     if isinstance(obj, list) and len(obj) == 1 and isinstance(obj[0], dict):
         return obj[0]
@@ -126,6 +165,13 @@ def parse_content(content: str, task: dict):
         obj = _normalize_json_prediction(obj)
         if kind == "multi_binary":
             return {k: _coerce_binary_label(obj.get(k, 0)) for k in task["labels"]}, None
+        elif kind == "score":
+            k = task["label_key"]
+            value = obj.get(k) if isinstance(obj, dict) else obj
+            pred, err = score_pred(value, task)
+            if err is None or err == "not_applicable":
+                return pred, err
+            # fall through to the bare-value fallback
         elif kind == "binary":
             k = task["label_key"]
             if isinstance(obj, dict):
@@ -161,6 +207,12 @@ def parse_content(content: str, task: dict):
 
     if kind == "multi_binary":
         return {k: None for k in task["labels"]}, f"parse_fail: {content[:80]!r}"
+
+    if kind == "score":
+        pred, err = score_pred(extract_json(content), task)
+        if err is None or err == "not_applicable":
+            return pred, err
+        return pred, f"parse_fail: {content[:80]!r}"
 
     k = task["label_key"]
     return {k: None}, f"parse_fail: {content[:80]!r}"
@@ -289,6 +341,9 @@ def example_payload_for_task(task):
         return {task["label_key"]: 0}
     if kind == "categorical":
         return {task["label_key"]: task["labels"][0]}
+    if kind == "score":
+        lo, hi = task["score_range"]
+        return {task["label_key"]: int((lo + hi) / 2)}
     return {label: 0 for label in task["labels"]}
 
 

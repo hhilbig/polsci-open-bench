@@ -24,10 +24,15 @@
   `code/build_benoit_manifesto_position_tasks.py` from Benoit et al. (2016).
   Gold label is the most common five-point code among the expert coders who
   placed the sentence in that domain; ties are dropped (13% and 17% of
-  domain sentences). Macro F1 ignores scale distance, so an ordinal metric
-  (weighted kappa or rank correlation) should be added before reporting.
-  Next candidate: Le Mens and Gallego (2025) congressional tweets, 0-100 crowd
-  ratings, text public in doi:10.7910/DVN/YFM0BW. Ideological Books Corpus
+  domain sentences). Macro F1 ignores scale distance; summaries now add
+  weighted kappa and rank correlation for tasks flagged `ordinal: true`.
+  Le Mens and Gallego (2025) tweets added 2026-10-02 in two forms:
+  `lemens_gallego_tweet_position` (new `score` task type, 0-100, scored by
+  correlation and MAE with the mean of about 16 human ratings) and
+  `lemens_gallego_tweet_position3` (stopgap thirds of the slider, categorical).
+  899 of 900 tweets kept; one had no non-NA rating. All three ordered
+  categorical tasks carry `ordinal: true`. The Anthropic and OpenAI batch
+  scripts do not yet support `score` tasks. Ideological Books Corpus
   requested from Mohit Iyyer by email on 2026-10-01; no reply yet.
 
 - **`yan_bernhard_offensive` stays an open-weight extension (decided 2026-09-20).**

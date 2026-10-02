@@ -1,0 +1,8 @@
+You will be provided with the text of a tweet published by a member of the US Congress. Where does this text stand on the "left" to "right" wing scale?
+
+Classify the tweet as:
+- "left" if it stands on the left of the scale
+- "center" if it stands near the middle of the scale, or does not take a clear left or right position
+- "right" if it stands on the right of the scale
+
+Return JSON only, with a single field `position` whose value is one of the strings "left", "center", or "right".

@@ -48,6 +48,7 @@ import pandas as pd
 import yaml
 
 from benchmark import parse_content
+from scoring import ordinal_metrics, score_metrics
 from panel_manifest import (
     PanelSelection,
     assert_panel_checkout,
@@ -167,6 +168,16 @@ def _task_headline_metrics(
             else float("nan")
         )
         result["headline_f1"] = result["avg_f1"]
+        if task.get("ordinal"):
+            result.update(ordinal_metrics(task, group))
+    elif kind == "score":
+        # A numeric answer cannot be made "explicitly wrong", so malformed and
+        # not-applicable rows are excluded and their rates reported instead.
+        result["headline_f1"] = float("nan")
+        result["not_applicable_rate"] = float(
+            group["parse_error"].astype(str).eq("not_applicable").mean()
+        )
+        result.update(score_metrics(task, group.loc[~malformed]))
     else:
         raise BakeoffError(f"{task['name']}: unknown label kind {kind}")
     return result
@@ -224,6 +235,8 @@ def task_metrics_frame(
         elif kind == "categorical":
             key = str(task["label_key"])
             group.loc[malformed, f"pred_{key}"] = "__MALFORMED_INCORRECT__"
+        elif kind == "score":
+            pass  # scored on parsed rows only; see _task_headline_metrics
         else:
             raise BakeoffError(f"{task['name']}: unknown label kind {kind}")
         metrics = _task_headline_metrics(task, group, malformed)
