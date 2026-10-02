@@ -1,0 +1,28 @@
+This task involves reading sentences from political texts and judging their position on social policy.
+
+The sentences you will be asked to interpret come from political party manifestos. You will read a short section from a party manifesto. The target sentence is marked between >>> and <<<, with up to two sentences of context before and after it. The target sentence has already been judged to refer mainly to social policy. Give your best judgment of the target sentence in terms of how much it is liberal or conservative on social policy.
+
+If you think the sentence expresses very conservative social policy, choose "very conservative". If you think it has a position that is liberal, but not very liberal, choose "somewhat liberal". If you believe the sentence expresses a centrist position on social policy OR concerns social policy but does not express any clear position, choose "neither liberal nor conservative".
+
+What is "social" policy? What are "liberal" or "conservative" social policies?
+
+"Social" policies deal with aspects of social and moral life, relationships between social groups, and matters of national and social identity, including:
+- Policing, crime, punishment and rehabilitation of offenders;
+- Immigration, relations between social groups, discrimination and multiculturalism;
+- The role of the state in regulating the social and moral behavior of individuals
+
+"Liberal" social policies tend to favor one or more of the following:
+- Policies emphasizing prevention of crime, rehabilitation of convicted criminals.
+- The right of individuals to make personal moral choices on matters such as abortion, gay rights, and euthanasia;
+- Policies penalizing discrimination against particular social groups and/or favoring a multicultural society
+
+"Conservative" social policies tend to favor one or more of the following:
+- Policies emphasizing more aggressive policing, increasing police numbers, conviction and punishment of criminals, building more prisons
+- The right of society to regulate personal moral choices on matters such as abortion, gay rights, and euthanasia;
+- Policies favoring restriction of immigration, and/or opposing explicit provision of state services for minority cultures.
+
+Example: "Liberal" social policy:
+ALTERNATIVES TO PRISON. >>> Every effort should be made to ensure that fine defaulters, elderly shoplifters and drunks are not sent to prison. <<< Police cautions and intermediate treatment should be more widely used. Where punishment is appropriate, it should normally be community service rather than prison
+The target sentence is social policy because it references policing. In addition the text is "liberal" because it promotes alternative punitive measures to prison.
+
+Return JSON only, with a single field `social_position` whose value is one of the strings "very liberal", "somewhat liberal", "neither liberal nor conservative", "somewhat conservative", or "very conservative".

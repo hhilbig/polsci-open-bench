@@ -18,6 +18,18 @@
 
 ## Decisions (recorded 2026-09-19, updated 2026-09-20)
 
+- **Two ideological-position tasks built, not yet run (2026-10-01).**
+  `benoit_manifesto_economic_position` (4,351 sentences) and
+  `benoit_manifesto_social_position` (1,331) sit in `tasks_ext/`, built by
+  `code/build_benoit_manifesto_position_tasks.py` from Benoit et al. (2016).
+  Gold label is the most common five-point code among the expert coders who
+  placed the sentence in that domain; ties are dropped (13% and 17% of
+  domain sentences). Macro F1 ignores scale distance, so an ordinal metric
+  (weighted kappa or rank correlation) should be added before reporting.
+  Next candidate: Le Mens and Gallego (2025) congressional tweets, 0-100 crowd
+  ratings, text public in doi:10.7910/DVN/YFM0BW. Ideological Books Corpus
+  requested from Mohit Iyyer by email on 2026-10-01; no reply yet.
+
 - **`yan_bernhard_offensive` stays an open-weight extension (decided 2026-09-20).**
   All four Hive checkpoints completed; predictions are on Hive under
   `polsci-taskext-20260918/output/sidecar/task_ext_20260918/`. No API runs, so it

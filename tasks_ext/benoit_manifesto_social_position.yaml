@@ -1,0 +1,25 @@
+order: 37
+name: benoit_manifesto_social_position
+# Lives in tasks_ext/ until it has model runs; adding it to tasks/ would break the
+# panels that pin `expected_tasks: 34`. Built by code/build_benoit_manifesto_position_tasks.py.
+family: Ideological position
+source: Benoit et al. 2016
+data_file: ../data/benoit_manifesto_social_position.csv
+prompt_file: ../prompts/benoit_manifesto_social_position.txt
+label_kind: categorical
+label_key: social_position
+labels:
+  - very liberal
+  - somewhat liberal
+  - neither liberal nor conservative
+  - somewhat conservative
+  - very conservative
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Manifesto section:
+    {context_before} >>> {text} <<< {context_after}
+ground_truth:
+  column: gt_position

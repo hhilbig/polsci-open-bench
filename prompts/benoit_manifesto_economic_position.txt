@@ -1,0 +1,35 @@
+This task involves reading sentences from political texts and judging their position on economic policy.
+
+The sentences you will be asked to interpret come from political party manifestos. You will read a short section from a party manifesto. The target sentence is marked between >>> and <<<, with up to two sentences of context before and after it. The target sentence has already been judged to refer mainly to economic policy. Give your best judgment of the target sentence in terms of how much it is left or right wing on economic policy.
+
+If you think the sentence expresses very right wing economic policy, choose "very right". If you think it has a position that is left-wing, but not very left wing, choose "somewhat left". If you believe the sentence expresses a centrist position on economic policy OR concerns economic policy but does not express any clear position, choose "neither left nor right".
+
+What is "economic" policy? What are "left" or "right" economic policies?
+
+"Economic" policies deal with all aspects of the economy, including:
+- Taxation
+- Government spending
+- Services provided by the government or other public bodies
+- Pensions, unemployment and welfare benefits, and other state benefits
+- Property, investment and share ownership, public or private
+- Interest rates and exchange rates
+- Regulation of economic activity, public or private
+- Relations between employers, workers and trade unions
+
+"Left" economic policies tend to favor one or more of the following:
+- High levels of services provided by the government and state benefits, even if this implies high levels of taxation;
+- Public investment. Public ownership or control of sections of business and industry;
+- Public regulation of private business and economic activity;
+- Support for workers/trade unions relative to employers
+
+"Right" economic policies tend to favor one or more of the following:
+- Low levels of taxation, even if this implies low levels of services provided by the government and state benefits;
+- Private investment. Minimal public ownership or control of business and industry;
+- Minimal public regulation of private business and economic activity;
+- Support for employers relative to trade unions/workers
+
+Example: "Right" economic policy:
+With a Conservative Government, all that has been changing. >>> We were determined to make share-ownership available to the whole nation. <<< Just as with cars, television sets, washing machines and foreign holidays, it would no longer be a privilege of the few
+The target sentence is economic because it references ownership. In addition, the text is "right" because it is promoting private ownership.
+
+Return JSON only, with a single field `economic_position` whose value is one of the strings "very left", "somewhat left", "neither left nor right", "somewhat right", or "very right".
