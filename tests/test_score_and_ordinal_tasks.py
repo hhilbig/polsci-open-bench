@@ -94,6 +94,16 @@ class ScoreMetricsTest(unittest.TestCase):
         self.assertEqual(scoring.scored_labels(SCORE_TASK, self.frame([1] * 5)), [])
         self.assertTrue(np.isnan(scoring.headline_f1(SCORE_TASK, self.frame([1] * 5))))
 
+    def test_not_applicable_scored_at_midpoint(self):
+        g = self.frame([10, None, 50, 70, None])
+        g["parse_error"] = ["not_applicable", "not_applicable", None, None, "malformed"]
+        g.loc[0, "pred_score"] = None
+        m = scoring.score_metrics(SCORE_TASK, g[g.parse_error.ne("malformed")])
+        # Rows 0 and 1 become 50; the malformed row is dropped.
+        self.assertEqual(m["n_scored"], 4)
+        self.assertAlmostEqual(m["mae"], (40 + 20 + 0 + 0) / 4)
+        self.assertAlmostEqual(m["mae_answered"], 0.0)
+
     def test_summary_row(self):
         g = self.frame([12, 28, None, 75, 85])
         g["parse_error"] = [None, None, "not_applicable", None, None]
@@ -101,8 +111,9 @@ class ScoreMetricsTest(unittest.TestCase):
         row = build_summary._metrics_for_group(SCORE_TASK, g)
         self.assertTrue(np.isnan(row["headline_f1"]))
         self.assertEqual(row["not_applicable_rate"], 0.2)
-        self.assertEqual(row["n_scored"], 4)
-        self.assertGreater(row["pearson_r"], 0.99)
+        self.assertEqual(row["n_scored"], 5)
+        self.assertAlmostEqual(row["mae"], (2 + 2 + 0 + 5 + 5) / 5)
+        self.assertGreater(row["pearson_r_answered"], 0.99)
 
 
 class OrdinalMetricsTest(unittest.TestCase):

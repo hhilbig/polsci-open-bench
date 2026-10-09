@@ -193,18 +193,33 @@ def headline_f1(task_def, frame, support_only=True, label_subset=None):
 def score_metrics(task_def, frame):
     """Agreement with a numeric gold value, for `label_kind: score` tasks.
 
-    Pearson and Spearman correlation and mean absolute error over rows where both
-    the gold value and the prediction are present. These replace F1, which is
-    undefined for a continuous target."""
+    Pearson and Spearman correlation and mean absolute error with the gold value.
+    These replace F1, which is undefined for a continuous target.
+
+    A "not applicable" answer (`parse_error == "not_applicable"`, which the prompt
+    allows for text with no political content) is scored as the midpoint of
+    `score_range`, so a model gains nothing by abstaining on hard, near-centre
+    items. Pass the not-applicable rows in; drop only genuinely malformed rows.
+    `pearson_r_answered`, `spearman_rho_answered` and `mae_answered` repeat the
+    measures over the numerically answered rows only, for reference."""
     gt_col, pred_col = _gt_pred_columns(task_def)
-    sub = frame[[gt_col, pred_col]].dropna().astype(float)
-    out = {"n_scored": len(sub), "pearson_r": np.nan, "spearman_rho": np.nan, "mae": np.nan}
-    if len(sub) == 0:
-        return out
-    out["mae"] = float((sub[pred_col] - sub[gt_col]).abs().mean())
-    if len(sub) >= 3 and sub[pred_col].nunique() > 1 and sub[gt_col].nunique() > 1:
-        out["pearson_r"] = _pearson(sub[gt_col], sub[pred_col])
-        out["spearman_rho"] = _spearman(sub[gt_col], sub[pred_col])
+    lo, hi = task_def["score_range"]
+    sub = frame[[gt_col, pred_col]].copy()
+    if "parse_error" in frame.columns:
+        not_applicable = frame["parse_error"].astype(str).eq("not_applicable")
+        sub.loc[not_applicable, pred_col] = (float(lo) + float(hi)) / 2
+    answered = frame[[gt_col, pred_col]].dropna().astype(float)
+    sub = sub.dropna().astype(float)
+    out = {"n_scored": len(sub)}
+    for suffix, rows in (("", sub), ("_answered", answered)):
+        out.update({f"pearson_r{suffix}": np.nan, f"spearman_rho{suffix}": np.nan,
+                    f"mae{suffix}": np.nan})
+        if len(rows) == 0:
+            continue
+        out[f"mae{suffix}"] = float((rows[pred_col] - rows[gt_col]).abs().mean())
+        if len(rows) >= 3 and rows[pred_col].nunique() > 1 and rows[gt_col].nunique() > 1:
+            out[f"pearson_r{suffix}"] = _pearson(rows[gt_col], rows[pred_col])
+            out[f"spearman_rho{suffix}"] = _spearman(rows[gt_col], rows[pred_col])
     return out
 
 

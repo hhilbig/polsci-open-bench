@@ -57,7 +57,9 @@ def _metrics_for_group(task_def, g, support_only=True, label_subset=None):
         row["not_applicable_rate"] = (
             g.parse_error.astype(str).eq("not_applicable").mean() if len(g) else np.nan
         )
-        row.update(score_metrics(task_def, clean))
+        # Not-applicable answers stay in: score_metrics scores them at the midpoint.
+        scorable = g[g.parse_error.isna() | g.parse_error.astype(str).eq("not_applicable")]
+        row.update(score_metrics(task_def, scorable))
         return row
 
     f1_by_label = per_class_f1(

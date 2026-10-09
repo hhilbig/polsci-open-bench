@@ -171,13 +171,13 @@ def _task_headline_metrics(
         if task.get("ordinal"):
             result.update(ordinal_metrics(task, group))
     elif kind == "score":
-        # A numeric answer cannot be made "explicitly wrong", so malformed and
-        # not-applicable rows are excluded and their rates reported instead.
+        # A numeric answer cannot be made "explicitly wrong", so malformed rows
+        # are excluded and their rate reported. Not-applicable answers stay in:
+        # score_metrics scores them at the midpoint of the score range.
         result["headline_f1"] = float("nan")
-        result["not_applicable_rate"] = float(
-            group["parse_error"].astype(str).eq("not_applicable").mean()
-        )
-        result.update(score_metrics(task, group.loc[~malformed]))
+        not_applicable = group["parse_error"].astype(str).eq("not_applicable")
+        result["not_applicable_rate"] = float(not_applicable.mean())
+        result.update(score_metrics(task, group.loc[~malformed | not_applicable]))
     else:
         raise BakeoffError(f"{task['name']}: unknown label kind {kind}")
     return result
