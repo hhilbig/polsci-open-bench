@@ -1,5 +1,5 @@
 version: 1
-benchmark_commit: 878bef92097bc93530c0ae1205344ccfbcab8393
+benchmark_commit: 7abd2f97abfc17483a987e7ebe43c40124d287f8
 task_scope:
   tasks_dir: tasks_ext
   expected_tasks: 5
