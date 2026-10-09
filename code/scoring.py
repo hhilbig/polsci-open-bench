@@ -18,8 +18,37 @@ so published v1 numbers stay reproducible.
 from __future__ import annotations
 
 import numpy as np
-from scipy.stats import pearsonr, spearmanr
-from sklearn.metrics import cohen_kappa_score, f1_score
+import pandas as pd
+
+# scipy and scikit-learn are not in the pinned Hive runtime lock, and
+# `hive_vllm_benchmark.py` imports the score and ordinal metrics from here. The
+# correlation and kappa helpers below are therefore numpy-only, and f1_score is
+# imported inside the F1 functions that need it.
+
+
+def _pearson(x, y):
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    return float(np.corrcoef(x, y)[0, 1])
+
+
+def _spearman(x, y):
+    """Spearman rho as Pearson r of average ranks, which is how scipy handles ties."""
+    return _pearson(pd.Series(x).rank(method="average"), pd.Series(y).rank(method="average"))
+
+
+def _quadratic_weighted_kappa(gt, pred, n_labels):
+    """Cohen's kappa with quadratic weights over the fixed scale 0..n_labels-1.
+
+    Matches sklearn's cohen_kappa_score(weights="quadratic", labels=range(n_labels))."""
+    gt = np.asarray(gt, dtype=int)
+    pred = np.asarray(pred, dtype=int)
+    observed = np.zeros((n_labels, n_labels))
+    np.add.at(observed, (gt, pred), 1)
+    expected = np.outer(observed.sum(axis=1), observed.sum(axis=0)) / observed.sum()
+    idx = np.arange(n_labels)
+    weights = (idx[:, None] - idx[None, :]) ** 2
+    return float(1 - (weights * observed).sum() / (weights * expected).sum())
 
 
 def _gt_pred_columns(task_def):
@@ -75,6 +104,8 @@ def per_class_f1(task_def, frame, support_only=True, label_subset=None):
     a failure. Callers that write `f1_<label>` columns should keep emitting a
     column per manifest label and let NaN mark the unsupported ones.
     """
+    from sklearn.metrics import f1_score
+
     kind = task_def["label_kind"]
     labels = list(task_def["labels"])
     keep = set(
@@ -172,8 +203,8 @@ def score_metrics(task_def, frame):
         return out
     out["mae"] = float((sub[pred_col] - sub[gt_col]).abs().mean())
     if len(sub) >= 3 and sub[pred_col].nunique() > 1 and sub[gt_col].nunique() > 1:
-        out["pearson_r"] = float(pearsonr(sub[gt_col], sub[pred_col])[0])
-        out["spearman_rho"] = float(spearmanr(sub[gt_col], sub[pred_col])[0])
+        out["pearson_r"] = _pearson(sub[gt_col], sub[pred_col])
+        out["spearman_rho"] = _spearman(sub[gt_col], sub[pred_col])
     return out
 
 
@@ -196,10 +227,9 @@ def ordinal_metrics(task_def, frame):
         return out
     out["mae_steps"] = float((pred - gt).abs().mean())
     if gt.nunique() > 1 or pred.nunique() > 1:
-        out["weighted_kappa"] = float(cohen_kappa_score(
-            gt, pred, weights="quadratic", labels=list(range(len(position)))))
+        out["weighted_kappa"] = _quadratic_weighted_kappa(gt, pred, len(position))
     if len(gt) >= 3 and gt.nunique() > 1 and pred.nunique() > 1:
-        out["spearman_rho"] = float(spearmanr(gt, pred)[0])
+        out["spearman_rho"] = _spearman(gt, pred)
     return out
 
 
@@ -210,6 +240,8 @@ def macro_f1_arrays(gt_arr, pred_arr, labels):
     the label list from `scored_labels` computed on the FULL sample so every
     replicate averages over the same classes.
     """
+    from sklearn.metrics import f1_score
+
     if len(gt_arr) == 0 or not labels:
         return np.nan
     return f1_score(gt_arr, pred_arr, labels=list(labels),
