@@ -16,9 +16,9 @@ set -u
 JOB_IDS="${JOB_IDS:?set JOB_IDS to a comma-separated list of Slurm job ids}"
 HIVE="hhilbig@hive.hpc.ucdavis.edu"
 W="/nfs/hive/scratch/hhilbig/polsci-taskext-20261002"
-RUN_DIR="$W/output/sidecar/task_ext_20261002"
+RUN_DIR="${RUN_DIR:-$W/output/sidecar/task_ext_20261002}"
 PROJECT="Polsci LLM benchmark"
-TASK="Test run of four new left-right position tasks on four open-weight models"
+TASK="${TASK:-Test run of four new left-right position tasks on four open-weight models}"
 POLL_SECONDS=300
 PROGRESS_SECONDS=$((6 * 3600))
 UNREACHABLE_SECONDS=$((30 * 60))
