@@ -1,0 +1,28 @@
+# Party-masked copy of tasks_ext/benoit_manifesto_economic_position.yaml, built by
+# code/build_masked_position_tasks.py. Same rows, same 500-item draw.
+order: 136
+name: benoit_manifesto_economic_position_masked
+family: Ideological position
+source: Benoit et al. 2016
+data_file: ../data/benoit_manifesto_economic_position_masked.csv
+prompt_file: ../prompts/benoit_manifesto_economic_position.txt
+label_kind: categorical
+ordinal: true
+label_key: economic_position
+labels:
+- very left
+- somewhat left
+- neither left nor right
+- somewhat right
+- very right
+id:
+  kind: column
+  column: source_id
+text:
+  template: 'Manifesto section:
+
+    {context_before} >>> {text} <<< {context_after}
+
+    '
+ground_truth:
+  column: gt_position

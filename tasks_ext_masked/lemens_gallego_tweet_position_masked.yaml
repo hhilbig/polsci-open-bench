@@ -1,0 +1,22 @@
+# Party-masked copy of tasks_ext/lemens_gallego_tweet_position.yaml, built by
+# code/build_masked_position_tasks.py. Same rows, same 500-item draw.
+order: 139
+name: lemens_gallego_tweet_position_masked
+family: Ideological position
+source: Le Mens and Gallego 2025
+data_file: ../data/lemens_gallego_tweet_position_masked.csv
+prompt_file: ../prompts/lemens_gallego_tweet_position.txt
+label_kind: score
+label_key: score
+score_range:
+- 0
+- 100
+id:
+  kind: column
+  column: source_id
+text:
+  template: 'Tweet: {text}
+
+    '
+ground_truth:
+  column: human_position_mean
