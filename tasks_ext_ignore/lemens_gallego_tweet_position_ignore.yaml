@@ -1,0 +1,22 @@
+# Copy of tasks_ext/lemens_gallego_tweet_position.yaml whose prompt also tells the model to ignore
+# party and politician names; built by code/build_ignore_names_tasks.py.
+order: 239
+name: lemens_gallego_tweet_position_ignore
+family: Ideological position
+source: Le Mens and Gallego 2025
+data_file: ../data/lemens_gallego_tweet_position.csv
+prompt_file: ../prompts/lemens_gallego_tweet_position_ignore.txt
+label_kind: score
+label_key: score
+score_range:
+- 0
+- 100
+id:
+  kind: column
+  column: source_id
+text:
+  template: 'Tweet: {text}
+
+    '
+ground_truth:
+  column: human_position_mean
