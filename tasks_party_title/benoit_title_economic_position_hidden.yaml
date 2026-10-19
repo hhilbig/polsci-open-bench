@@ -1,0 +1,31 @@
+# Manifesto title shown vs hidden (party-names experiment); built by
+# code/build_party_title_tasks.py. Uses every row of the data file.
+order: 400
+name: benoit_title_economic_position_hidden
+family: Ideological position
+source: Benoit et al. 2016
+data_file: ../data/benoit_title_economic_position.csv
+prompt_file: ../prompts/benoit_manifesto_economic_position.txt
+label_kind: categorical
+ordinal: true
+label_key: economic_position
+labels:
+- very left
+- somewhat left
+- neither left nor right
+- somewhat right
+- very right
+id:
+  kind: column
+  column: source_id
+text:
+  template: 'Manifesto section:
+
+    {context_before} >>> {text} <<< {context_after}
+
+    '
+ground_truth:
+  column: gt_position
+sampling:
+  n_v1: 100000
+  n_v2_new: 0
