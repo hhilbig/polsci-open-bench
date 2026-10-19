@@ -84,7 +84,9 @@ elif [[ -f "$BAKEOFF_RUNTIME_BASE_LOCK" ]]; then
     uv pip install "${UV_PIP_FLAGS[@]}" --torch-backend=auto -r "$BAKEOFF_RUNTIME_BASE_LOCK"
     CREATE_RUNTIME_LOCK=1
 else
-    uv pip install "${UV_PIP_FLAGS[@]}" "vllm==0.26.0" --torch-backend=auto
+    # BAKEOFF_VLLM_VERSION lets a new runtime (no lock yet) start from another vLLM
+    # release, e.g. 0.28.0 for architectures 0.26 lacks; the first run writes its lock.
+    uv pip install "${UV_PIP_FLAGS[@]}" "vllm==${BAKEOFF_VLLM_VERSION:-0.26.0}" --torch-backend=auto
     uv pip install "${UV_PIP_FLAGS[@]}" \
         "pandas==2.3.3" \
         "PyYAML==6.0.3" \

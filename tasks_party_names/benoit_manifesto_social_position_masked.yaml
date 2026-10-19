@@ -1,0 +1,28 @@
+# Party-masked copy of tasks_ext/benoit_manifesto_social_position.yaml, built by
+# code/build_masked_position_tasks.py. Same rows, same 500-item draw.
+order: 137
+name: benoit_manifesto_social_position_masked
+family: Ideological position
+source: Benoit et al. 2016
+data_file: ../data/benoit_manifesto_social_position_masked.csv
+prompt_file: ../prompts/benoit_manifesto_social_position.txt
+label_kind: categorical
+ordinal: true
+label_key: social_position
+labels:
+- very liberal
+- somewhat liberal
+- neither liberal nor conservative
+- somewhat conservative
+- very conservative
+id:
+  kind: column
+  column: source_id
+text:
+  template: 'Manifesto section:
+
+    {context_before} >>> {text} <<< {context_after}
+
+    '
+ground_truth:
+  column: gt_position
