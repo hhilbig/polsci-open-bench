@@ -89,7 +89,7 @@ save_figure(p, "fig-recent-mean-f1", "Overall performance", overview_caption,
 
 # Cost against performance for the API models, with the best one-GPU open model as a reference.
 costs <- read.csv(cost_path) |>
-  select(model, cost_per_1k_items, cost_basis) |>
+  select(model, cost_per_1k_items, cost_per_1k_items_batch, cost_basis) |>
   inner_join(models |> filter(kind == "API") |> select(model, short_label, mean_task_f1), by = "model") |>
   mutate(estimated = cost_basis %in% c("token_estimate", "provider_tokens"))
 stopifnot(nrow(costs) == sum(models$kind == "API"))
@@ -110,15 +110,18 @@ p <- ggplot(costs, aes(cost_per_1k_items, mean_task_f1)) +
 top_api <- costs |> slice_max(mean_task_f1, n = 1)
 cheap_api <- costs |> slice_min(cost_per_1k_items, n = 1)
 api_above <- sum(costs$mean_task_f1 > best_open$mean_task_f1)
+# Providers without a batch option (DeepSeek, Jev) keep their standard price.
+batch_price <- function(row) if (is.na(row$cost_per_1k_items_batch)) row$cost_per_1k_items else row$cost_per_1k_items_batch
 save_figure(p, "fig-cost-f1", "Cost and performance",
             sprintf(paste(
-              "Higher prices buy small gains in accuracy. %s costs about %.0f times as much per text as %s",
-              "and scores %.3f higher. %s of the %d API models score above the best open-weight model that",
+              "Higher prices buy small gains in accuracy. %s costs about %.0f times as much per text as %s,",
+              "the cheapest API model, and scores %.3f higher; at batch prices the ratio is about %.0f.",
+              "%s of the %d API models score above the best open-weight model that",
               "runs on one GPU (dashed line), which has no per-text charge. Costs are per 1,000 texts at",
               "standard prices in September 2026; hollow points are estimated from token counts rather than",
               "taken from provider bills."),
               top_api$short_label, top_api$cost_per_1k_items / cheap_api$cost_per_1k_items, cheap_api$short_label,
-              top_api$mean_task_f1 - cheap_api$mean_task_f1,
+              top_api$mean_task_f1 - cheap_api$mean_task_f1, batch_price(top_api) / batch_price(cheap_api),
               c("None", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven")[api_above + 1],
               nrow(costs)),
             costs |> select(model, cost_per_1k_items, mean_task_f1, estimated), 7, 4.6, "featured")
@@ -150,13 +153,24 @@ p <- task_gap(all_ids)
 gap_tasks <- scores |> filter(hardware_tier %in% c("api", "single-gpu")) |>
   group_by(task, group) |> summarise(f1 = max(headline_f1), .groups = "drop") |>
   pivot_wider(names_from = group, values_from = f1)
+# Taking the best of many open models on each task favours the open side, so the
+# caption also reports one fixed pair: the best one-GPU open model and the best API model.
+top_api_model <- models |> filter(kind == "API") |> slice_max(mean_task_f1, n = 1)
+pair <- scores |> filter(model %in% c(best_open$model, top_api_model$model)) |>
+  select(task, model, headline_f1) |> pivot_wider(names_from = model, values_from = headline_f1)
+pair_open_wins <- sum(pair[[best_open$model]] >= pair[[top_api_model$model]])
+pair_gap <- mean(pair[[top_api_model$model]] - pair[[best_open$model]])
 save_figure(p, "fig-recent-task-gap", "API and open models by task",
             sprintf(paste(
               "Each row shows one task. Points show the best API score minus the best score among the %d",
               "open-weight models that run on one GPU. An open model matches or beats the best API model on",
-              "%d of the %d tasks (blue points)."),
+              "%d of the %d tasks (blue points). Because each task takes the best of many open models, this",
+              "count favours the open side. Comparing one fixed pair, %s matches or beats %s on %d tasks,",
+              "and %s leads by %.3f F1 on average."),
               sum(models$hardware_tier == "single-gpu"),
-              sum(gap_tasks$`Open weights` >= gap_tasks$API), n_tasks),
+              sum(gap_tasks$`Open weights` >= gap_tasks$API), n_tasks,
+              best_open$short_label, top_api_model$short_label, pair_open_wins,
+              top_api_model$short_label, pair_gap),
             NULL, 7, 7.8, "featured")
 
 # Annotation types as small multiples, with models in the same overall order in every panel.
@@ -181,8 +195,7 @@ p <- family_plot(featured, "short_label", 3)
 save_figure(p, "fig-recent-family", "Performance by annotation type",
             paste(
               "Mean F1 within the five annotation types used in the paper, with each task weighted equally.",
-              "Models appear in the same order in every panel, ranked by their overall mean.",
-              "These types differ from the categories in the task selector."),
+              "Models appear in the same order in every panel, ranked by their overall mean."),
             NULL, 8.5, 0.34 * length(featured) + 1.2, "featured")
 
 # Coding complexity: all scores and the best model per task, API against open.
@@ -210,18 +223,21 @@ complexity_plot <- function(ids) {
 }
 # The gap the caption reports, computed rather than typed: best API minus best
 # one-GPU open model on each task, averaged within the medium and high groups.
-complexity_gap <- scores |> filter(hardware_tier %in% c("api", "single-gpu")) |>
+best_by_complexity <- scores |> filter(hardware_tier %in% c("api", "single-gpu")) |>
   group_by(task, complexity, group) |> summarise(f1 = max(headline_f1), .groups = "drop") |>
-  pivot_wider(names_from = group, values_from = f1) |>
+  pivot_wider(names_from = group, values_from = f1)
+complexity_gap <- best_by_complexity |>
   filter(complexity %in% c("Medium", "High")) |> summarise(gap = mean(API - `Open weights`)) |> pull(gap)
+low_gap <- best_by_complexity |> filter(complexity == "Low") |> summarise(gap = mean(API - `Open weights`)) |> pull(gap)
+stopifnot(complexity_gap > 0)
 complexity_caption <- sprintf(paste(
-  "The gap between API and open models grows with coding complexity. On the %d low-complexity tasks,",
-  "the best open model on each task scores as high as the best API model; on medium- and",
-  "high-complexity tasks it trails by about %.2f F1. High-complexity tasks allow several labels per",
+  "The gap between API and open models grows with coding complexity. Comparing the best open model",
+  "on each task with the best API model, the open model is %.2f F1 %s on the %d low-complexity",
+  "tasks and trails by about %.2f F1 on medium- and high-complexity tasks. High-complexity tasks allow several labels per",
   "text or use at least eight labels in practice, and medium-complexity tasks use at least three labels",
   "or have a prompt of 300 words or more. The number of labels in practice is the exponential of the",
   "entropy of the gold labels, which counts rare labels less than common ones."),
-  sum(meta$complexity == "Low"), complexity_gap)
+  abs(low_gap), if_else(low_gap <= 0, "ahead", "behind"), sum(meta$complexity == "Low"), complexity_gap)
 p <- complexity_plot(all_ids)
 save_figure(p, "fig-recent-complexity", "Coding complexity", complexity_caption, NULL, 7.5, 3.4, "featured")
 

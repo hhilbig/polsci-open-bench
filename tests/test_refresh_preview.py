@@ -5,6 +5,10 @@ from pathlib import Path
 import unittest
 import tempfile
 import hashlib
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import PANEL, skip_module_without  # noqa: E402
+skip_module_without(PANEL)
 
 
 def test_paper_figures_require_matching_release_and_assets():

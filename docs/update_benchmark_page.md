@@ -57,8 +57,9 @@ build checks; each group becomes one panel of the speed figure.
   every scored model has a label (`code/page_config.py`).
 - The page reproduces the release's numbers, and the figures were built from the
   same release (`build_refresh_preview.py: verify`).
-- Staging strips exactly three preview markers: the `noindex` tag, the preview
-  notice and the preview sentence in the footer. It publishes only the figure
+- Staging strips exactly four preview markers: the `noindex` tag, the preview
+  notice, the preview sentence in the footer, and the embedded release data
+  that only the local verifier reads. It publishes only the figure
   files the page references, and running it twice changes nothing
   (`tests/test_update_benchmark_page.py`).
 

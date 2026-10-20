@@ -13,9 +13,12 @@ from build_architecture_adjusted_plots import (  # noqa: E402
     compute_staircase_plot,
     lineage_plot,
 )
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import BROAD18_SUMMARY, needs_local_outputs  # noqa: E402
 
 
 class ArchitectureAdjustedPlotTests(unittest.TestCase):
+    @needs_local_outputs(BROAD18_SUMMARY)
     def test_frozen_groups_and_plots(self):
         source = pd.read_csv(
             ROOT / "output" / "sidecar" / "frontier_2026" / "broad18" / "checkpoint_summary.csv"

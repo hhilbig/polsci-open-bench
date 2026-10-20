@@ -8,9 +8,12 @@ import pandas as pd
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/"code"))
 from build_twitter_figures import PARAMETERS, disagreement, overall, task_changes  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import BROAD18_SUMMARY, needs_local_outputs  # noqa: E402
 
 
 class TestTwitterFigures(unittest.TestCase):
+    @needs_local_outputs(BROAD18_SUMMARY)
     def test_real_outputs_are_complete_and_nontrivial(self):
         broad=ROOT/"output/sidecar/frontier_2026/broad18"
         disagreement_path=ROOT/"output/sidecar/frontier_2026/human_votes/external_analysis/item_disagreement_effects.csv"

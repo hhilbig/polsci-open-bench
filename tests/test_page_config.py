@@ -8,6 +8,8 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'code'))
 from page_config import DEFAULT_CONFIG, load_page_config  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import PANEL, needs_local_outputs  # noqa: E402
 
 
 def config_data():
@@ -21,6 +23,7 @@ def write(data):
     return handle.name
 
 
+@needs_local_outputs(PANEL)
 def test_real_config_loads_and_matches_the_release():
     config = load_page_config()
     release = config.check_against_release()
@@ -52,6 +55,7 @@ def test_unknown_schema_version_is_rejected():
         load_page_config(write(data))
 
 
+@needs_local_outputs(PANEL)
 def test_featured_model_outside_the_release_is_rejected():
     data = config_data()
     data['featured_models'].append('model-that-was-never-run')
@@ -60,6 +64,7 @@ def test_featured_model_outside_the_release_is_rejected():
         config.check_against_release()
 
 
+@needs_local_outputs(PANEL)
 def test_scored_model_without_a_label_is_rejected():
     data = config_data()
     data['labels'].pop('claude-opus-5')
@@ -68,6 +73,7 @@ def test_scored_model_without_a_label_is_rejected():
         config.check_against_release()
 
 
+@needs_local_outputs(PANEL)
 def test_speed_run_without_metadata_is_rejected():
     data = config_data()
     data['inputs']['speed_runs'][0]['models']['glm4_7_flash'] = 'output/sidecar/not-a-run'

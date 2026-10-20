@@ -7,6 +7,8 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'code'))
 import inspect_refresh_candidates as candidates
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import needs_local_outputs  # noqa: E402
 
 
 class CandidatePreflightTests(unittest.TestCase):
@@ -34,6 +36,7 @@ class CandidatePreflightTests(unittest.TestCase):
         self.assertEqual(report['runtime_lock_sha256'],
                          json.loads(candidates.QWEN_FLASH_RUNTIME.read_text())['runtime_lock_sha256'])
 
+    @needs_local_outputs("output/sidecar/refresh_20260910_release/qwen_flash_runtime.json")
     def test_changed_or_incompatible_preflight_is_rejected(self):
         original = json.loads(candidates.QWEN_FLASH_RUNTIME.read_text())
         with tempfile.TemporaryDirectory() as directory:

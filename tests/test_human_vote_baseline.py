@@ -9,6 +9,8 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "code"))
 from analyze_human_vote_baseline import build  # noqa: E402
 from build_human_vote_tasks import build_alia, build_semeval  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import HOLDOUT_FULL34, needs_local_outputs  # noqa: E402
 
 
 class HumanVoteBaselineTests(unittest.TestCase):
@@ -25,6 +27,7 @@ class HumanVoteBaselineTests(unittest.TestCase):
         self.assertEqual(len(alia), 2850)
         self.assertTrue((alia["n_votes"] == 3).all())
 
+    @needs_local_outputs(HOLDOUT_FULL34)
     def test_frozen_sample_and_model_coverage(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

@@ -14,9 +14,12 @@ from build_twitter_claim_plots import (  # noqa: E402
     progress_plot,
     task_set_plot,
 )
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import BROAD18_SUMMARY, needs_local_outputs  # noqa: E402
 
 
 class TwitterClaimPlotTests(unittest.TestCase):
+    @needs_local_outputs(BROAD18_SUMMARY)
     def test_all_three_claim_plots(self):
         base = ROOT / "output" / "sidecar" / "frontier_2026"
         with tempfile.TemporaryDirectory() as directory:

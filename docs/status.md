@@ -60,6 +60,12 @@ Last updated: 2026-09-22
 
 ## Post-Release Changes
 
+- 2026-10-19: Stricter output parsing and safer runner defaults; corrected
+  comparisons in the README, report and page (fixed model pairs, best single
+  local model for the supervised baseline, batch-price cost ratio, inference
+  settings); chance baselines in `output/chance_baselines.csv`; constrained-decoding
+  predictions in `output/sidecar/schema_parity_20260918/`. No score changes.
+  Details in [`CHANGELOG.md`](../CHANGELOG.md).
 - 2026-09-18: Second source-fidelity audit and its fixes, plus the exclusion of
   `halterman_ccc_protest`. Headline moves from 10 of 34 to 9 of 33 tasks where
   local matches or beats API, and the mean gap from +0.011 to +0.013. Full

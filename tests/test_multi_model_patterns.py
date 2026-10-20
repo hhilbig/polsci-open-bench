@@ -20,6 +20,8 @@ from analyze_multi_model_patterns import (  # noqa: E402
 )
 from build_compact_frontier import bootstrap_indices  # noqa: E402
 from panel_manifest import load_panel_manifest  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import BROAD18_SUMMARY, needs_local_outputs  # noqa: E402
 
 
 class MetricCalculationTests(unittest.TestCase):
@@ -105,6 +107,7 @@ class MetricCalculationTests(unittest.TestCase):
         self.assertFalse(np.array_equal(headline_one, symmetric_one))
 
 
+@needs_local_outputs(BROAD18_SUMMARY)
 class FrozenPanelIntegrationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

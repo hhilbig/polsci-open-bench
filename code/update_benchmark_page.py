@@ -31,6 +31,9 @@ PREVIEW_MARKERS = [
     (r'<meta name="robots" content="noindex">', ''),
     (r'<p class="notice">Local preview, not published\..*?</p>', ''),
     (r'\. This is a local preview\. Publication requires approval\.</footer>', '.</footer>'),
+    # The release data embedded for the local verifier; benchmark.js does not
+    # read it, and it is about 1.3 MB of the page.
+    (r'<script id="benchmark-data" type="application/json">.*?</script>', ''),
 ]
 
 

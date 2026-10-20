@@ -9,8 +9,11 @@ import pandas as pd
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "code"))
 from analyze_regression_mechanisms import build  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import HOLDOUT_FULL34, needs_local_outputs  # noqa: E402
 
 
+@needs_local_outputs(HOLDOUT_FULL34)
 class RegressionMechanismTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

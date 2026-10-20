@@ -72,6 +72,77 @@ class PredictionParsingTests(unittest.TestCase):
         )
         self.assertEqual(parsed, [({"relevant": 0}, None), ({"relevant": 1}, None)])
 
+    def test_categorical_json_with_unknown_label_is_a_parse_error(self):
+        # The key name must not be substring-matched against the labels.
+        task = {
+            "label_kind": "categorical",
+            "label_key": "criticism_or_agenda",
+            "labels": ["criticism", "agenda"],
+        }
+        for content in ('{"criticism_or_agenda": "unclear"}', '{"criticism_or_agenda": "neither"}'):
+            preds, parse_err = benchmark.parse_content(content, task)
+            self.assertIsNotNone(parse_err)
+            self.assertEqual(preds, {"criticism_or_agenda": None})
+
+    def test_categorical_json_label_matches_case_insensitively(self):
+        preds, parse_err = benchmark.parse_content('{"stance": "oppose."}', self.categorical_task)
+        self.assertIsNone(parse_err)
+        self.assertEqual(preds, {"stance": "Oppose"})
+
+    def test_bare_label_fallback_prefers_longer_label_and_whole_words(self):
+        task = {
+            "label_kind": "categorical",
+            "label_key": "stance",
+            "labels": ["Support", "Not Support"],
+        }
+        self.assertEqual(benchmark.parse_content("Answer: Not Support", task), ({"stance": "Not Support"}, None))
+        preds, parse_err = benchmark.parse_content("Supportive", task)
+        self.assertIsNotNone(parse_err)
+
+    def test_missing_binary_key_is_a_parse_error_not_zero(self):
+        for content in ("{}", '{"foo": 1}'):
+            preds, parse_err = benchmark.parse_content(content, self.binary_task)
+            self.assertIsNotNone(parse_err)
+            self.assertEqual(preds, {"relevant": None})
+
+    def test_missing_multi_binary_key_is_a_parse_error(self):
+        task = {"label_kind": "multi_binary", "labels": ["Budget", "Other"]}
+        preds, parse_err = benchmark.parse_content('{"Budget": 1}', task)
+        self.assertIsNotNone(parse_err)
+        self.assertEqual(preds, {"Budget": None, "Other": None})
+        self.assertEqual(
+            benchmark.parse_content('{"budget": 1, "Other": 0}', task),
+            ({"Budget": 1, "Other": 0}, None),
+        )
+
+    def test_batched_parser_rejects_length_mismatch(self):
+        parsed = batch_benchmark.parse_response(
+            '[{"relevant": 1}, {"relevant": 0}]',
+            self.binary_task,
+            expected_n=3,
+        )
+        self.assertEqual(len(parsed), 3)
+        self.assertTrue(all(err and err.startswith("batch_length_mismatch") for _, err in parsed))
+
+    def test_release_predictions_are_not_overwritten_by_default(self):
+        import argparse
+        parser = argparse.ArgumentParser()
+        with mock.patch.object(parser, "error", side_effect=SystemExit) as err:
+            with self.assertRaises(SystemExit):
+                benchmark.guard_release_output(str(benchmark.OUT / "predictions.csv"), False, parser)
+            benchmark.guard_release_output(str(benchmark.OUT / "predictions.csv"), True, parser)
+            benchmark.guard_release_output(str(benchmark.OUT / "tmp" / "x.csv"), False, parser)
+        self.assertEqual(err.call_count, 1)
+
+    def test_batched_parser_flags_missing_key(self):
+        parsed = batch_benchmark.parse_response(
+            '[{"relevant": 1}, {"other": 0}]',
+            self.binary_task,
+            expected_n=2,
+        )
+        self.assertEqual(parsed[0], ({"relevant": 1}, None))
+        self.assertTrue(parsed[1][1].startswith("missing_key"))
+
 
 class LoaderIntegrityTests(unittest.TestCase):
     def test_all_loaders_return_expected_unique_item_ids(self):

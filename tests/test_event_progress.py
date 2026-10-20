@@ -3,8 +3,11 @@ from pathlib import Path
 import matplotlib.image as mpimg
 ROOT = Path(__file__).resolve().parents[1]; sys.path.insert(0, str(ROOT / "code"))
 from analyze_event_progress import analyze, external_confirmation, longitudinal
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import needs_local_outputs  # noqa: E402
 
 
+@needs_local_outputs("output/sidecar/frontier_2026/event_progress/external/llama3_1_70b_external_event/run_metadata.json", "output/sidecar/frontier_2026/twitter_figures/full34_task_categories.csv")
 class EventProgressTests(unittest.TestCase):
     def test_event_pattern_replicates_but_omnibus_does_not(self):
         sensitivity, omnibus = analyze(draws=10000)

@@ -8,26 +8,60 @@ models on 33 classification tasks drawn from political science papers,
 replication archives and documented public datasets. The
 [report](output/report_pdf.pdf) is the authoritative summary.
 
+The repository holds two sets of results. They use different models, items and
+scoring rules for unusable output, so their numbers are not directly comparable.
+
+| | Main release | September 2026 panel |
+|---|---|---|
+| Models | 6 local (Ollama on an Apple M2 Pro) and 4 API | 20 open-weight (vLLM, one or two GPUs) and 11 API |
+| Tasks and items | 33 tasks, 293 to 500 items each | the same 33 tasks, 100 frozen items each |
+| Unusable output | excluded from F1 and reported as a rate | scored as wrong |
+| Written up in | [report](output/report_pdf.pdf), section "Main Result" below | [results page](https://www.hannohilbig.com/llm-benchmark/), section "Matched Model Comparison" below |
+| Data | [`output/summary.csv`](output/summary.csv), [`output/predictions.csv`](output/predictions.csv) | [`output/sidecar/refresh_20260910_release_33/`](output/sidecar/refresh_20260910_release_33) (summary tables only) |
+
+Main-release models: `gemma4:26b`, `gemma4:31b-it-q4_K_M`, `qwen3:14b-q4_K_M`,
+`qwen3.5:35b-a3b-q4_K_M`, `qwen3:30b-a3b-q4_K_M`,
+`mistral-small:24b-instruct-2501-q4_K_M`, `gpt-5.5`, `gpt-5.4-nano`,
+`claude-sonnet-4-6` and `deepseek-v4-pro`. The manifests are in [`models/`](models).
+
+**Start here.** To read results, open the report or the results page. To check
+that the code runs on your machine without spending anything, use the no-cost
+smoke test under [Reproduce](#reproduce). To score your own task or model, see
+[`docs/custom_tasks.md`](docs/custom_tasks.md) and
+[`docs/custom_models.md`](docs/custom_models.md).
+
 ## Main Result
 
 Local open-weight models are often competitive with commercial API models, and
 no single model ranks first across tasks. The best local model matches or
 exceeds the best API model on 9 of 33 tasks. On average, the best API model
 leads by 0.013 F1, with its clearest advantage on tasks that have many active
-labels, long codebooks or several outputs per item.
+labels, long codebooks or several outputs per item. On average, every model
+scores well above chance: always predicting the most common label averages 0.154
+F1 across the 33 tasks, and guessing at the rate of each gold label averages
+0.253, against 0.713 for the best model on each task. One task is an exception. On
+`bestvater_wm_stance`, 85% of items are positive, so always answering yes scores
+0.918, above every model ([`output/chance_baselines.csv`](output/chance_baselines.csv)).
 
 Two further experiments test whether this gap is an artifact of the benchmark.
 The published run gave API models server-side JSON-schema enforcement and local
 models none. Running four open-weight models twice over the same 16,425 items,
 once with schema-constrained decoding and once without, moves mean F1 by 0.0014,
-an order of magnitude less than the gap. The difference between the two groups
-therefore reflects the models themselves.
+an order of magnitude less than the gap. Output constraint therefore does not
+explain the difference between the two groups. These four were vLLM checkpoints
+on a GPU cluster, not the Ollama models of the main release, and the test does
+not address other differences between the groups, such as reasoning settings.
+The item-level predictions are in
+[`output/sidecar/schema_parity_20260918/`](output/sidecar/schema_parity_20260918),
+and `code/build_schema_parity.py` recomputes the result from them.
 
 The second experiment asks how many hand-coded labels a supervised classifier
 needs to match zero-shot coding. Logistic regression on frozen multilingual-E5
-embeddings, trained on 2,000 labels per task, reaches 0.672 mean F1 against
-0.697 for the best local model with no labels at all, and the learning curve has
-flattened. The crossover thus lies in the low thousands of labels per task.
+embeddings, trained on 2,000 labels per task, reaches 0.672 mean F1 on 30 tasks.
+With no labels at all, the best single local model, Gemma 4 31B, reaches 0.679
+on the same tasks, and choosing the best local model separately for each task
+reaches 0.697. The learning curve gained 0.012 over the last doubling of labels,
+so the crossover lies in the low thousands of labels per task.
 
 Researchers should test candidate models on labeled examples from their own task
 and report both performance and the rate of unusable output.
@@ -36,7 +70,11 @@ and report both performance and the rate of unusable output.
 
 A second panel runs 31 models, 11 commercial APIs and 20 open-weight
 checkpoints, on the same 33 tasks with 100 frozen items per task. Every model
-codes the same 3,300 texts under the same prompts and scorer. The results are
+codes the same 3,300 texts under the same prompts and scorer, with one
+exception: Jev 1.13, a model from TypeSafe that answers by choosing among fixed
+options, receives the prompt inside its provider's choice format. Open-weight
+models ran at temperature 0, while most API models ran at their provider's
+default temperature, and each model coded each text once. The results are
 at [hannohilbig.com/llm-benchmark](https://www.hannohilbig.com/llm-benchmark/),
 and the release data are in
 [`output/sidecar/refresh_20260910_release_33/`](output/sidecar/refresh_20260910_release_33).
@@ -46,9 +84,10 @@ are Qwen3.8 Flash-Next at 0.675, which needs two GPUs, and Llama 3.1 70B in FP8
 at 0.675 on one GPU. Both trail Opus by 0.039 F1, a gap whose paired intervals
 exclude zero, and both score above four of the eleven API models (GPT-5.6 Luna,
 both DeepSeek models and Jev 1.13). Of those eight comparisons, only Flash-Next's
-lead over Jev is distinguishable from zero. Task by task, the best single-GPU
-open model matches or beats the best API model on 14 of 33 tasks, and the best
-API model leads by 0.013 F1 on average, the same gap as in the main release.
+lead over Jev is distinguishable from zero. Task by task, Llama 3.1 70B matches
+or beats Claude Opus 5 on 9 of 33 tasks. Taking the best of the 19 single-GPU
+open models on each task raises that count to 14, but picking the maximum of 19
+noisy scores per task favours the open side.
 
 The panel also measures what each API model costs and how long a request takes.
 
@@ -95,6 +134,8 @@ prices, and the figures draw these models with hollow markers.
 - Prompt-batched runs: [`output/predictions_batched.csv`](output/predictions_batched.csv),
   [`output/summary_batched.csv`](output/summary_batched.csv)
 - Supervised learning curves: [`output/supervised_baseline_e5.csv`](output/supervised_baseline_e5.csv)
+- Chance baselines per task: [`output/chance_baselines.csv`](output/chance_baselines.csv)
+- Constrained-decoding experiment: [`output/sidecar/schema_parity_20260918/`](output/sidecar/schema_parity_20260918)
 - September panel tables: [`output/sidecar/jev_sidecar/`](output/sidecar/jev_sidecar)
 - GEPA results, including each optimised prompt: [`output/sidecar/gepa_jev_20260920/`](output/sidecar/gepa_jev_20260920)
 
@@ -107,6 +148,46 @@ python3 code/task_inventory.py --check
 python3 -m unittest discover -s tests
 ```
 
+On a fresh clone the test suite takes a few minutes and skips about 65 tests.
+Those tests check figures built from per-request outputs under `output/sidecar/`
+that are not in the repository, and each skip names the missing file.
+
+No-cost smoke test. It runs a two-item example task against a local stub server
+that imitates an OpenAI-compatible API, so it needs no API key, Ollama or GPU.
+Start the stub in one terminal:
+
+```bash
+python3 examples/local_openai_stub_server.py --max-requests 4
+```
+
+Then, in a second terminal:
+
+```bash
+python3 code/benchmark.py \
+  --task-dir examples/minimal_custom_task \
+  --model-manifest examples/minimal_custom_models/local_openai_stub.yaml \
+  --output /tmp/polsci-smoke/predictions.csv
+python3 code/build_summary.py \
+  --task-dir examples/minimal_custom_task \
+  --model-manifest examples/minimal_custom_models/local_openai_stub.yaml \
+  --predictions /tmp/polsci-smoke/predictions.csv \
+  --output /tmp/polsci-smoke/summary.csv
+```
+
+Success means four prediction rows and one summary row with `headline_f1` 1.0.
+
+Before a real run, `--dry-run` lists the tasks, item counts, models and number
+of model calls without calling any model:
+
+```bash
+python3 code/benchmark.py --dry-run
+```
+
+A real run calls every API model whose key is set in the environment, and those
+calls are billed by the provider. The runners refuse to overwrite the
+checked-in `output/predictions.csv` or `output/predictions_batched.csv` unless
+you pass `--overwrite-release`; use `--output` to write elsewhere.
+
 Rebuild the report:
 
 ```bash
@@ -114,8 +195,8 @@ Rscript code/build_report_assets.R
 quarto render output/report_pdf.qmd --to pdf
 ```
 
-A full rerun calls paid APIs when keys are present. See
-[`docs/reproduce.md`](docs/reproduce.md) for setup, costs and rerun commands.
+See [`docs/reproduce.md`](docs/reproduce.md) for setup, local model downloads
+and rerun commands.
 
 ## Documentation
 
@@ -148,6 +229,7 @@ are tracked, so the figures rebuild from a clone.
 
 Please cite the report and the source papers for the individual tasks, listed in
 [`docs/prompts_provenance.md`](docs/prompts_provenance.md).
+[`CITATION.cff`](CITATION.cff) holds the citation for this repository.
 
 ## License
 

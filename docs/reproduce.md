@@ -32,7 +32,7 @@ The serial and batched benchmark runners depend on the packages in
 
 Built-in benchmark tasks live in YAML manifests under [`tasks/`](../tasks).
 The generated task-count inventory is [`docs/task_inventory.md`](task_inventory.md):
-it records the public 34-task benchmark and output coverage.
+it records the 34 task manifests (33 active tasks and one held out) and output coverage.
 
 You can also run a custom task without editing core code by supplying either:
 
@@ -79,7 +79,8 @@ with Quarto plus these R packages:
 Install them with:
 
 ```bash
-Rscript -e "install.packages(c('tidyverse','knitr','ggrepel','scales','haschaR','kableExtra'), repos='https://cloud.r-project.org')"
+Rscript -e "install.packages(c('tidyverse','knitr','ggrepel','scales','kableExtra','remotes'), repos='https://cloud.r-project.org')"
+Rscript -e "remotes::install_github('hhilbig/haschaR')"
 ```
 
 The report QMD is intentionally prose-only: figures and tables are generated
@@ -98,13 +99,14 @@ The benchmark was run with Ollama 0.19.0 on Apple Silicon (M2 Pro, 32 GB
 unified memory). Most local manifests use `Q4_K_M`; `gemma4:26b` uses its
 published local Ollama tag.
 
-Pull the five local models used in the checked-in release benchmark:
+Pull the six local models used in the checked-in release benchmark:
 
 ```bash
 ollama pull gemma4:26b
 ollama pull gemma4:31b-it-q4_K_M
 ollama pull qwen3:14b-q4_K_M
 ollama pull qwen3:30b-a3b-q4_K_M
+ollama pull qwen3.5:35b-a3b-q4_K_M
 ollama pull mistral-small:24b-instruct-2501-q4_K_M
 ```
 
@@ -114,8 +116,12 @@ The runner reads `OLLAMA_URL` if you need to point it at a non-default host:
 export OLLAMA_URL=http://localhost:11434
 ```
 
-Local calls run with `temperature=0.1` and the model's internal thinking mode
-disabled.
+Local calls run with `temperature=0.1`, the model's internal thinking mode
+disabled, and a context window of 32,768 tokens (`num_ctx`). That window is the
+default Ollama 0.19.0 chose on the 32 GB machine used for the release; the
+runner sets it explicitly so that machines with less memory or other Ollama
+versions do not silently cut long prompts. The longest prompt plus item is about
+3,600 tokens.
 
 ### OpenAI
 
@@ -198,19 +204,23 @@ provider-side paths above.
 
 Run the full serial benchmark and rebuild the serial summary:
 
-These commands overwrite the checked-in release outputs and can call paid API
-models if API keys are set. Use a custom `--output` path and explicit
-`--model-manifest` for smoke tests or custom benchmarks.
+These commands replace the checked-in release outputs and call every API model
+whose key is set. The runners refuse to overwrite `output/predictions.csv` or
+`output/predictions_batched.csv` unless `--overwrite-release` is passed. Run
+with `--dry-run` first to see the tasks, models and number of calls. Use a
+custom `--output` path and explicit `--model-manifest` for smoke tests or custom
+benchmarks.
 
 ```bash
-python3 code/benchmark.py
+python3 code/benchmark.py --dry-run
+python3 code/benchmark.py --overwrite-release
 python3 code/build_summary.py
 ```
 
 Run the batched benchmark and rebuild the batched summary:
 
 ```bash
-python3 code/batch_benchmark.py
+python3 code/batch_benchmark.py --overwrite-release
 python3 code/build_summary_batched.py
 ```
 
@@ -230,8 +240,8 @@ are set, those commands can call paid API models. For no-cost checks, use an
 explicit local manifest and a custom `--output` path.
 
 ```bash
-# Run one task across all models
-python3 code/benchmark.py --only-task gilardi_stance
+# Run one task across all models, written to a separate file
+python3 code/benchmark.py --only-task gilardi_stance --output /tmp/gilardi_stance.csv
 
 # Run one (task, model) cell and merge into the existing predictions CSV
 python3 code/benchmark.py \
@@ -246,10 +256,11 @@ python3 code/benchmark.py \
   --only-new-items \
   --merge-into output/predictions.csv
 
-# Batched run for a single task
+# Batched run for a single task, written to a separate file
 python3 code/batch_benchmark.py \
   --only-task gilardi_relevance \
-  --batch-sizes 10,20
+  --batch-sizes 10,20 \
+  --output /tmp/gilardi_relevance_batched.csv
 
 # Run a custom task directory through the same pipeline
 python3 code/benchmark.py \

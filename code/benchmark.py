@@ -12,8 +12,13 @@ Default models are loaded from YAML manifests in `models/`. You can also supply
 your own model manifest or model-manifest directory at the CLI.
 
 Basic usage:
-  # Run full benchmark (all tasks x all models)
-  python3 code/benchmark.py
+  # See what a run would do (tasks, items, models, number of calls) without
+  # calling any model
+  python3 code/benchmark.py --dry-run
+
+  # Run full benchmark (all tasks x all models). This calls paid APIs for every
+  # API model whose key is set, and replaces the checked-in predictions file.
+  python3 code/benchmark.py --overwrite-release
 
   # Selective rerun of one (task, model) cell, merge into existing predictions
   python3 code/benchmark.py \\
@@ -21,8 +26,8 @@ Basic usage:
     --only-task halterman_ccc_protest \\
     --merge-into output/predictions.csv
 
-  # Run only one task across all models
-  python3 code/benchmark.py --only-task gilardi_stance
+  # Run only one task across all models, written to a new file
+  python3 code/benchmark.py --only-task gilardi_stance --output /tmp/gilardi.csv
 
   # Run a self-contained custom task directory with an explicit local model
   python3 code/benchmark.py \\
@@ -44,6 +49,7 @@ named in the model manifest. For local models, ensure Ollama is running at
 http://localhost:11434 (or override OLLAMA_URL).
 """
 import argparse
+import re
 import json
 import os
 import time
@@ -74,6 +80,11 @@ REPO = HERE.parent
 OUT = REPO / "output"
 
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
+# Context window for Ollama calls. 32768 is the default that Ollama 0.19.0 chose
+# on the 32 GB machine used for the published run; setting it explicitly keeps
+# runs on other machines or Ollama versions from silently truncating long
+# prompts (the longest prompt plus item is about 3,600 tokens).
+OLLAMA_NUM_CTX = 32768
 
 # (model_name, task_name) pairs to skip. Reserved for empirically-discovered
 # unusable cells (long system prompts that an Ollama backend re-prefills on
@@ -109,6 +120,40 @@ def _coerce_binary_label(value):
         if normalized in {"1", "true", "yes"}:
             return 1
     raise ValueError(f"not a binary label: {value!r}")
+
+
+def _get_key(obj, key):
+    """Value for `key` in a JSON object, matching the key case-insensitively.
+    A missing key raises KeyError so it is recorded as a parse error rather
+    than read as a negative or a guessed label."""
+    if key in obj:
+        return obj[key]
+    for k, v in obj.items():
+        if isinstance(k, str) and k.strip().lower() == key.lower():
+            return v
+    raise KeyError(f"missing key: {key!r}")
+
+
+def _match_label_value(value, labels):
+    """Exact, case-insensitive match of a JSON label value to the task labels."""
+    if not isinstance(value, str):
+        return None
+    norm = value.strip().strip(" \"'.,!").upper()
+    for lbl in labels:
+        if norm == lbl.upper():
+            return lbl
+    return None
+
+
+def _bare_label_hits(text, labels):
+    """Labels that occur in non-JSON text as whole words. A label contained in
+    another matching label ("Support" in "Not Support") is dropped in favour
+    of the longer one."""
+    hits = [
+        lbl for lbl in labels
+        if re.search(r"(?<![A-Za-z0-9])" + re.escape(lbl.upper()) + r"(?![A-Za-z0-9])", text)
+    ]
+    return [h for h in hits if not any(h != o and h.upper() in o.upper() for o in hits)]
 
 
 NOT_APPLICABLE = {"na", "n/a", "not applicable", "none", "null", ""}
@@ -159,32 +204,43 @@ def _normalize_json_prediction(obj):
 def parse_content(content: str, task: dict):
     """Parse model output. JSON first, then compact task-specific fallbacks."""
     kind = task["label_kind"]
-    # JSON attempt
+    # JSON attempt. Once the output decodes to a JSON object, the answer must
+    # be in that object: a missing key or an unknown label is a parse error,
+    # never a default value or a substring match against the raw text.
     try:
         obj, _ = json.JSONDecoder().raw_decode(extract_json(content))
         obj = _normalize_json_prediction(obj)
-        if kind == "multi_binary":
-            return {k: _coerce_binary_label(obj.get(k, 0)) for k in task["labels"]}, None
-        elif kind == "score":
-            k = task["label_key"]
-            value = obj.get(k) if isinstance(obj, dict) else obj
-            pred, err = score_pred(value, task)
-            if err is None or err == "not_applicable":
-                return pred, err
-            # fall through to the bare-value fallback
-        elif kind == "binary":
-            k = task["label_key"]
-            if isinstance(obj, dict):
-                return {k: _coerce_binary_label(obj.get(k, 0))}, None
-            return {k: _coerce_binary_label(obj)}, None
-        else:
-            k = task["label_key"]
-            v = obj.get(k, "")
-            if v in task["labels"]:
-                return {k: v}, None
-            # fall through
     except Exception:
-        pass
+        obj = None
+    if isinstance(obj, dict):
+        try:
+            if kind == "multi_binary":
+                return {k: _coerce_binary_label(_get_key(obj, k)) for k in task["labels"]}, None
+            k = task["label_key"]
+            if kind == "score":
+                pred, err = score_pred(_get_key(obj, k), task)
+                if err is None or err == "not_applicable":
+                    return pred, err
+                return pred, f"parse_fail: {content[:80]!r}"
+            if kind == "binary":
+                return {k: _coerce_binary_label(_get_key(obj, k))}, None
+            lbl = _match_label_value(_get_key(obj, k), task["labels"])
+            if lbl is not None:
+                return {k: lbl}, None
+        except (KeyError, ValueError):
+            pass
+        if kind == "multi_binary":
+            return {k: None for k in task["labels"]}, f"parse_fail: {content[:80]!r}"
+        return {task["label_key"]: None}, f"parse_fail: {content[:80]!r}"
+    if obj is not None and kind == "binary":
+        try:
+            return {task["label_key"]: _coerce_binary_label(obj)}, None
+        except ValueError:
+            pass
+    if obj is not None and kind == "score":
+        pred, err = score_pred(obj, task)
+        if err is None or err == "not_applicable":
+            return pred, err
 
     if kind == "binary":
         k = task["label_key"]
@@ -200,7 +256,7 @@ def parse_content(content: str, task: dict):
         for lbl in task["labels"]:
             if upper == lbl.upper() or upper.strip(' "\'.,!') == lbl.upper():
                 return {k: lbl}, None
-        hits = [lbl for lbl in task["labels"] if lbl.upper() in upper]
+        hits = _bare_label_hits(upper, task["labels"])
         if len(hits) == 1:
             return {k: hits[0]}, None
         return {k: None}, f"parse_fail: {content[:80]!r}"
@@ -230,7 +286,7 @@ def classify_ollama(model_def, system_prompt, user_content):
         ],
         "stream": False,
         "think": model_def.get("think", False),
-        "options": {"temperature": 0.1, "num_predict": 1024},
+        "options": {"temperature": 0.1, "num_predict": 1024, "num_ctx": OLLAMA_NUM_CTX},
     }
     t0 = time.perf_counter()
     with httpx.Client(timeout=600) as c:
@@ -424,7 +480,7 @@ def warmup_ollama(model_def):
                 "model": model_def["name"],
                 "messages": [{"role": "user", "content": "hi"}],
                 "stream": False, "think": False,
-                "options": {"num_predict": 1},
+                "options": {"num_predict": 1, "num_ctx": OLLAMA_NUM_CTX},
             })
     except Exception as e:
         print(f"  warmup failed: {e}", flush=True)
@@ -573,6 +629,48 @@ def _is_public_predictions_path(path):
         return False
 
 
+def guard_release_output(path, allow, parser):
+    """Refuse to overwrite a checked-in release file unless asked explicitly.
+    Without this, `benchmark.py --only-task X` replaces the whole published
+    predictions file with the rows of one task."""
+    if path is None or allow:
+        return
+    try:
+        resolved = Path(path).expanduser().resolve()
+    except OSError:
+        return
+    release_files = {(OUT / name).resolve() for name in ("predictions.csv", "predictions_batched.csv")}
+    if resolved in release_files and resolved.exists():
+        parser.error(
+            f"{path} is a checked-in release file. Pass --output with a new path "
+            "(or --merge-into to update selected cells), or add --overwrite-release "
+            "to replace it."
+        )
+
+
+def describe_dry_run(tasks, models, unavailable, only_new_items=False):
+    """Print what a run would do, without calling any model."""
+    total_items = 0
+    print("[dry-run] tasks:", flush=True)
+    for task in tasks:
+        n = len(task["loader"]())
+        if only_new_items:
+            n = max(n - N_V1, 0)
+        total_items += n
+        print(f"  {task['name']:<45} {n:>5} items", flush=True)
+    print("[dry-run] models:", flush=True)
+    for m in models:
+        kind = "local" if m["backend"] == "ollama" or _is_local_base_url(m.get("base_url", "")) else "API (may be paid)"
+        print(f"  {m['name']:<45} {m['backend']:<10} {kind}", flush=True)
+    for name, reason in unavailable.items():
+        print(f"  {name:<45} skipped: {reason}", flush=True)
+    print(
+        f"[dry-run] {len(tasks)} tasks x {len(models)} models = "
+        f"{total_items * len(models)} model calls. Nothing was run.",
+        flush=True,
+    )
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     add_task_loading_args(ap)
@@ -609,6 +707,10 @@ def main():
                     help="Cost ceiling stored in the run ledger for paid API runs; metadata only, not enforced.")
     ap.add_argument("--render-run-status", action="store_true",
                     help=f"Render {DEFAULT_STATUS_MD.relative_to(REPO)} after ledger updates.")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="List the tasks, item counts, models and number of model calls, then exit without calling any model.")
+    ap.add_argument("--overwrite-release", action="store_true",
+                    help="Allow writing over the checked-in output/predictions.csv.")
     args = ap.parse_args()
 
     OUT.mkdir(parents=True, exist_ok=True)
@@ -641,12 +743,16 @@ def main():
         print(f"[selective] Running ONLY task: {args.only_task}", flush=True)
 
     if args.output is None:
-        args.output = str(
-            OUT / "sidecar" / "frontier_2026" / "serial_predictions.csv"
-            if panel
-            else OUT / "predictions.csv"
-        )
-    Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        if panel:
+            args.output = str(OUT / "sidecar" / "frontier_2026" / "serial_predictions.csv")
+        elif args.merge_into:
+            # The run's own rows go to scratch; the merge target gets updated.
+            args.output = str(OUT / "tmp" / "merge_run_predictions.csv")
+        else:
+            args.output = str(OUT / "predictions.csv")
+    if not args.dry_run:
+        guard_release_output(args.output, args.overwrite_release, ap)
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
 
     panel_run_metadata = (
         {
@@ -686,6 +792,11 @@ def main():
                 )
             else:
                 model_clients[model["name"]] = client
+
+    if args.dry_run:
+        runnable = [m for m in models if m["name"] not in unavailable]
+        describe_dry_run(tasks, runnable, unavailable, args.only_new_items)
+        return
 
     if unavailable:
         for model_name, reason in unavailable.items():

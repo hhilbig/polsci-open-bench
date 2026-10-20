@@ -10,9 +10,12 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "code"))
 
 from plot_broad18_holdout import holdout_data, render, task_deltas  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import BAKEOFF_METRICS, BROAD18_SUMMARY, needs_local_outputs  # noqa: E402
 
 
 class Broad18HoldoutFigureTests(unittest.TestCase):
+    @needs_local_outputs(BROAD18_SUMMARY, BAKEOFF_METRICS)
     def test_holdout_coverage_and_headline_contrasts(self):
         means, metrics, _ = holdout_data()
         self.assertEqual(metrics["task"].nunique(), 16)
@@ -28,6 +31,7 @@ class Broad18HoldoutFigureTests(unittest.TestCase):
         self.assertLess(values.loc["Held-out 16", "ci_low"], 0)
         self.assertGreater(values.loc["Held-out 16", "ci_high"], 0)
 
+    @needs_local_outputs(BROAD18_SUMMARY, BAKEOFF_METRICS)
     def test_rendered_outputs_are_nontrivial_and_csvs_agree(self):
         with tempfile.TemporaryDirectory() as temp:
             output = Path(temp)

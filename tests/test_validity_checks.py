@@ -5,8 +5,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "code"))
 from build_validity_checks import DEFAULT_ROOT, build_checks, render  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import HOLDOUT_FULL34, needs_local_outputs  # noqa: E402
 
 
+@needs_local_outputs(HOLDOUT_FULL34)
 class ValidityCheckTests(unittest.TestCase):
     def test_frozen_checks_and_rosters(self):
         task, leakage, size = build_checks(DEFAULT_ROOT)

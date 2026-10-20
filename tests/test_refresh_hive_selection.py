@@ -9,8 +9,11 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'code'))
 import hive_vllm_benchmark as h
 import refresh_pilot as p
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import PANEL, needs_local_outputs  # noqa: E402
 
 
+@needs_local_outputs(PANEL)
 class RefreshSelectionTests(unittest.TestCase):
     def test_refresh_schema_rejects_legacy_coercions(self):
         task = {'name': 'test', 'label_kind': 'multi_binary', 'labels': ['a', 'b'],

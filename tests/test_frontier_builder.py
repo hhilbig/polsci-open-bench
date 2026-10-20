@@ -25,6 +25,8 @@ from build_frontier_2026 import (  # noqa: E402
     passes_reliability_gate,
 )
 from panel_manifest import load_panel_manifest  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import BAKEOFF_METRICS, needs_local_outputs  # noqa: E402
 
 
 PANEL = load_panel_manifest(REPO / "experiments" / "frontier_panel_18.yaml")
@@ -114,6 +116,7 @@ class CalibrationAndPromotionTests(unittest.TestCase):
         self.assertAlmostEqual(min(pair[0] for pair in pairs), 0.599246018214532)
         self.assertAlmostEqual(max(pair[0] for pair in pairs), 0.6835794338371117)
 
+    @needs_local_outputs(BAKEOFF_METRICS)
     def test_six_held_out_residuals_and_validation_statistics_reproduce(self):
         registry = yaml.safe_load(
             (REPO / "experiments" / "frontier_checkpoints_2026.yaml").read_text()
@@ -489,6 +492,7 @@ class TwoSeriesRegistryTests(unittest.TestCase):
         self.assertEqual(qwen3_5["result_status"], "panel_only")
         self.assertEqual(qwen3_5["hardware_qualification"], "confirmed")
 
+    @needs_local_outputs(BAKEOFF_METRICS)
     def test_public_score_output_has_no_laptop_fields_or_rows(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             scores, _ = build_outputs(

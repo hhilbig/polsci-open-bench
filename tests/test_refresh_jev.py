@@ -6,8 +6,12 @@ from unittest import mock
 
 import refresh_jev
 from task_registry import load_task_definitions
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import PANEL, needs_local_outputs  # noqa: E402
 
 
+@needs_local_outputs(PANEL)
 class JevRefreshTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

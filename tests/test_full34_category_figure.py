@@ -6,9 +6,12 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "code"))
 from build_full34_category_figure import CATEGORIES, category_frame, render  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import needs_local_outputs  # noqa: E402
 
 
 class Full34CategoryFigureTests(unittest.TestCase):
+    @needs_local_outputs("output/sidecar/frontier_2026/broad18/holdout16/llama3_1_70b_instruct_fp8_dynamic_full34/run_metadata.json")
     def test_exact_partition_and_real_evidence(self):
         self.assertEqual(len(set().union(*CATEGORIES.values())), 34)
         self.assertEqual(sum(map(len, CATEGORIES.values())), 34)

@@ -22,6 +22,7 @@ SOFTWARE.
 
 ---
 
-Data in `data/` is subject to each upstream source's license (see
-`candidates.yaml` `license` field per task). Users must consult the upstream
-paper/archive before redistributing task data beyond this repo.
+The MIT license above covers the code. Data in `data/` is subject
+to each upstream source's license; the source of each task is listed in
+`docs/prompts_provenance.md`. Users must consult the upstream paper or archive
+before redistributing task data beyond this repo.

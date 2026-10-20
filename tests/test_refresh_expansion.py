@@ -13,6 +13,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'code'))
 import run_refresh_expansion as driver
 import hive_vllm_benchmark as benchmark
 import configure_refresh_minimax as minimax_config
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import PANEL, needs_local_outputs  # noqa: E402
 
 
 class ExpansionTests(unittest.TestCase):
@@ -87,6 +89,7 @@ class ExpansionTests(unittest.TestCase):
         self.assertEqual(result['status'], 'validation_failed')
         runner.assert_not_called()
 
+    @needs_local_outputs(PANEL)
     def test_config_settings_must_match_and_panel_must_be_frozen(self):
         configs = []
         panel_hash = driver.digest(json.loads(driver.PANEL.read_text()))
@@ -196,6 +199,7 @@ class MiniMaxConfigurationTests(unittest.TestCase):
         self.metadata.write_text(json.dumps(self.meta))
         return minimax_config.configure(self.metadata, self.freeze, image_hash, self.output)
 
+    @needs_local_outputs(PANEL)
     def test_generated_stages_preserve_frozen_protocol(self):
         paths = self.configure()
         for path, stage, count in zip(paths, ('pilot', 'remainder'), (68, 3332)):

@@ -188,6 +188,7 @@ No v2 predictions have been generated yet.
 - `osnabruegge_cross_domain_topic` and `halterman_ccc_protest` have gold-label
   problems that cannot be fixed without re-obtaining their source archives.
   Neither has a build script and no source URL is recorded.
-- The constrained-decoding experiment is configured
-  (`experiments/schema_parity_20260918_{guided,plain}.yaml`) but not run.
+- The constrained-decoding experiment
+  (`experiments/schema_parity_20260918_{guided,plain}.yaml`) ran 18 to 20
+  September 2026; its predictions are in `output/sidecar/schema_parity_20260918/`.
 - Deduplication is documented and deliberately deferred.

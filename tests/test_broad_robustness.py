@@ -28,8 +28,11 @@ from build_broad_robustness import (  # noqa: E402
     source_cluster_bootstrap,
     source_cluster_order,
 )
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import needs_local_outputs  # noqa: E402
 
 
+@needs_local_outputs("output/sidecar/frontier_2026/broad18/model_by_task.csv")
 class BroadRobustnessTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

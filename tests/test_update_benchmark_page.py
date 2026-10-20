@@ -9,6 +9,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'code'))
 import update_benchmark_page as updater  # noqa: E402
 from page_config import load_page_config  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import PANEL, skip_module_without  # noqa: E402
+skip_module_without(PANEL)
 
 CONFIG = load_page_config()
 
@@ -18,6 +21,7 @@ def test_published_page_strips_every_preview_marker():
     assert 'noindex' not in page
     assert 'Local preview, not published' not in page
     assert 'Publication requires approval' not in page
+    assert 'benchmark-data' not in page and 'publication_approval_required' not in page
     # The rest of the page survives.
     assert '<h2 id="hardware">Where the models ran</h2>' in page
     assert CONFIG.site['page_url'] in page

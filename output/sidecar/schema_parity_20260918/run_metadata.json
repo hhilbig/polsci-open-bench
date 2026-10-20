@@ -1,0 +1,106 @@
+{
+ "guided/gemma4_31b_it_qat_w4a16": {
+  "artifact_publication_source": "https://huggingface.co/google/gemma-4-31B-it-qat-w4a16-ct/commit/52f3f65bc7a02d555763bc923bd1d9094898219d",
+  "benchmark_commit": "bb16725c4c888b07d7672646719245f03b2b4b30",
+  "generation": {
+   "enable_thinking": false,
+   "max_tokens": 256,
+   "prompt_margin_tokens": 128,
+   "seed": 20260918,
+   "structured_outputs": "json_schema",
+   "temperature": 0.0
+  },
+  "model_id": "google/gemma-4-31B-it-qat-w4a16-ct"
+ },
+ "guided/qwen3_30b_a3b_instruct_2507_fp8": {
+  "artifact_publication_source": null,
+  "benchmark_commit": "bb16725c4c888b07d7672646719245f03b2b4b30",
+  "generation": {
+   "enable_thinking": false,
+   "max_tokens": 256,
+   "prompt_margin_tokens": 128,
+   "seed": 20260918,
+   "structured_outputs": "json_schema",
+   "temperature": 0.0
+  },
+  "model_id": "Qwen/Qwen3-30B-A3B-Instruct-2507-FP8"
+ },
+ "guided/qwen3_6_27b_fp8": {
+  "artifact_publication_source": null,
+  "benchmark_commit": "bb16725c4c888b07d7672646719245f03b2b4b30",
+  "generation": {
+   "enable_thinking": false,
+   "max_tokens": 256,
+   "prompt_margin_tokens": 128,
+   "seed": 20260918,
+   "structured_outputs": "json_schema",
+   "temperature": 0.0
+  },
+  "model_id": "Qwen/Qwen3.6-27B-FP8"
+ },
+ "guided/qwen3_6_35b_a3b_fp8": {
+  "artifact_publication_source": null,
+  "benchmark_commit": "bb16725c4c888b07d7672646719245f03b2b4b30",
+  "generation": {
+   "enable_thinking": false,
+   "max_tokens": 256,
+   "prompt_margin_tokens": 128,
+   "seed": 20260918,
+   "structured_outputs": "json_schema",
+   "temperature": 0.0
+  },
+  "model_id": "Qwen/Qwen3.6-35B-A3B-FP8"
+ },
+ "plain/gemma4_31b_it_qat_w4a16": {
+  "artifact_publication_source": "https://huggingface.co/google/gemma-4-31B-it-qat-w4a16-ct/commit/52f3f65bc7a02d555763bc923bd1d9094898219d",
+  "benchmark_commit": "bb16725c4c888b07d7672646719245f03b2b4b30",
+  "generation": {
+   "enable_thinking": false,
+   "max_tokens": 256,
+   "prompt_margin_tokens": 128,
+   "seed": 20260918,
+   "structured_outputs": "none",
+   "temperature": 0.0
+  },
+  "model_id": "google/gemma-4-31B-it-qat-w4a16-ct"
+ },
+ "plain/qwen3_30b_a3b_instruct_2507_fp8": {
+  "artifact_publication_source": null,
+  "benchmark_commit": "bb16725c4c888b07d7672646719245f03b2b4b30",
+  "generation": {
+   "enable_thinking": false,
+   "max_tokens": 256,
+   "prompt_margin_tokens": 128,
+   "seed": 20260918,
+   "structured_outputs": "none",
+   "temperature": 0.0
+  },
+  "model_id": "Qwen/Qwen3-30B-A3B-Instruct-2507-FP8"
+ },
+ "plain/qwen3_6_27b_fp8": {
+  "artifact_publication_source": null,
+  "benchmark_commit": "bb16725c4c888b07d7672646719245f03b2b4b30",
+  "generation": {
+   "enable_thinking": false,
+   "max_tokens": 256,
+   "prompt_margin_tokens": 128,
+   "seed": 20260918,
+   "structured_outputs": "none",
+   "temperature": 0.0
+  },
+  "model_id": "Qwen/Qwen3.6-27B-FP8"
+ },
+ "plain/qwen3_6_35b_a3b_fp8": {
+  "artifact_publication_source": null,
+  "benchmark_commit": "bb16725c4c888b07d7672646719245f03b2b4b30",
+  "generation": {
+   "enable_thinking": false,
+   "max_tokens": 256,
+   "prompt_margin_tokens": 128,
+   "seed": 20260918,
+   "structured_outputs": "none",
+   "temperature": 0.0
+  },
+  "model_id": "Qwen/Qwen3.6-35B-A3B-FP8"
+ }
+}

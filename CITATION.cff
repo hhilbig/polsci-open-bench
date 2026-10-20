@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this benchmark, please cite it as below, together with the source papers for the tasks you use (docs/prompts_provenance.md)."
+title: "Political Science LLM Benchmark"
+type: software
+authors:
+  - family-names: Hilbig
+    given-names: Hanno
+    affiliation: "University of California, Davis"
+repository-code: "https://github.com/hhilbig/polsci-open-bench"
+url: "https://www.hannohilbig.com/llm-benchmark/"
+license: MIT
+date-released: 2026-09-22
+keywords:
+  - political science
+  - text classification
+  - large language models
+  - benchmark

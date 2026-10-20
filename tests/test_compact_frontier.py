@@ -38,6 +38,8 @@ from build_compact_frontier import (  # noqa: E402
     resolve_repo_path,
 )
 from panel_manifest import load_panel_manifest  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import needs_local_outputs  # noqa: E402
 
 
 BROAD_MANIFEST = REPO / "experiments" / "frontier_broad_18.yaml"
@@ -155,6 +157,7 @@ class CompactFrontierTest(unittest.TestCase):
             self.assertGreaterEqual(int(first[task_name].min()), 0)
             self.assertLess(int(first[task_name].max()), 500)
 
+    @needs_local_outputs("output/sidecar/frontier_2026/compact8/hive/llama3_1_70b_instruct_fp8_dynamic/predictions.csv")
     def test_prediction_rows_are_canonicalized_before_shared_bootstrap(self):
         checkpoint = next(
             row
@@ -192,6 +195,7 @@ class CompactFrontierTest(unittest.TestCase):
         self.assertEqual(int(scored.loc[1, f"pred_{key}"]), 1)
         self.assertAlmostEqual(metrics["headline_f1"], 2 / 3)
 
+    @needs_local_outputs("output/sidecar/frontier_2026/compact8/hive/llama3_1_70b_instruct_fp8_dynamic/run_metadata.json")
     def test_hive_hardware_uses_measured_records_not_registry_fallback(self):
         checkpoint = next(
             row
@@ -341,6 +345,7 @@ class CompactFrontierTest(unittest.TestCase):
                             checkpoint, result, predictions_path, self.benchmark
                         )
 
+    @needs_local_outputs("output/sidecar/frontier_2026/compact8/hive/llama3_1_70b_instruct_fp8_dynamic/predictions.csv")
     def test_outputs_are_compact_audited_and_consistent(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             output = Path(temp_dir)
@@ -391,6 +396,7 @@ class CompactFrontierTest(unittest.TestCase):
 
 
 class BroadFrontierTest(unittest.TestCase):
+    @needs_local_outputs("output/sidecar/frontier_2026/broad18/historical_extension/qwen1_5_72b_chat_awq/predictions.csv")
     def test_audited_legacy_evidence_subsets_to_frozen_broad_keys(self):
         benchmark = load_panel_manifest(BROAD_MANIFEST)
         registry = load_compact_registry(BROAD_REGISTRY, benchmark)

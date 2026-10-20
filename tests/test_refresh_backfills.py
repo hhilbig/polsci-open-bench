@@ -15,6 +15,8 @@ from audit_refresh_reuse import sha
 from prepare_refresh_backfills import split_missing, build_config
 from hive_vllm_benchmark import selected_tasks, load_config, validate_scope, BakeoffError
 import hive_vllm_benchmark as hive
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_data import PANEL, needs_local_outputs  # noqa: E402
 
 
 class RefreshBackfillTests(unittest.TestCase):
@@ -43,6 +45,7 @@ class RefreshBackfillTests(unittest.TestCase):
         scope = validate_scope(config, tasks)
         self.assertEqual(scope['total_items'], 45)
 
+    @needs_local_outputs(PANEL)
     def test_runner_subset_validation(self):
         panel = json.loads(Path('output/sidecar/refresh_20260910/panel.json').read_text())
         row = panel['rows'][0]

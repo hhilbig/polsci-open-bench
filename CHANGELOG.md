@@ -12,6 +12,83 @@ Two conventions hold throughout:
   reproduces it exactly.
 - **A change that moves a published number says so, with the number.**
 
+## 2026-10-19 Corrected claims, chance baselines, constrained-decoding data
+
+No score changes. Several sentences in the README, report and page compared
+groups in a way that favoured one side or left out a setting; they now report
+the fair comparison next to the old one.
+
+- Supervised baseline. The README and report compared E5 at 2,000 labels
+  (0.672) with the best local model chosen separately for each task (0.697).
+  The best single local model on the same 30 tasks, Gemma 4 31B, reaches 0.679,
+  and both numbers are now reported. Zero-shot still wins.
+- Open against API, September panel. "The best open model matches or beats the
+  best API model on 14 of 33 tasks" takes the best of 19 open models against the
+  best of 11 API models on every task. The README now reports one fixed pair,
+  Llama 3.1 70B against Claude Opus 5: 9 of 33 tasks, with Opus ahead by 0.040
+  F1 on average. The page caption gives both counts, and the complexity caption
+  states the low-complexity gap it computes (open ahead by 0.01) instead of the
+  untested wording "scores as high as". The README sentence calling the 0.013
+  gap "the same gap as in the main release" is removed; the two releases differ
+  in models, items and scoring.
+- Cost. The page caption keeps the 220x ratio at standard prices and adds the
+  ratio at batch prices, about 110x, since Anthropic offers a batch discount and
+  Jev does not.
+- Settings. The README and page now state that Jev 1.13 receives the prompt
+  inside its provider's choice format, that most API models ran at their
+  provider's default temperature (DeepSeek at 0.1, open models at 0), and that
+  each model coded each text once. The page explains what Jev 1.13 is and names
+  the release ID in the citation line.
+- Constrained-decoding experiment. The item-level predictions (labels and
+  parse errors only) are now in `output/sidecar/schema_parity_20260918/`, and
+  `code/build_schema_parity.py` recomputes the reported result from them:
+  -0.0014 F1 for constrained decoding, interval [-0.0029, 0.0000], better in 53
+  of 136 checkpoint-task cells. The README states that these were vLLM
+  checkpoints, not the Ollama models of the main release.
+- Chance baselines. `code/build_chance_baselines.py` writes
+  `output/chance_baselines.csv`: always predicting the most common label
+  averages 0.154 F1 over the 33 tasks, guessing at the gold label rates 0.253,
+  against 0.713 for the best model per task. On `bestvater_wm_stance` 85% of
+  items are positive, so always answering yes (0.918) beats every model (best
+  0.905).
+- `CITATION.cff` added. `LICENSE` no longer points to the nonexistent
+  `candidates.yaml` and limits the MIT license to the code.
+
+## 2026-10-19 Stricter output parsing, safer runner defaults
+
+None of these changes moves a published number: predictions are parsed when a
+model is called, and the checked-in predictions files are not reparsed. They
+apply to new runs.
+
+- Parsing (`code/benchmark.py`, `code/batch_benchmark.py`). Once an answer
+  decodes to a JSON object, the label must be in that object. A missing key is
+  now a parse error rather than a 0 for binary and multi-label tasks, and an
+  unknown categorical value is a parse error rather than a substring match
+  against the raw text. Before, `{"criticism_or_agenda": "unclear"}` was read
+  as `criticism` because the key name contains that label. Label values and
+  keys match case-insensitively. The fallback for non-JSON answers matches
+  whole words and prefers the longer of two nested labels ("Not Support" over
+  "Support").
+- Batched runs. A response with more or fewer objects than items is recorded as
+  unusable for the whole batch, because answers are matched to items by
+  position and one skipped item would shift every later answer.
+- Ollama context window. Calls set `num_ctx` to 32,768, the default Ollama
+  0.19.0 chose on the 32 GB machine used for the main release. Checked on that
+  setup: the longest prompt plus item is about 3,600 tokens and was read in
+  full, so the main release was not affected by truncation.
+- Runner defaults. Both runners refuse to overwrite the checked-in
+  `output/predictions.csv` or `output/predictions_batched.csv` without
+  `--overwrite-release`. With `--merge-into` and no `--output`, the run's own
+  rows now go to `output/tmp/` instead of first overwriting the file being
+  merged into. `benchmark.py --dry-run` lists tasks, items, models and the
+  number of calls without calling any model.
+- Tests. Tests that need untracked per-request outputs under `output/sidecar/`
+  are skipped on a fresh clone with the missing path named
+  (`tests/local_data.py`).
+- Page. Staging removes the 1.3 MB embedded release data that only the local
+  verifier reads, and the family-figure caption no longer mentions the removed
+  task selector.
+
 ## 2026-09-22 Benchmark page published
 
 - The page is live at <https://www.hannohilbig.com/llm-benchmark/>, linked from
@@ -296,7 +373,8 @@ Two conventions hold throughout:
   apart from that key. The published run gave API models server-side JSON-schema
   enforcement and local Ollama models none, so the local-versus-API gap confounds
   model quality with harness parity. The two arms vary only constrained decoding,
-  with model, GPU, prompt, items and seed fixed. Not yet run.
+  with model, GPU, prompt, items and seed fixed. Run 18 to 20 September 2026;
+  see the 2026-10-19 entry for the results and data.
 
 - **`osnabruegge_cross_domain_topic` human ceiling.** The replication capsule
   carries three independent validation coders on 250 rows. They match the

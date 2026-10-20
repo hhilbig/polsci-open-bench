@@ -69,6 +69,7 @@ output/sidecar/*
 # The built page is published from the homepage repo, not from here.
 output/sidecar/refresh_20260910_release_33/preview/
 !output/sidecar/latency_sample/
+!output/sidecar/schema_parity_20260918/
 !output/sidecar/refresh_gemini_20260920/
 output/sidecar/refresh_gemini_20260920/*
 !output/sidecar/refresh_gemini_20260920/*.csv

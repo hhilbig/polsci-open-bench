@@ -1,0 +1,34 @@
+task,label_kind,n,majority_value,majority_f1,majority_accuracy,stratified_f1,best_model_f1
+gilardi_relevance,binary,500,0,0.0000,0.5480,0.4520,0.9501
+ballard_incivility,binary,500,0,0.0000,0.8780,0.1220,0.5632
+gilardi_stance,categorical,500,neutral,0.2240,0.5060,0.3333,0.5677
+chae_semeval_stance,categorical,500,AGAINST,0.2228,0.5020,0.3333,0.7729
+ornstein_scotus_sentiment,categorical,500,Negative,0.2602,0.6400,0.3333,0.6684
+wesleyan_creative_ads_2022,categorical,500,promote,0.2782,0.7160,0.3333,0.7110
+halterman_keith_bfrs,categorical,500,ASSASSINATION,0.0381,0.2960,0.0833,0.6931
+halterman_keith_cmp,categorical,500,Welfare and Quality of Life,0.0753,0.3580,0.1429,0.5971
+mellon_bes_mii_2024,categorical,500,Coronavirus,0.0157,0.3800,0.0286,0.7811
+osnabruegge_cross_domain_topic,categorical,500,Political System,0.0535,0.2720,0.1250,0.4755
+rheault_line_of_fire_incivility,binary,500,0,0.0000,0.8860,0.1140,0.6612
+haunss_papea_fgz_forms,categorical,500,Demonstration / Assembly,0.1011,0.5480,0.1429,0.9646
+brandt_political_relevance,binary,320,0,0.0000,0.8344,0.1656,0.7391
+douglass_icbe_sentence_event_type,categorical,500,Action,0.0894,0.2880,0.2000,0.5297
+muller_fujimura_campaign_policy_area,categorical,500,No Policy Area,0.0490,0.4160,0.0833,0.6359
+burnham_polnli_entailment,binary,500,0,0.0000,0.5860,0.4140,0.9082
+theocharis_dynamics_incivility,binary,500,0,0.0000,0.7180,0.2820,0.6824
+toxicity_protests_es,binary,500,1,0.6702,0.5040,0.5040,0.8937
+brandt_gtd_attack_type,categorical,500,Bombing/Explosion,0.0648,0.4120,0.1111,0.6167
+haunss_papea_claims,categorical,500,Infrastructure,0.0140,0.2220,0.0385,0.4979
+twitcivility_impoliteness,binary,500,0,0.0000,0.7620,0.2380,0.6308
+bestvater_wm_stance,binary,500,1,0.9177,0.8480,0.8480,0.9054
+erlich_ati_topics,multi_binary,500,0;0;0;0;0;0;0,0.0000,0.8074,0.1926,0.5016
+plover_cameo_event,categorical,312,AGREE,0.0126,0.1282,0.0556,0.6537
+burnham_polnli_event_entailment,binary,500,1,0.6894,0.5260,0.5260,0.9741
+burnham_trump_stance,categorical,500,Oppose,0.2011,0.4320,0.3333,0.8035
+burnham_covid_threat_minimization,binary,293,0,0.0000,0.7372,0.2628,0.6015
+dicocco_manifesto_populism,binary,500,0,0.0000,0.9180,0.0820,0.4545
+bestvater_kavanaugh_stance,binary,500,1,0.7030,0.5420,0.5420,0.9544
+politicause_causal_relation,binary,500,0,0.0000,0.6860,0.3140,0.7164
+cap_party_platform_policy_topic,categorical,500,International Affairs,0.0108,0.1280,0.0476,0.7313
+cap_crs_policy_topic,categorical,500,Government Operations,0.0118,0.1340,0.0500,0.7688
+agoraspeech_criticism_agenda,categorical,500,political agenda,0.3711,0.5900,0.5000,0.9217

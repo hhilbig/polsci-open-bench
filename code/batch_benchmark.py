@@ -13,7 +13,9 @@ Per-batch semantics:
   - b=1 is the classic single-item path (identical to benchmark.py's
     classify_* functions; included so this run is self-contained).
   - b>1 builds one API call with all N items numbered and asks the
-    model to return a JSON array of N objects in order.
+    model to return a JSON array of N objects in order. A response with
+    more or fewer than N objects is recorded as unusable for the whole
+    batch, since answers are matched to items by position.
   - OpenAI strict schema wraps the per-item schema as
     {"results": [<object>, ...]} with minItems = maxItems = b.
   - Per-item latency is reported as batch_wall_clock / b so the paper's
@@ -23,9 +25,11 @@ Per-batch semantics:
     most one cell.
 
 Usage:
-  python3 code/batch_benchmark.py
-  python3 code/batch_benchmark.py --only-task gilardi_relevance --batch-sizes 10,20
-  python3 code/batch_benchmark.py --resume    # skip cells already in output CSV
+  # Full grid; replaces the checked-in output/predictions_batched.csv
+  python3 code/batch_benchmark.py --overwrite-release
+  python3 code/batch_benchmark.py --only-task gilardi_relevance --batch-sizes 10,20 \
+    --output /tmp/gilardi_relevance_batched.csv
+  python3 code/batch_benchmark.py --resume --overwrite-release  # skip cells already in output CSV
   python3 code/batch_benchmark.py --task-dir examples/minimal_custom_task \
     --model-manifest examples/minimal_custom_models/my_ollama_model.yaml \
     --output output/custom_batched_predictions.csv
@@ -51,9 +55,12 @@ from task_registry import (DEFAULT_SAMPLE_N_V1, add_task_loading_args,
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from benchmark import (  # noqa: E402
+    OLLAMA_NUM_CTX,
     OLLAMA_URL,
     OUT,
     _coerce_binary_label,
+    _get_key,
+    _match_label_value,
     score_pred,
     augment_system_prompt_for_json_object,
     extra_body_for_openai_model,
@@ -62,6 +69,7 @@ from benchmark import (  # noqa: E402
     parse_content as parse_single_content,
     require_usable_rows,
     response_format_type,
+    guard_release_output,
     warmup_ollama,
 )
 
@@ -170,20 +178,23 @@ def _pred_from_obj(obj, task_def):
     try:
         if kind == "multi_binary":
             return {
-                k: _coerce_binary_label(obj.get(k, 0))
+                k: _coerce_binary_label(_get_key(obj, k))
                 for k in task_def["labels"]
             }, None
         if kind == "binary":
             key = task_def["label_key"]
-            return {key: _coerce_binary_label(obj.get(key, 0))}, None
+            return {key: _coerce_binary_label(_get_key(obj, key))}, None
         if kind == "categorical":
             key = task_def["label_key"]
-            v = obj.get(key, "")
-            if v in task_def["labels"]:
-                return {key: v}, None
+            v = _get_key(obj, key)
+            lbl = _match_label_value(v, task_def["labels"])
+            if lbl is not None:
+                return {key: lbl}, None
             return {key: None}, f"invalid_label: {v!r}"
         if kind == "score":
-            return score_pred(obj.get(task_def["label_key"]), task_def)
+            return score_pred(_get_key(obj, task_def["label_key"]), task_def)
+    except KeyError as exc:
+        return _empty_pred(task_def), f"missing_key: {exc}"
     except ValueError as exc:
         return _empty_pred(task_def), f"invalid_binary_label: {exc}"
     return _empty_pred(task_def), "unknown_label_kind"
@@ -217,6 +228,13 @@ def parse_response(content: str, task_def, expected_n: int):
         label = "not_array" if decoded is not None else f"batch_parse_fail: {content[:80]!r}"
         return [(_empty_pred(task_def), label)] * expected_n
 
+    # The response objects carry no item ids, so answers are matched to items by
+    # position. If the model returned more or fewer objects than items, one
+    # skipped or merged item would shift every later answer, so the whole batch
+    # is recorded as unusable instead of being scored.
+    if len(arr) != expected_n:
+        return [(_empty_pred(task_def), f"batch_length_mismatch: {len(arr)} of {expected_n}")] * expected_n
+
     results = []
     for i in range(expected_n):
         if i < len(arr) and isinstance(arr[i], dict):
@@ -248,7 +266,7 @@ def classify_ollama_batched(model_def, system_prompt, batch, task_def):
         ],
         "stream": False,
         "think": model_def.get("think", False),
-        "options": {"temperature": 0.1, "num_predict": num_predict},
+        "options": {"temperature": 0.1, "num_predict": num_predict, "num_ctx": OLLAMA_NUM_CTX},
     }
     t0 = time.perf_counter()
     ollama_url = model_def.get("ollama_url") or OLLAMA_URL
@@ -457,6 +475,8 @@ def main():
                     help="Cost ceiling stored in the run ledger for paid API runs; metadata only, not enforced.")
     ap.add_argument("--render-run-status", action="store_true",
                     help=f"Render {DEFAULT_STATUS_MD.relative_to(OUT.parent)} after ledger updates.")
+    ap.add_argument("--overwrite-release", action="store_true",
+                    help="Allow writing over the checked-in output/predictions_batched.csv.")
     args = ap.parse_args()
 
     batch_sizes = [int(x) for x in args.batch_sizes.split(",")]
@@ -488,11 +508,14 @@ def main():
             print(f"Unknown task: {args.only_task}"); return
 
     if args.output is None:
-        args.output = str(
-            OUT / "sidecar" / "frontier_2026" / "batched_predictions.csv"
-            if panel
-            else OUT / "predictions_batched.csv"
-        )
+        if panel:
+            args.output = str(OUT / "sidecar" / "frontier_2026" / "batched_predictions.csv")
+        elif args.merge_into:
+            # The run's own rows go to scratch; the merge target gets updated.
+            args.output = str(OUT / "tmp" / "merge_run_predictions_batched.csv")
+        else:
+            args.output = str(OUT / "predictions_batched.csv")
+    guard_release_output(args.output, args.overwrite_release, ap)
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
 
     panel_run_metadata = (

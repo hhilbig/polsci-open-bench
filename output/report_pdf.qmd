@@ -193,8 +193,9 @@ include_graphics("figures/fig-supervised-curve.png")
 
 Zero-shot classification wins over the range a coding project would plausibly
 budget. With 2,000 hand-coded labels per task, embeddings plus logistic regression
-reach 0.672 mean F1, against 0.697 for the best local model given no labels at
-all. The supervised curve is still rising at that point but has flattened, gaining
+reach 0.672 mean F1. With no labels at all, the best single local model, Gemma 4
+31B, reaches 0.679 on the same tasks, and the best local model chosen separately
+for each task reaches 0.697. The supervised curve is still rising at that point but has flattened, gaining
 0.012 over the last doubling, so the crossover lies somewhere in the low thousands
 of labels per task.
 
@@ -265,8 +266,8 @@ The benchmark studies prompt-based classification, and section 3.7 places it aga
 Can researchers use local open-weight models instead of commercial APIs for applied text classification? The answer in this benchmark is often yes, but not by default. Local models match or exceed the best API model on 9 of 33 tasks in the task-specific oracle comparison, and the average best-API advantage is 0.013 F1. At the same time, API models retain their clearest edge on complex tasks with many labels or multiple outputs per item. That edge survives the most obvious alternative explanation for it. Running four open-weight checkpoints over the same items with and without schema-constrained decoding moves mean F1 by 0.001 against the constraint, which is an order of magnitude smaller than the gap it was proposed to explain, so the difference between the two model classes is a property of the models rather than of how the benchmark called them.
 
 The supervised comparison supports the same conclusion. A classifier trained on
-2,000 hand-coded labels per task reaches 0.672 mean F1, against 0.697 for the best
-local model given none. For the corpus sizes and label budgets typical of this
+2,000 hand-coded labels per task reaches 0.672 mean F1, against 0.679 for the best
+single local model given none. For the corpus sizes and label budgets typical of this
 work, prompt-based coding is not a stopgap to be used until enough labels
 accumulate.
 
