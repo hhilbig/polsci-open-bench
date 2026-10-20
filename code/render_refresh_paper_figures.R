@@ -79,8 +79,8 @@ overview <- function(ids, label_col) {
     theme_clara()
 }
 overview_caption <- sprintf(paste(
-  "Each row shows one model. Points mark mean F1 across the %d tasks, and grey bars mark 95%%",
-  "intervals from resampling tasks. Open-weight models are blue and API models grey."), n_tasks)
+  "Each row shows one model. Points mark the mean F1 across the %d tasks, grey bars mark 95%%",
+  "intervals that I obtain from resampling tasks. Open-weight models are blue, API models are grey."), n_tasks)
 
 p <- overview(featured, "short_label")
 save_figure(p, "fig-recent-mean-f1", "Overall performance", overview_caption,
@@ -114,14 +114,15 @@ api_above <- sum(costs$mean_task_f1 > best_open$mean_task_f1)
 batch_price <- function(row) if (is.na(row$cost_per_1k_items_batch)) row$cost_per_1k_items else row$cost_per_1k_items_batch
 save_figure(p, "fig-cost-f1", "Cost and performance",
             sprintf(paste(
-              "Higher prices buy small gains in accuracy. %s costs about %.0f times as much per text as %s,",
-              "the cheapest API model, and scores %.3f higher; at batch prices the ratio is about %.0f.",
+              "Higher prices buy relatively small gains in accuracy. %s costs about %.0f times as much per text as %s,",
+              "the cheapest API model, and scores %.3f higher (at batch prices, the ratio is about %.0f instead of %.0f).",
               "%s of the %d API models score above the best open-weight model that",
-              "runs on one GPU (dashed line), which has no per-text charge. Costs are per 1,000 texts at",
-              "standard prices in September 2026; hollow points are estimated from token counts rather than",
-              "taken from provider bills."),
+              "runs on one GPU (dashed line), for which there is no per-text charge. Costs are per 1,000 texts at",
+              "standard prices in September 2026, and hollow points are estimates based on token counts rather",
+              "than provider bills."),
               top_api$short_label, top_api$cost_per_1k_items / cheap_api$cost_per_1k_items, cheap_api$short_label,
               top_api$mean_task_f1 - cheap_api$mean_task_f1, batch_price(top_api) / batch_price(cheap_api),
+              top_api$cost_per_1k_items / cheap_api$cost_per_1k_items,
               c("None", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven")[api_above + 1],
               nrow(costs)),
             costs |> select(model, cost_per_1k_items, mean_task_f1, estimated), 7, 4.6, "featured")
@@ -156,21 +157,27 @@ gap_tasks <- scores |> filter(hardware_tier %in% c("api", "single-gpu")) |>
 # Taking the best of many open models on each task favours the open side, so the
 # caption also reports one fixed pair: the best one-GPU open model and the best API model.
 top_api_model <- models |> filter(kind == "API") |> slice_max(mean_task_f1, n = 1)
+# Short names for the pair in running text: "Llama", "Opus".
+pair_short <- function(label) {
+  words <- strsplit(label, " ")[[1]]
+  if (words[1] == "Claude") words[2] else words[1]
+}
 pair <- scores |> filter(model %in% c(best_open$model, top_api_model$model)) |>
   select(task, model, headline_f1) |> pivot_wider(names_from = model, values_from = headline_f1)
 pair_open_wins <- sum(pair[[best_open$model]] >= pair[[top_api_model$model]])
 pair_gap <- mean(pair[[top_api_model$model]] - pair[[best_open$model]])
 save_figure(p, "fig-recent-task-gap", "API and open models by task",
             sprintf(paste(
-              "Each row shows one task. Points show the best API score minus the best score among the %d",
+              "Each row shows one task, and points show the best API score minus the best score among the %d",
               "open-weight models that run on one GPU. An open model matches or beats the best API model on",
-              "%d of the %d tasks (blue points). Because each task takes the best of many open models, this",
-              "count favours the open side. Comparing one fixed pair, %s matches or beats %s on %d tasks,",
-              "and %s leads by %.3f F1 on average."),
+              "%d of the %d tasks (blue points), although this number is somewhat inflated in favor of open",
+              "models, since on every task I pick the best out of %d open models. If I compare a fixed pair of",
+              "models instead – %s and %s – %s matches or beats %s on %d tasks, and %s leads by %.3f F1 on average."),
               sum(models$hardware_tier == "single-gpu"),
-              sum(gap_tasks$`Open weights` >= gap_tasks$API), n_tasks,
-              best_open$short_label, top_api_model$short_label, pair_open_wins,
-              top_api_model$short_label, pair_gap),
+              sum(gap_tasks$`Open weights` >= gap_tasks$API), n_tasks, sum(models$hardware_tier == "single-gpu"),
+              best_open$short_label, top_api_model$short_label, pair_short(best_open$short_label),
+              pair_short(top_api_model$short_label), pair_open_wins,
+              pair_short(top_api_model$short_label), pair_gap),
             NULL, 7, 7.8, "featured")
 
 # Annotation types as small multiples, with models in the same overall order in every panel.
@@ -194,7 +201,7 @@ family_plot <- function(ids, label_col, ncol) {
 p <- family_plot(featured, "short_label", 3)
 save_figure(p, "fig-recent-family", "Performance by annotation type",
             paste(
-              "Mean F1 within the five annotation types used in the paper, with each task weighted equally.",
+              "Mean F1 within each of the five annotation types used in the paper, with each task weighted equally.",
               "Models appear in the same order in every panel, ranked by their overall mean."),
             NULL, 8.5, 0.34 * length(featured) + 1.2, "featured")
 
@@ -231,13 +238,13 @@ complexity_gap <- best_by_complexity |>
 low_gap <- best_by_complexity |> filter(complexity == "Low") |> summarise(gap = mean(API - `Open weights`)) |> pull(gap)
 stopifnot(complexity_gap > 0)
 complexity_caption <- sprintf(paste(
-  "The gap between API and open models grows with coding complexity. Comparing the best open model",
-  "on each task with the best API model, the open model is %.2f F1 %s on the %d low-complexity",
-  "tasks and trails by about %.2f F1 on medium- and high-complexity tasks. High-complexity tasks allow several labels per",
+  "The gap between API and open models increases with coding complexity. If I compare the best open model",
+  "on each task with the best API model on that task, the open model is %s by %.2f F1 on the %d low-complexity",
+  "tasks, while it trails by about %.2f F1 on medium- and high-complexity tasks. High-complexity tasks allow several labels per",
   "text or use at least eight labels in practice, and medium-complexity tasks use at least three labels",
-  "or have a prompt of 300 words or more. The number of labels in practice is the exponential of the",
-  "entropy of the gold labels, which counts rare labels less than common ones."),
-  abs(low_gap), if_else(low_gap <= 0, "ahead", "behind"), sum(meta$complexity == "Low"), complexity_gap)
+  "or have a prompt of 300 words or more. To count the number of labels in practice, I use the exponential",
+  "of the entropy of the gold labels, which gives less weight to rare labels than to common ones."),
+  if_else(low_gap <= 0, "ahead", "behind"), abs(low_gap), sum(meta$complexity == "Low"), complexity_gap)
 p <- complexity_plot(all_ids)
 save_figure(p, "fig-recent-complexity", "Coding complexity", complexity_caption, NULL, 7.5, 3.4, "featured")
 
@@ -268,12 +275,12 @@ p <- ggplot(tp, aes(seconds_per_item, mean_f1)) +
 minutes <- tp |> group_by(panel) |> summarise(lo = min(seconds_per_item) * 1000 / 60,
                                               hi = max(seconds_per_item) * 1000 / 60, n = n())
 speed_caption <- sprintf(paste(
-  "Each point shows one open-weight model: mean F1 against generation time per text, on one %s GPU.",
-  "Within each panel, the models coded the same texts with identical settings. The August runs let",
-  "vLLM process as many texts at once as memory allowed, while the September runs processed at most 16,",
-  "so times are comparable within a panel but not across panels. The %d models in the first panel need",
-  "%.1f to %.1f minutes per 1,000 texts, and the %d in the second %.1f to %.1f. Load and queue times",
-  "are excluded."),
+  "Each point shows one open-weight model, with mean F1 plotted against generation time per text on one %s GPU.",
+  "Within each panel, the models coded the same texts with identical settings. In the August runs,",
+  "vLLM processed as many texts at once as memory allowed, while in the September runs it processed at most 16,",
+  "which means that times can be compared within but not across panels. The %d models in the first panel need",
+  "%.1f to %.1f minutes per 1,000 texts, the %d models in the second panel need %.1f to %.1f minutes. Load and",
+  "queue times are not included."),
   sub("^NVIDIA ", "", sub(" Max-Q Workstation Edition", "", groups[[1]]$hardware)),
   minutes$n[1], minutes$lo[1], minutes$hi[1], minutes$n[2], minutes$lo[2], minutes$hi[2])
 save_figure(p, "fig-speed", "Quality and generation time", speed_caption,

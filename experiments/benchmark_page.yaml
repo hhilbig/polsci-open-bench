@@ -110,7 +110,7 @@ runs:
   gpu_memory: 96 GB
   cluster: UC Davis's Hive computing cluster
   runtime: vLLM 0.26
-  multi_gpu_note: Qwen3.8 Flash-Next needed two of these GPUs and a development version of vLLM.
+  multi_gpu_note: The only exception is Qwen3.8 Flash-Next, which needed two of these GPUs and a development version of vLLM.
   max_output_tokens: 256
-  token_limit_exception: Jev 1.13, which returns a choice among the labels rather than free text
+  token_limit_exception: Jev 1.13, which returns one of the labels rather than free text
   not_run_open: [Kimi K3, GLM-5.3, MiniMax M3]

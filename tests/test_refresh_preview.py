@@ -157,7 +157,7 @@ def test_no_javascript_fallbacks():
         root=Path(folder);(root/'release.json').write_text(json.dumps(release))
         page=(preview.build(root)/'index.html').read_text()
         assert 'Paired comparisons' not in page
-        assert 'that zero says nothing about the model' in page
+        assert 'which does not say anything about the model' in page
         assert 'F1 of 0 by convention' in (root/'preview/llm-benchmark/downloads/methodology.md').read_text()
 
 def test_build_preserves_aggregate_download_and_values():
