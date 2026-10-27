@@ -100,6 +100,31 @@ ALLOWED_INFERENCE_INTERFACES = {
     "vllm_responses_harmony",
 }
 
+# Remote code read before submission (October 2026 additions). vLLM runs these
+# models with its own implementations; the remote files supply only the config,
+# tokenizer and processor classes. Every Python file in the pinned snapshot must
+# appear here with this hash, so an unreviewed file cannot be imported.
+REVIEWED_REMOTE_CODE = {
+    ("XiaomiMiMo/MiMo-V2.6-Flash-MOPD", "b12f5573350bb1704513fcf119fca48e498b0423"): {
+        "configuration_mimo_v2.py": "773062ac9850b908eb54751b3e4dbe00e653c0e80595599409e97d0c1af2ce3e",
+        "modeling_mimo_v2.py": "a8c3cb3aae473bcc15f023010547c919f15eba6546e6ed7efb61a8937b12f3ad",
+        "dflash/dflash.py": "da5ab1738b954800950405131f1d1d97c3345f37e32676d511d3a25dfddd9d75",
+    },
+    ("nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16", "fb0ee0bc6b3f70342afd8d84cb80dbadbaa8a1fe"): {
+        "__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "configuration_nemotron_h_omni.py": "83f0c11fd9fb4da4a3de434759e1a18958b69f9fce672bafed4346a616ec20d4",
+        "configuration_radio.py": "b0f1ea1d8136272635bc8d6eeba0564542a4e48474ae98b2d8ed74b0fc5d20ce",
+        "image_processing_nemotron_h_omni.py": "0344e8432097e0718672d6529c68fd6095c36bea176500f131d203d1c7d497e0",
+        "modeling_nemotron_h_omni.py": "5c2ebc4f9326ccd52d4981e2a78df554c54f95291abdab0eeb5bf7b5952fbfbb",
+        "modeling_radio.py": "ceec4c1ecd2a2649a79e74b16a2ea4af60e6cd11fbecebbd681c33fb1fccb943",
+        "processing_nemotron_h_omni.py": "406bc7689161d19e2a01e34f0ac8a7cc1bbc927f664d03bae3d23d00ea27f11a",
+        "ultra_v3_reasoning_parser.py": "14e03de50a523c1b6b4542c22d38ec11cadc515a95752e5a4c8246967f620857",
+    },
+    ("internlm/Intern-S2-397B-FP8", "31b460c8ebb8bdda6f1d77651cfad7ab811910e3"): {
+        "tokenization_interns1.py": "e9827427dc82126ad638a3029af4a535a55eae3f88a885aa4dad0248721865f4",
+    },
+}
+
 
 def _f1_for_label(gold: pd.Series, predicted: pd.Series, label: Any) -> float:
     """Return sklearn-compatible one-vs-rest F1 without a runtime dependency."""
@@ -1429,6 +1454,17 @@ def create_llm(model: dict[str, Any], runtime: dict[str, Any], generation: dict[
             {"require_exact_snapshot_path": True, "require_offline_inference": True}, model)
         if file_sha256(snapshot / "configuration_minimax_m3_vl.py") != expected:
             raise BakeoffError("Reviewed remote configuration checksum mismatch")
+        kwargs.update(trust_remote_code=True, code_revision=model["revision"])
+    elif model.get("reviewed_remote_code"):
+        expected = REVIEWED_REMOTE_CODE.get((model["model_id"], model["revision"]))
+        if expected is None:
+            raise BakeoffError("Remote code has not been reviewed")
+        snapshot = assert_compact_offline_provenance(
+            {"require_exact_snapshot_path": True, "require_offline_inference": True}, model)
+        observed = {path.relative_to(snapshot).as_posix(): file_sha256(path)
+                    for path in snapshot.rglob("*.py")}
+        if observed != expected:
+            raise BakeoffError("Snapshot Python files differ from the reviewed remote code")
         kwargs.update(trust_remote_code=True, code_revision=model["revision"])
     kwargs.update(dict(model.get("llm_kwargs", {})))
     return LLM(**kwargs), kwargs

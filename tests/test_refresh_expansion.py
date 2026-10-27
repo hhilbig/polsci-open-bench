@@ -179,6 +179,58 @@ class ExpansionRuntimeGuardTests(unittest.TestCase):
         provenance.assert_not_called()
 
 
+class ReviewedRemoteCodeTests(unittest.TestCase):
+    """Snapshot Python files must match the reviewed set exactly."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.snapshot = Path(self.temp.name) / 'snapshot'
+        (self.snapshot / 'pkg').mkdir(parents=True)
+        (self.snapshot / 'config.py').write_text('A = 1\n')
+        (self.snapshot / 'pkg/tok.py').write_text('B = 2\n')
+        (self.snapshot / 'weights.safetensors').write_text('not python')
+        self.key = ('org/model', 'b' * 40)
+        self.reviewed = {path: benchmark.file_sha256(self.snapshot / path)
+                         for path in ('config.py', 'pkg/tok.py')}
+        self.model = {'model_id': self.key[0], 'revision': self.key[1],
+                      'reviewed_remote_code': True}
+        self.runtime = {'max_model_len': 16384, 'gpu_memory_utilization': .9}
+        self.generation = {'seed': 20260910}
+        self.llm = MagicMock()
+        modules = patch.dict(sys.modules, {'vllm': SimpleNamespace(LLM=self.llm)})
+        modules.start()
+        self.addCleanup(modules.stop)
+
+    def create(self, reviewed):
+        with patch.dict(benchmark.REVIEWED_REMOTE_CODE, {self.key: reviewed}), \
+                patch.object(benchmark, 'assert_compact_offline_provenance',
+                             return_value=self.snapshot):
+            return benchmark.create_llm(self.model, self.runtime, self.generation)
+
+    def test_matching_files_enable_pinned_remote_code(self):
+        _, kwargs = self.create(self.reviewed)
+        self.assertTrue(kwargs['trust_remote_code'])
+        self.assertEqual(kwargs['code_revision'], self.key[1])
+
+    def test_changed_extra_or_missing_file_rejected(self):
+        changed = dict(self.reviewed, **{'config.py': '0' * 64})
+        missing = {'config.py': self.reviewed['config.py']}
+        extra = dict(self.reviewed, **{'other.py': '0' * 64})
+        for reviewed in (changed, missing, extra):
+            with self.subTest(reviewed=sorted(reviewed)):
+                with self.assertRaisesRegex(benchmark.BakeoffError, 'differ from the reviewed'):
+                    self.create(reviewed)
+        self.llm.assert_not_called()
+
+    def test_unlisted_model_rejected_before_snapshot_access(self):
+        with patch.object(benchmark, 'assert_compact_offline_provenance') as provenance:
+            with self.assertRaisesRegex(benchmark.BakeoffError, 'has not been reviewed'):
+                benchmark.create_llm(dict(self.model, revision='c' * 40),
+                                     self.runtime, self.generation)
+        provenance.assert_not_called()
+
+
 class MiniMaxConfigurationTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()

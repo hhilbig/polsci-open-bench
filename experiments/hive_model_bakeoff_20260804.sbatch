@@ -97,14 +97,18 @@ fi
 
 GPU_NAME=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -1)
 GPU_NAME_LOWER=$(printf '%s' "$GPU_NAME" | tr '[:upper:]' '[:lower:]')
-if [[ "$GPU_NAME_LOWER" == *blackwell* || "$GPU_NAME_LOWER" == *"rtx pro 6000"* ]]; then
+# PIP_CUDA_ANY_GPU=1 uses the pip CUDA toolchain on A100s too, for runtimes
+# (vLLM 0.32, torch cu130) that the cuda/12.6.2 module does not match.
+if [[ "$GPU_NAME_LOWER" == *blackwell* || "$GPU_NAME_LOWER" == *"rtx pro 6000"* \
+      || "${PIP_CUDA_ANY_GPU:-0}" == "1" ]]; then
     if [[ -n "$CUDA_TOOLKIT_META_VERSION" ]]; then
-        if [[ "$CUDA_TOOLKIT_META_VERSION" != "13.0.2" ]]; then
+        # 13.0.3 (required by torch 2.13) pins the same compiler components as 13.0.2.
+        if [[ "$CUDA_TOOLKIT_META_VERSION" != "13.0.2" && "$CUDA_TOOLKIT_META_VERSION" != "13.0.3" ]]; then
             echo "no audited CUDA component pins for toolkit $CUDA_TOOLKIT_META_VERSION" >&2
             exit 4
         fi
         uv pip install "${UV_PIP_FLAGS[@]}" \
-            "cuda-toolkit[cccl,crt,cudart,nvcc,nvrtc,nvvm]==13.0.2" \
+            "cuda-toolkit[cccl,crt,cudart,nvcc,nvrtc,nvvm]==$CUDA_TOOLKIT_META_VERSION" \
             "nvidia-cuda-cccl==13.0.85" \
             "nvidia-cuda-crt==13.0.88" \
             "nvidia-cuda-nvcc==13.0.88" \
