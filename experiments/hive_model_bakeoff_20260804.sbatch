@@ -34,6 +34,9 @@ DEFAULT_BAKEOFF_RUNTIME_LOCK="/nfs/hive/scratch/$USER/polsci-bakeoff-vllm-0.26.0
 export BAKEOFF_RUNTIME_LOCK="${BAKEOFF_RUNTIME_LOCK:-$DEFAULT_BAKEOFF_RUNTIME_LOCK}"
 BAKEOFF_RUNTIME_BASE_LOCK="${BAKEOFF_RUNTIME_BASE_LOCK:-$DEFAULT_BAKEOFF_RUNTIME_LOCK}"
 CUDA_TOOLKIT_META_VERSION="${CUDA_TOOLKIT_META_VERSION:-}"
+# uv's auto backend picks cu132 torch on Hive's CUDA 13.0 drivers (Oct 2026), so
+# runtimes that need a matching toolkit pass an explicit backend such as cu130.
+TORCH_BACKEND="${TORCH_BACKEND:-auto}"
 mkdir -p "$TMPDIR" "$HF_HOME" "$PIP_CACHE_DIR" "$UV_PYTHON_INSTALL_DIR" "$UV_CACHE_DIR"
 
 if [[ "$MODEL_KEY" == gpt_oss_* ]]; then
@@ -79,14 +82,14 @@ if [[ "${OFFLINE_INSTALL:-0}" == "1" ]]; then
 fi
 CREATE_RUNTIME_LOCK=0
 if [[ -f "$BAKEOFF_RUNTIME_LOCK" ]]; then
-    uv pip install "${UV_PIP_FLAGS[@]}" --torch-backend=auto -r "$BAKEOFF_RUNTIME_LOCK"
+    uv pip install "${UV_PIP_FLAGS[@]}" --torch-backend="$TORCH_BACKEND" -r "$BAKEOFF_RUNTIME_LOCK"
 elif [[ -f "$BAKEOFF_RUNTIME_BASE_LOCK" ]]; then
-    uv pip install "${UV_PIP_FLAGS[@]}" --torch-backend=auto -r "$BAKEOFF_RUNTIME_BASE_LOCK"
+    uv pip install "${UV_PIP_FLAGS[@]}" --torch-backend="$TORCH_BACKEND" -r "$BAKEOFF_RUNTIME_BASE_LOCK"
     CREATE_RUNTIME_LOCK=1
 else
     # BAKEOFF_VLLM_VERSION lets a new runtime (no lock yet) start from another vLLM
     # release, e.g. 0.28.0 for architectures 0.26 lacks; the first run writes its lock.
-    uv pip install "${UV_PIP_FLAGS[@]}" "vllm==${BAKEOFF_VLLM_VERSION:-0.26.0}" --torch-backend=auto
+    uv pip install "${UV_PIP_FLAGS[@]}" "vllm==${BAKEOFF_VLLM_VERSION:-0.26.0}" --torch-backend="$TORCH_BACKEND"
     uv pip install "${UV_PIP_FLAGS[@]}" \
         "pandas==2.3.3" \
         "PyYAML==6.0.3" \

@@ -14,7 +14,7 @@ import yaml
 
 from hive_vllm_benchmark import REVIEWED_REMOTE_CODE, load_config
 
-OUTPUT = Path('experiments/refresh_october_20261026')
+STAMP = '20261026'
 CUDA_COMPONENTS = {
     'nvidia-cuda-cccl': '13.0.85',
     'nvidia-cuda-crt': '13.0.88',
@@ -44,7 +44,8 @@ MODELS = {
 }
 
 
-def configure(output=OUTPUT):
+def configure(stamp=STAMP, output=None):
+    output = output or Path(f'experiments/refresh_october_{stamp}')
     commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
     base = yaml.safe_load(Path('experiments/refresh_hive_20260914_pilot.yaml').read_text())
     base['benchmark_commit'] = commit
@@ -66,7 +67,7 @@ def configure(output=OUTPUT):
         config['promotion_gate']['baseline_model_key'] = key
         for stage, count in [('pilot', 68), ('remainder', 3332)]:
             staged = deepcopy(config)
-            staged['run_id'] = f'refresh_october_{key}_{stage}_20261026'
+            staged['run_id'] = f'refresh_october_{key}_{stage}_{stamp}'
             staged['refresh_sample']['stage'] = stage
             staged['task_scope']['expected_items'] = count
             path = Path(output) / key / f'{stage}.yaml'
@@ -83,5 +84,7 @@ def configure(output=OUTPUT):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output', type=Path, default=OUTPUT)
+    # A retry gets a new stamp, so a failed attempt's configs are never rewritten.
+    parser.add_argument('--stamp', default=STAMP)
+    parser.add_argument('--output', type=Path)
     print(json.dumps(configure(**vars(parser.parse_args())), indent=2))
