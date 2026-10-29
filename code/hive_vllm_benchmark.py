@@ -46,6 +46,7 @@ from typing import Any
 
 import pandas as pd
 import yaml
+from packaging.version import Version
 
 from benchmark import parse_content
 from scoring import ordinal_metrics, score_metrics
@@ -1380,7 +1381,8 @@ def assert_runtime_versions(runtime: dict[str, Any], details: dict[str, Any]) ->
     expected_toolkit = runtime.get("cuda_toolkit_meta_version")
     if expected_toolkit is not None:
         actual_toolkit = details["packages"].get("cuda-toolkit")
-        if actual_toolkit != str(expected_toolkit):
+        # The wheel reports 13.0.3 as "13.0.3.0"; PEP 440 treats the two as equal.
+        if actual_toolkit is None or Version(actual_toolkit) != Version(str(expected_toolkit)):
             raise BakeoffError(
                 "CUDA toolkit meta-package mismatch: "
                 f"expected {expected_toolkit}, observed {actual_toolkit}"
