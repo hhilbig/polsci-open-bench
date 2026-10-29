@@ -20,6 +20,13 @@ IGNORE_NOTE appended to the system prompt (condition "ignore"), into
 IGNORE_RUN_DIR. Same items, so the results compare item by item with the
 as-written and masked conditions of the main run.
 
+With --title, runs the manifesto-title experiment instead (tasks_party_title/,
+code/build_party_title_tasks.py): each sampled economic sentence is sent with
+the manifesto title hidden and shown, into TITLE_RUN_DIR. Sample: all
+semi-expert-experiment sentences plus a seeded random TITLE_N of the expert-pair
+sentences (sized from the open-model runs, code/analyze_title_experiment.py
+--precision).
+
 Usage:
   python3 code/run_masking_openrouter.py --pilot 5      # 5 items per task per model
   python3 code/run_masking_openrouter.py                # full sample, resumes
@@ -49,6 +56,8 @@ IGNORE_RUN_DIR = REPO / "output" / "sidecar" / "task_ext_20261018_ignore_api"
 IGNORE_NOTE = ("The text may name political parties or politicians. Judge only the position "
                "the text itself expresses. Do not let the names, or anything you know about "
                "those parties or people, affect your answer.")
+TITLE_RUN_DIR = REPO / "output" / "sidecar" / "task_ext_20261019_title_api"
+TITLE_N = 1000
 ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
 TASKS = ["benoit_manifesto_economic_position", "benoit_manifesto_social_position",
          "lemens_gallego_tweet_position"]
@@ -70,6 +79,11 @@ MODELS = {
     "gemini_3_8_flash": {"id": "google/gemini-3.8-flash", "reasoning": {"effort": "minimal"},
                          "max_tokens": 1024},
     "claude_sonnet_5": {"id": "anthropic/claude-sonnet-5", "reasoning": {"enabled": False}},
+    # Added 2026-10-18 as a current flagship, to answer "the models are just weak".
+    # Reasoning cannot be disabled on this endpoint (HTTP 400), so it runs at the
+    # lowest effort with a larger output limit, like Gemini.
+    "gpt_6_1_sol": {"id": "openai/gpt-6.1-sol", "reasoning": {"effort": "minimal"},
+                    "max_tokens": 1024},
 }
 
 lock = threading.Lock()
@@ -95,6 +109,19 @@ def sample_items(task, pilot):
     if pilot:
         keep = [k for k in keep if k[2]][:pilot - pilot // 2] + [k for k in keep if not k[2]][:pilot // 2]
     return orig, mask, keep
+
+
+def sample_title_items(pilot):
+    hidden, shown = (task_registry.load_task_definitions(
+        task_manifest=REPO / "tasks_party_title" / f"benoit_title_economic_position_{c}.yaml")[0]
+        for c in ("hidden", "shown"))
+    a, b = hidden["loader"](), shown["loader"]()
+    assert [x["item_id"] for x in a] == [x["item_id"] for x in b]
+    data = pd.read_csv(REPO / "data" / "benoit_title_economic_position.csv").set_index("source_id")
+    expert = sorted(data.index[data.in_expert_pairs])
+    ids = set(random.Random(f"{SEED}-title").sample(expert, TITLE_N)) | set(data.index[data.in_semi_expert_experiment])
+    keep = [(x, y) for x, y in zip(a, b) if x["item_id"] in ids]
+    return hidden, shown, keep[:pilot] if pilot else keep
 
 
 def call(key, model, system_prompt, user_content, task_def):
@@ -174,21 +201,32 @@ def main():
     ap.add_argument("--job-id", default=None, help="jobstatus id for menu-bar progress")
     ap.add_argument("--ignore-names", action="store_true",
                     help="as-written text with IGNORE_NOTE added to the prompt")
+    ap.add_argument("--title", action="store_true", help="manifesto title hidden vs shown")
     args = ap.parse_args()
     key = (REPO / ".openrouter_api_key").read_text().strip()
-    out_root = (IGNORE_RUN_DIR if args.ignore_names else RUN_DIR) / (f"pilot{args.pilot}" if args.pilot else "full")
+    out_root = (TITLE_RUN_DIR if args.title else IGNORE_RUN_DIR if args.ignore_names else RUN_DIR) / (f"pilot{args.pilot}" if args.pilot else "full")
     ledger = out_root / "calls.jsonl"
     out_root.mkdir(parents=True, exist_ok=True)
     done = set()
     if ledger.exists():
         for line in ledger.read_text().splitlines():
             r = json.loads(line)
-            done.add((r["model"], r["task"], r["item_id"], r["condition"]))
+            # Failed calls (e.g. provider 429s) are retried on the next start.
+            if not str(r.get("parse_error") or "").startswith("call_failed"):
+                done.add((r["model"], r["task"], r["item_id"], r["condition"]))
             spent["usd"] += r.get("cost_usd") or 0.0
     print(f"resuming with {len(done)} calls done, ${spent['usd']:.4f} spent", flush=True)
 
     jobs = []
-    for task in TASKS:
+    if args.title:
+        hidden, shown, keep = sample_title_items(args.pilot)
+        print(f"title experiment: {len(keep)} economic sentences", flush=True)
+        for model in args.models.split(","):
+            for x, y in keep:
+                for cond, td, it in (("hidden", hidden, x), ("shown", shown, y)):
+                    if (model, td["name"], it["item_id"], cond) not in done:
+                        jobs.append((model, td, td["prompt_path"].read_text(), it, cond))
+    for task in ([] if args.title else TASKS):
         orig, mask, keep = sample_items(task, args.pilot)
         print(f"{task}: {len(keep)} items ({sum(k[2] for k in keep)} named)", flush=True)
         prompts = {"orig": orig["prompt_path"].read_text(), "masked": mask["prompt_path"].read_text()}
@@ -233,8 +271,13 @@ def main():
     # Write per-model task files in the Hive layout for the analysis script.
     calls = pd.read_json(ledger, lines=True)
     calls = calls[calls.model.isin(args.models.split(","))]
+    # Keep one row per call: a successful retry replaces the failed attempt.
+    calls["failed"] = calls.parse_error.astype(str).str.startswith("call_failed")
+    calls = (calls.sort_values("failed", kind="stable")
+             .drop_duplicates(["model", "task", "item_id", "condition"]).drop(columns="failed"))
     for (model, task, cond), g in calls.groupby(["model", "task", "condition"]):
-        d = out_root / cond / model / "tasks"
+        # Title task names already carry the condition; the analysis reads <model>/tasks/.
+        d = out_root / model / "tasks" if args.title else out_root / cond / model / "tasks"
         d.mkdir(parents=True, exist_ok=True)
         g.drop(columns="condition").to_csv(d / f"{task}.csv", index=False)
 
