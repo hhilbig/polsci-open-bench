@@ -28,7 +28,10 @@ MODELS = {
         hardware=dict(nodes=1, gpu_count=4, gpu_type='6000_blackwell'),
         model=dict(model_id='XiaomiMiMo/MiMo-V2.6-Flash-MOPD',
                    revision='b12f5573350bb1704513fcf119fca48e498b0423',
-                   display_name='MiMo-V2.6-Flash MOPD FP8', quantization='FP8 (official)')),
+                   display_name='MiMo-V2.6-Flash MOPD FP8', quantization='FP8 (official)'),
+        # vLLM 0.32's CUTLASS block-scaled FP8 GEMM fails on SM120 for this model
+        # (job 25197208, "Invalid status"); the Triton kernel takes the same weights.
+        llm_kwargs=dict(linear_backend='triton')),
     'nemotron3_5_super_vl_bf16': dict(
         hardware=dict(nodes=1, gpu_count=4, gpu_type='6000_blackwell'),
         model=dict(model_id='nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16',
@@ -59,7 +62,8 @@ def configure(stamp=STAMP, output=None):
         if (model['model_id'], model['revision']) not in REVIEWED_REMOTE_CODE:
             raise ValueError(f'{key} remote code has not been reviewed')
         model.update(reviewed_remote_code=True,
-                     llm_kwargs=dict(tensor_parallel_size=spec['hardware']['gpu_count']),
+                     llm_kwargs=dict(tensor_parallel_size=spec['hardware']['gpu_count'],
+                                     **spec.get('llm_kwargs', {})),
                      chat_template_kwargs=dict(enable_thinking=False))
         config = deepcopy(base)
         config['hardware'] = spec['hardware']
