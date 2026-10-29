@@ -1,0 +1,53 @@
+version: 1
+run_id: refresh_october_intern_s2_397b_fp8_pilot_20261026
+benchmark_commit: a6faeb53b08a1399eb44e762055c1bbaf63f34c4
+refresh_sample:
+  panel_sha256: 20294ce2229b45dd3d0aa97f5e52f1ebc2292c6bae186475d998e00e8140bf5a
+  stage: pilot
+task_scope:
+  tasks_dir: tasks
+  expected_tasks: 34
+  expected_items: 68
+runtime:
+  vllm_version: 0.32.0
+  python_version: '3.12'
+  cuda_toolkit_meta_version: 13.0.3
+  cuda_component_versions:
+    nvidia-cuda-cccl: 13.0.85
+    nvidia-cuda-crt: 13.0.88
+    nvidia-cuda-nvcc: 13.0.88
+    nvidia-cuda-nvrtc: 13.0.88
+    nvidia-cuda-runtime: 13.0.96
+    nvidia-nvvm: 13.0.88
+  max_model_len: 16384
+  gpu_memory_utilization: 0.9
+generation:
+  temperature: 0.0
+  max_tokens: 256
+  seed: 20260910
+  enable_thinking: false
+  structured_outputs: json_schema
+  prompt_margin_tokens: 128
+promotion_gate:
+  baseline_model_key: intern_s2_397b_fp8
+  minimum_mean_f1_gain: 0.01
+  equivalence_tolerance: 0.005
+  maximum_parse_error_increase: 0.005
+  material_throughput_ratio: 1.25
+models:
+  intern_s2_397b_fp8:
+    role: refresh_candidate_no_accuracy_selection
+    model_id: internlm/Intern-S2-397B-FP8
+    revision: 31b460c8ebb8bdda6f1d77651cfad7ab811910e3
+    display_name: Intern-S2 397B FP8
+    quantization: FP8 (official)
+    language_model_only: true
+    reviewed_remote_code: true
+    llm_kwargs:
+      tensor_parallel_size: 8
+    chat_template_kwargs:
+      enable_thinking: false
+hardware:
+  nodes: 1
+  gpu_count: 8
+  gpu_type: a100

@@ -1,0 +1,53 @@
+version: 1
+run_id: refresh_october_nemotron3_5_super_vl_bf16_pilot_20261026
+benchmark_commit: a6faeb53b08a1399eb44e762055c1bbaf63f34c4
+refresh_sample:
+  panel_sha256: 20294ce2229b45dd3d0aa97f5e52f1ebc2292c6bae186475d998e00e8140bf5a
+  stage: pilot
+task_scope:
+  tasks_dir: tasks
+  expected_tasks: 34
+  expected_items: 68
+runtime:
+  vllm_version: 0.32.0
+  python_version: '3.12'
+  cuda_toolkit_meta_version: 13.0.3
+  cuda_component_versions:
+    nvidia-cuda-cccl: 13.0.85
+    nvidia-cuda-crt: 13.0.88
+    nvidia-cuda-nvcc: 13.0.88
+    nvidia-cuda-nvrtc: 13.0.88
+    nvidia-cuda-runtime: 13.0.96
+    nvidia-nvvm: 13.0.88
+  max_model_len: 16384
+  gpu_memory_utilization: 0.9
+generation:
+  temperature: 0.0
+  max_tokens: 256
+  seed: 20260910
+  enable_thinking: false
+  structured_outputs: json_schema
+  prompt_margin_tokens: 128
+promotion_gate:
+  baseline_model_key: nemotron3_5_super_vl_bf16
+  minimum_mean_f1_gain: 0.01
+  equivalence_tolerance: 0.005
+  maximum_parse_error_increase: 0.005
+  material_throughput_ratio: 1.25
+models:
+  nemotron3_5_super_vl_bf16:
+    role: refresh_candidate_no_accuracy_selection
+    model_id: nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16
+    revision: fb0ee0bc6b3f70342afd8d84cb80dbadbaa8a1fe
+    display_name: Nemotron 3.5 Super VL 120B-A12B BF16
+    quantization: BF16
+    language_model_only: true
+    reviewed_remote_code: true
+    llm_kwargs:
+      tensor_parallel_size: 4
+    chat_template_kwargs:
+      enable_thinking: false
+hardware:
+  nodes: 1
+  gpu_count: 4
+  gpu_type: 6000_blackwell
