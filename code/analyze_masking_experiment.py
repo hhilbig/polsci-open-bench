@@ -17,14 +17,27 @@ Benoit manifesto tasks (codes -2..2, positive = right / conservative):
   back and this is negative. The same contrast on unchanged passages is the
   placebo. 95% intervals from a bootstrap over manifestos.
 - Also the Conservative-minus-Labour gap in error (model minus expert mean,
-  with expert modal-code fixed effects) before and after masking.
+  with expert modal-code fixed effects) before and after masking, with the
+  same manifesto bootstrap.
 
 Le Mens-Gallego tweets (0-100, NA scored as 50):
 - Mean change for Republican minus Democratic tweets, changed vs unchanged
   tweets, item bootstrap; NA rates by party before and after masking.
+- Republican-minus-Democratic gap in error (model minus mean human rating)
+  before and after masking, and mean absolute error. The human raters saw the
+  tweets with names, so a positive gap means the model separates the parties
+  more than human readers did.
 
-Writes CSVs to output/sidecar/task_ext_20261010_masked/analysis/.
+Writes CSVs to output/sidecar/task_ext_20261010_masked/analysis/, including
+per-tweet scores (tweet_items.csv).
+
+With --run api, analyses the commercial-model run instead
+(code/run_masking_openrouter.py: both conditions run fresh, every named item
+plus a 25% placebo sample) and writes to
+output/sidecar/task_ext_20261011_masked_api/analysis/. Items whose call failed
+in either condition are dropped and counted.
 """
+import argparse
 from pathlib import Path
 
 import numpy as np
@@ -56,15 +69,37 @@ def ols(y, X):
     return beta
 
 
+def use_api_run():
+    global ORIG, MASK, OUT, MODELS, N_ITEMS
+    api = REPO / "output" / "sidecar" / "task_ext_20261011_masked_api"
+    ORIG, MASK, OUT = api / "full" / "orig", api / "full" / "masked", api / "analysis"
+    MODELS = {"gemini_3_8_flash": "Gemini 3.8 Flash", "deepseek_v4_pro": "DeepSeek V4 Pro",
+              "gpt_5_6_terra": "GPT-5.6 Terra", "claude_sonnet_5": "Claude Sonnet 5"}
+    N_ITEMS = None
+
+
+N_ITEMS = 500
+
+
+def drop_failed(f, what):
+    bad = f.filter(like="parse_error").apply(
+        lambda c: c.astype(str).str.startswith(("call_failed", "parse_fail", "invalid"))).any(axis=1)
+    if bad.any():
+        print(f"{what}: dropping {int(bad.sum())} items with a failed call or parse")
+    return f[~bad]
+
+
 def benoit_items(domain, model_key):
     task = f"benoit_manifesto_{domain}_position"
     data = pd.read_csv(REPO / "data" / f"{task}_masked.csv")
     col = f"pred_{domain}_position"
-    orig = pd.read_csv(ORIG / model_key / "tasks" / f"{task}.csv")[["item_id", col]]
-    mask = pd.read_csv(MASK / model_key / "tasks" / f"{task}_masked.csv")[["item_id", col]]
+    cols = ["item_id", col, "parse_error"]
+    orig = pd.read_csv(ORIG / model_key / "tasks" / f"{task}.csv")[cols]
+    mask = pd.read_csv(MASK / model_key / "tasks" / f"{task}_masked.csv")[cols]
     f = (orig.merge(mask, on="item_id", suffixes=("_orig", "_mask"), validate="one_to_one")
          .merge(data, left_on="item_id", right_on="source_id", validate="one_to_one"))
-    assert len(f) == 500
+    assert N_ITEMS is None or len(f) == N_ITEMS
+    f = drop_failed(f, f"{model_key} {domain}")
     f["code_orig"] = f[f"{col}_orig"].map(CODES[domain])
     f["code_mask"] = f[f"{col}_mask"].map(CODES[domain])
     assert f[["code_orig", "code_mask"]].notna().all().all()
@@ -87,6 +122,11 @@ def con_lab_error_gap(fr, code_col):
     return ols(y, X.to_numpy(float))[-2]
 
 
+def benoit_stats(fr):
+    return (con_lab_change(fr), con_lab_error_gap(fr, "code_orig"),
+            con_lab_error_gap(fr, "code_mask"))
+
+
 def cluster_boot(fr, stat):
     groups = {k: g for k, g in fr.groupby("source_manifesto")}
     keys = list(groups)
@@ -95,7 +135,7 @@ def cluster_boot(fr, stat):
         b = pd.concat([groups[k] for k in np.random.choice(keys, len(keys))])
         if {"Conservatives", "Labour"} <= set(b.source_party):
             draws.append(stat(b))
-    return np.nanpercentile(draws, [2.5, 97.5])
+    return np.nanpercentile(np.array(draws), [2.5, 97.5], axis=0)
 
 
 def benoit_results():
@@ -104,18 +144,20 @@ def benoit_results():
         for model_key, model in MODELS.items():
             f = benoit_items(domain, model_key)
             for named, g in f.groupby("masked_changed"):
-                lo, hi = cluster_boot(g, con_lab_change)
+                lo, hi = cluster_boot(g, benoit_stats)
                 rows.append({
                     "domain": domain, "model": model,
                     "passage": "named" if named else "unchanged (placebo)",
                     "n": len(g),
                     "share_code_changed": (g.change != 0).mean(),
-                    "con_minus_lab_change": con_lab_change(g), "lo": lo, "hi": hi,
+                    "con_minus_lab_change": con_lab_change(g), "lo": lo[0], "hi": hi[0],
                     "mean_change_con": g.loc[g.source_party == "Conservatives", "change"].mean(),
                     "mean_change_lab": g.loc[g.source_party == "Labour", "change"].mean(),
                     "mean_change_ld": g.loc[g.source_party == "Liberal Democrats", "change"].mean(),
                     "con_lab_error_gap_orig": con_lab_error_gap(g, "code_orig"),
+                    "gap_orig_lo": lo[1], "gap_orig_hi": hi[1],
                     "con_lab_error_gap_mask": con_lab_error_gap(g, "code_mask"),
+                    "gap_mask_lo": lo[2], "gap_mask_hi": hi[2],
                 })
     return pd.DataFrame(rows)
 
@@ -123,26 +165,40 @@ def benoit_results():
 def tweet_results():
     task = "lemens_gallego_tweet_position"
     data = pd.read_csv(REPO / "data" / f"{task}_masked.csv")
-    rows = []
+    rows, items = [], []
     for model_key, model in MODELS.items():
         cols = ["item_id", "pred_score", "parse_error"]
         orig = pd.read_csv(ORIG / model_key / "tasks" / f"{task}.csv")[cols]
         mask = pd.read_csv(MASK / model_key / "tasks" / f"{task}_masked.csv")[cols]
         f = (orig.merge(mask, on="item_id", suffixes=("_orig", "_mask"), validate="one_to_one")
              .merge(data, left_on="item_id", right_on="source_id", validate="one_to_one"))
+        f = drop_failed(f, f"{model_key} tweets")
         for v in ("orig", "mask"):
             f[f"na_{v}"] = f[f"parse_error_{v}"].astype(str).eq("not_applicable")
             f[f"score_{v}"] = f[f"pred_score_{v}"].where(~f[f"na_{v}"], 50.0)
         f["change"] = f.score_mask - f.score_orig
         f["rep"] = f.source_party == "Republican Party"
-        stat = lambda g: g.loc[g.rep, "change"].mean() - g.loc[~g.rep, "change"].mean()
+        items.append(f[["item_id", "source_party", "masked_changed", "human_position_mean",
+                        "score_orig", "score_mask"]].assign(model=model))
+        for v in ("orig", "mask"):
+            f[f"err_{v}"] = f[f"score_{v}"] - f.human_position_mean
+        gap = lambda g, c: g.loc[g.rep, c].mean() - g.loc[~g.rep, c].mean()
+        # change, then Rep-minus-Dem error gap (model minus human mean) as written
+        # and masked: how much more the model separates the parties than the
+        # human raters, who saw the tweets with names
+        stat = lambda g: [gap(g, "change"), gap(g, "err_orig"), gap(g, "err_mask")]
         for named, g in f.groupby("masked_changed"):
             boot = [stat(g.sample(len(g), replace=True)) for _ in range(N_BOOT)]
-            lo, hi = np.percentile(boot, [2.5, 97.5])
+            lo, hi = np.percentile(np.array(boot), [2.5, 97.5], axis=0)
+            est = stat(g)
             rows.append({
                 "model": model, "passage": "named" if named else "unchanged (placebo)",
                 "n": len(g), "n_rep": int(g.rep.sum()),
-                "rep_minus_dem_change": stat(g), "lo": lo, "hi": hi,
+                "rep_minus_dem_change": est[0], "lo": lo[0], "hi": hi[0],
+                "rep_dem_error_gap_orig": est[1], "gap_orig_lo": lo[1], "gap_orig_hi": hi[1],
+                "rep_dem_error_gap_mask": est[2], "gap_mask_lo": lo[2], "gap_mask_hi": hi[2],
+                "mae_orig": f.loc[g.index, "err_orig"].abs().mean(),
+                "mae_mask": f.loc[g.index, "err_mask"].abs().mean(),
                 "mean_change_rep": g.loc[g.rep, "change"].mean(),
                 "mean_change_dem": g.loc[~g.rep, "change"].mean(),
                 "na_rate_orig_rep": g.loc[g.rep, "na_orig"].mean(),
@@ -150,10 +206,16 @@ def tweet_results():
                 "na_rate_orig_dem": g.loc[~g.rep, "na_orig"].mean(),
                 "na_rate_mask_dem": g.loc[~g.rep, "na_mask"].mean(),
             })
+    # per-tweet scores, for examples in the figures
+    pd.concat(items).to_csv(OUT / "tweet_items.csv", index=False)
     return pd.DataFrame(rows)
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--run", choices=["open", "api"], default="open")
+    if ap.parse_args().run == "api":
+        use_api_run()
     OUT.mkdir(parents=True, exist_ok=True)
     pd.set_option("display.width", 250)
     pd.set_option("display.max_columns", 30)
