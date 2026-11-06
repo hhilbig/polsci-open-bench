@@ -98,7 +98,7 @@ else
     CREATE_RUNTIME_LOCK=1
 fi
 
-GPU_NAME=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -1)
+GPU_NAME=$(nvidia-smi --query-gpu=name --format=csv,noheader | awk 'NR==1')
 GPU_NAME_LOWER=$(printf '%s' "$GPU_NAME" | tr '[:upper:]' '[:lower:]')
 # PIP_CUDA_ANY_GPU=1 uses the pip CUDA toolchain on A100s too, for runtimes
 # (vLLM 0.32, torch cu130) that the cuda/12.6.2 module does not match.
@@ -121,7 +121,7 @@ if [[ "$GPU_NAME_LOWER" == *blackwell* || "$GPU_NAME_LOWER" == *"rtx pro 6000"* 
     else
         uv pip install "${UV_PIP_FLAGS[@]}" "nvidia-cuda-nvcc>=13,<14"
     fi
-    NVCC_PATH=$(find "$SCRATCH_ROOT/venv" -name nvcc -type f | head -1)
+    NVCC_PATH=$(find "$SCRATCH_ROOT/venv" -name nvcc -type f | awk 'NR==1')
     if [[ -z "$NVCC_PATH" ]]; then
         echo "Blackwell job could not find nvcc after installation" >&2
         exit 4
