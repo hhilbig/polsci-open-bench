@@ -12,12 +12,15 @@ rather than silently falling back.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_CONFIG = ROOT / 'experiments/benchmark_page.yaml'
+# BENCHMARK_PAGE_CONFIG points the page build at another config, e.g. a preview of
+# a release that is not published yet; the published page uses the default.
+DEFAULT_CONFIG = ROOT / os.environ.get('BENCHMARK_PAGE_CONFIG', 'experiments/benchmark_page.yaml')
 REQUIRED_INPUTS = ['release_dir', 'panel', 'taxonomy', 'cost_table', 'api_source',
                    'open_manifest', 'api_manifests', 'speed_runs']
 REQUIRED_SITE = ['page_url', 'data_url', 'code_url', 'author_url', 'homepage_repo',
