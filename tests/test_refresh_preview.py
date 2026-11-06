@@ -58,7 +58,7 @@ def test_page_has_no_tables_or_task_selector():
 def test_static_page_and_pending():
     page=preview.render(data())
     assert 'Pilot queued' in page and 'Local preview, not published' in page
-    assert 'The open-weight models are a selection rather than a complete list.' in page
+    assert 'The open-weight models on this page are a selection rather than a complete list' in page
     assert 'name="robots" content="noindex"' in page
 
 def test_deepseek_observed_run_dates_are_required():

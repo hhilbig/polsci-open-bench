@@ -37,8 +37,8 @@ theme_clara <- function(base_size = 11) {
 
 models <- bind_rows(lapply(manifest$models, as_tibble)) |>
   mutate(group = if_else(kind == "API", "API", "Open weights"),
-         label = if_else(hardware_tier == "multi-gpu", paste0(label, " (2 GPUs)"), label),
-         short_label = if_else(hardware_tier == "multi-gpu", paste0(short_label, " (2 GPUs)"), short_label))
+         label = if_else(hardware_tier == "multi-gpu", sprintf("%s (%d GPUs)", label, as.integer(gpus)), label),
+         short_label = if_else(hardware_tier == "multi-gpu", sprintf("%s (%d GPUs)", short_label, as.integer(gpus)), short_label))
 featured <- unlist(manifest$featured_models)
 stopifnot(all(featured %in% models$model))
 meta <- bind_rows(lapply(manifest$task_metadata, function(x) tibble(
@@ -50,7 +50,7 @@ scores <- release$tasks |> select(model, task, headline_f1) |>
   left_join(meta, by = "task")
 stopifnot(nrow(scores) == nrow(models) * n_tasks, !anyNA(scores$headline_f1))
 
-entries <- list(featured = list(), more = list())
+entries <- list(featured = list(), more = list(), robustness = list())
 all_ids <- models$model
 save_figure <- function(p, stem, title, caption, values, width, height, section) {
   for (ext in c("svg", "pdf", "png")) {
@@ -110,6 +110,7 @@ p <- ggplot(costs, aes(cost_per_1k_items, mean_task_f1)) +
 top_api <- costs |> slice_max(mean_task_f1, n = 1)
 cheap_api <- costs |> slice_min(cost_per_1k_items, n = 1)
 api_above <- sum(costs$mean_task_f1 > best_open$mean_task_f1)
+stopifnot(api_above <= 20)
 # Providers without a batch option (DeepSeek, Jev) keep their standard price.
 batch_price <- function(row) if (is.na(row$cost_per_1k_items_batch)) row$cost_per_1k_items else row$cost_per_1k_items_batch
 save_figure(p, "fig-cost-f1", "Cost and performance",
@@ -118,12 +119,14 @@ save_figure(p, "fig-cost-f1", "Cost and performance",
               "the cheapest API model, and scores %.3f higher (at batch prices, the ratio is about %.0f instead of %.0f).",
               "%s of the %d API models score above the best open-weight model that",
               "runs on one GPU (dashed line), for which there is no per-text charge. Costs are per 1,000 texts at",
-              "standard prices in September 2026, and hollow points are estimates based on token counts rather",
+              "standard prices at the time of each run, and hollow points are estimates based on token counts rather",
               "than provider bills."),
               top_api$short_label, top_api$cost_per_1k_items / cheap_api$cost_per_1k_items, cheap_api$short_label,
               top_api$mean_task_f1 - cheap_api$mean_task_f1, batch_price(top_api) / batch_price(cheap_api),
               top_api$cost_per_1k_items / cheap_api$cost_per_1k_items,
-              c("None", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven")[api_above + 1],
+              c("None", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven",
+                "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen",
+                "Twenty")[api_above + 1],
               nrow(costs)),
             costs |> select(model, cost_per_1k_items, mean_task_f1, estimated), 7, 4.6, "featured")
 
@@ -248,6 +251,37 @@ complexity_caption <- sprintf(paste(
 p <- complexity_plot(all_ids)
 save_figure(p, "fig-recent-complexity", "Coding complexity", complexity_caption, NULL, 7.5, 3.4, "featured")
 
+# How much the ranking depends on single tasks: each model's rank, and its best and
+# worst rank when any one task is dropped. Drawn only when analyze_rank_robustness.py
+# has run for this release; shown in its own collapsed section.
+if (!is.null(manifest$rank_robustness)) {
+  rr <- bind_rows(lapply(manifest$rank_robustness, as_tibble)) |>
+    left_join(models |> select(model, label, group), by = "model") |>
+    arrange(desc(rank)) |>
+    mutate(name = factor(label, levels = label))
+  stopifnot(nrow(rr) == nrow(models), !anyNA(rr$label))
+  n_models <- nrow(rr)
+  p <- ggplot(rr, aes(y = name)) +
+    geom_segment(aes(x = loo_rank_best, xend = loo_rank_worst, yend = name),
+                 color = CLARA_GUIDE, linewidth = 1.8) +
+    geom_point(aes(x = rank, color = group), size = 2.2) +
+    scale_color_manual(values = group_colors) +
+    scale_x_reverse(breaks = c(1, seq(5, n_models, 5))) +
+    labs(x = "Rank (1 = best)", y = NULL) +
+    theme_clara()
+  widest <- rr |> mutate(width = loo_rank_worst - loo_rank_best) |> slice_max(width, n = 1, with_ties = FALSE)
+  top <- rr |> filter(rank == 1)
+  robustness_caption <- sprintf(paste(
+    "Points show the rank of each model by mean F1, and grey bars show the range of ranks that a model",
+    "reaches if I leave out one of the %d tasks at a time and compute the mean over the remaining %d.",
+    "%s is ranked first in all %d cases, while the rank of %s changes by up to %d places, which is the",
+    "largest change for any of the models."),
+    n_tasks, n_tasks - 1, top$label, n_tasks, widest$label, widest$loo_rank_worst - widest$loo_rank_best)
+  save_figure(p, "fig-rank-robustness", "Rank when one task is left out", robustness_caption,
+              rr |> select(model, rank, loo_rank_best, loo_rank_worst),
+              7.5, 0.2 * n_models + 1, "robustness")
+}
+
 # Further figures: every model.
 p <- overview(all_ids, "label")
 save_figure(p, "fig-mean-f1", "Overall performance, all models", overview_caption,
@@ -276,16 +310,18 @@ minutes <- tp |> group_by(panel) |> summarise(lo = min(seconds_per_item) * 1000 
                                               hi = max(seconds_per_item) * 1000 / 60, n = n())
 speed_caption <- sprintf(paste(
   "Each point shows one open-weight model, with mean F1 plotted against generation time per text on one %s GPU.",
-  "Within each panel, the models coded the same texts with identical settings. In the August runs,",
-  "vLLM processed as many texts at once as memory allowed, while in the September runs it processed at most 16,",
-  "which means that times can be compared within but not across panels. The %d models in the first panel need",
-  "%.1f to %.1f minutes per 1,000 texts, the %d models in the second panel need %.1f to %.1f minutes. Load and",
-  "queue times are not included."),
+  "The models in each panel coded the same texts with identical settings, but in the August runs vLLM",
+  "processed as many texts at once as memory allowed, while in the September runs I limited it to 16 texts",
+  "at a time, so I would only compare times within a panel and not across the two panels. In the first",
+  "panel, the %d models need between %.1f and %.1f minutes per 1,000 texts, and in the second panel the %d",
+  "models need between %.1f and %.1f minutes (not counting the time it takes to load a model or to wait in",
+  "the queue)."),
   sub("^NVIDIA ", "", sub(" Max-Q Workstation Edition", "", groups[[1]]$hardware)),
   minutes$n[1], minutes$lo[1], minutes$hi[1], minutes$n[2], minutes$lo[2], minutes$hi[2])
 save_figure(p, "fig-speed", "Quality and generation time", speed_caption,
             tp |> transmute(model, panel = as.character(panel), seconds_per_item, mean_f1), 9, 4.4, "more")
 manifest$featured_figures <- entries$featured
 manifest$figures <- entries$more
+manifest$robustness_figures <- entries$robustness
 write_json(manifest, file.path(out, "figure-data.json"), auto_unbox = TRUE, pretty = TRUE,
            digits = NA, null = "null")

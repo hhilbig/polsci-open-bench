@@ -7,6 +7,7 @@ every figure from that file in the CLARA house style and records each figure's
 title and caption back into it, which the page builder reads.
 """
 import argparse
+import csv
 from collections import defaultdict
 import hashlib
 import json
@@ -52,6 +53,23 @@ def speed_groups(release, tasks):
     return groups
 
 
+def gpu_count(hardware):
+    found=re.match(r'\s*(\d+)\s*[×x]',hardware or '')
+    return int(found.group(1)) if found else 1
+
+
+def rank_robustness(release_dir, models):
+    """Tiers, drop-one-task rank ranges and the trimmed mean, if analyze_rank_robustness.py ran."""
+    path=Path(release_dir)/'robustness/rank_robustness.csv'
+    if not path.exists():
+        return None
+    rows=list(csv.DictReader(path.open()))
+    if {r['model'] for r in rows}!=models:
+        raise ValueError('Rank robustness file covers different models; rerun analyze_rank_robustness.py')
+    keep=['model','rank','tier','loo_rank_best','loo_rank_worst','trimmed_rank','mean_task_f1','trimmed_f1']
+    return [{k:(float(r[k]) if k.endswith('f1') else r[k] if k=='model' else int(r[k])) for k in keep} for r in rows]
+
+
 def short_label(label):
     """'Qwen3.6 27B (FP8)' -> 'Qwen3.6 27B'; quantization details stay in the downloads."""
     return re.sub(r'\s*\([^)]*\)','',label).strip()
@@ -95,12 +113,13 @@ def build(release_dir):
         'task_metadata':list(tasks.values()),
         'featured_models':sorted(FEATURED_MODELS),
         'models':[dict(model=m['model'],label=m['label'],short_label=short_label(m['label']),kind=m['kind'],
-                       hardware_tier=m['hardware_tier'],mean_task_f1=m['mean_task_f1'],
+                       hardware_tier=m['hardware_tier'],gpus=gpu_count(m.get('hardware')),mean_task_f1=m['mean_task_f1'],
                        task_ci_low=m['ci_task_low'],task_ci_high=m['ci_task_high']) for m in models],
         'throughput_groups':speed_groups(release,tasks)+[
             dict(label='September runs',items=key[3],hardware=key[2],concurrency='16 texts at a time',
                  models=[dict(model=m['model'],seconds_per_item=1/m['throughput_items_per_second']) for m in group])],
         'figures':[],'featured_figures':[],
+        'rank_robustness':rank_robustness(release_dir,{m['model'] for m in models}),
     }
     (out/'figure-data.json').write_text(json.dumps(manifest,indent=2,ensure_ascii=False,allow_nan=False)+'\n')
     subprocess.run(['Rscript',str(ROOT/'code/render_refresh_paper_figures.R'),str(release_dir.resolve()),str(COST_TABLE)],check=True)
