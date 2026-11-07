@@ -8,7 +8,7 @@ preview: publication still needs Hanno's approval.
     python3 code/build_october_inputs.py             # predictions and manifests
     python3 code/build_october_inputs.py --costs     # cost table, after the release build
     python3 code/build_refresh_release.py --active-only \
-        --output output/sidecar/refresh_october_preview \
+        --output output/sidecar/refresh_20261106_release_33 \
         --open-manifest output/sidecar/refresh_october_preview_inputs/open_inputs.json \
         --api-manifest output/sidecar/refresh_jev_20260918/api_manifest.json \
         --api-manifest output/sidecar/refresh_gemini_20260920/api_manifest.json \

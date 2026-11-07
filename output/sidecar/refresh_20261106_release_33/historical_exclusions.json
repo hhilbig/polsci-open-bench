@@ -1,0 +1,11 @@
+{
+  "exclusions": [
+    {
+      "model": "GPT-OSS 120B (MXFP4)",
+      "model_id": "openai/gpt-oss-120b",
+      "revision": "b5c939de8f754692c1647ca79fbf85e8c1e70f8a",
+      "status": "excluded",
+      "reason": "Job 23393692_0 produced a malformed generated channel in an uncheckpointed task batch without an identifiable item. It cannot be assigned to a frozen text and scored incorrect. Job 23415406 completed a second attempt and retained one separate malformed response with an item ID. Its fully audited 3,400-item output remains exploratory because the first failure cannot be scored under the no-answer-quality-retry rule."
+    }
+  ]
+}

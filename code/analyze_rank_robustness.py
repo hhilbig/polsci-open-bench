@@ -14,7 +14,7 @@ Writes three things next to the release, under robustness/:
 - task_weights.csv: the reliability weight of each task.
 - rank_robustness.pdf/.png: the figure.
 
-    python3 code/analyze_rank_robustness.py --release-dir output/sidecar/refresh_october_preview
+    python3 code/analyze_rank_robustness.py --release-dir output/sidecar/refresh_20261106_release_33
 """
 import argparse
 from pathlib import Path

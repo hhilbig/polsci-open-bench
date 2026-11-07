@@ -68,6 +68,11 @@ output/sidecar/*
 !output/sidecar/refresh_20260910_release_33/
 # The built page is published from the homepage repo, not from here.
 output/sidecar/refresh_20260910_release_33/preview/
+!output/sidecar/refresh_20261106_release_33/
+output/sidecar/refresh_20261106_release_33/preview/
+!output/sidecar/refresh_october_preview_inputs/
+output/sidecar/refresh_october_preview_inputs/*
+!output/sidecar/refresh_october_preview_inputs/cost_performance.csv
 !output/sidecar/latency_sample/
 !output/sidecar/schema_parity_20260918/
 !output/sidecar/refresh_gemini_20260920/
@@ -111,3 +116,4 @@ output/embeddings/
 # Browser-automation scratch and preview screenshots (8.7 MB, regenerable)
 .playwright-cli/
 output/playwright/
+output/sidecar/refresh_20261106_release_33/robustness/*.p*

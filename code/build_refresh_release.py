@@ -374,7 +374,7 @@ def build(source=SOURCE, output=OUTPUT, open_manifest=None, iterations=2000,
     historical_exclusions = load_historical_exclusions(exclusions_path, provenance)
     if historical_exclusions:
         result['historical_exclusions'] = historical_exclusions
-    result['manifest'] = dict(release='refresh_20260910', status='api_complete_open_refresh_pending' if not open_manifest else 'validated_local_preview_publication_approval_required',
+    result['manifest'] = dict(release=CONFIG.page_id, status='api_complete_open_refresh_pending' if not open_manifest else 'validated_local_preview_publication_approval_required',
                               seed=SEED, bootstrap_replicates=iterations, panel_sha256=report['panel_sha256'],
                               prediction_sha256=sha(source/'comparison_predictions.csv'), taxonomy_sha256=sha(TAXONOMY),
                               generator_sha256=sha(__file__),

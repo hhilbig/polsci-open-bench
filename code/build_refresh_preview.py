@@ -338,8 +338,6 @@ def paper_figures(preview, release):
     return ''.join(blocks)
 
 
-PAGE_URL='https://www.hannohilbig.com/llm-benchmark/'
-DATA_URL='https://github.com/hhilbig/polsci-open-bench/tree/main/output/sidecar/refresh_20260910_release_33'
 MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December']
 
 def month_year(iso_date):
