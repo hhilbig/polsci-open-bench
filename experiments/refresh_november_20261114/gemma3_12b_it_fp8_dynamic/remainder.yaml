@@ -1,0 +1,51 @@
+version: 1
+run_id: refresh_november_gemma3_12b_it_fp8_dynamic_remainder_20261114
+benchmark_commit: 1cc4b09e55e1e1ac0e4c2c67e15cab8b8c2d6353
+refresh_sample:
+  panel_sha256: 20294ce2229b45dd3d0aa97f5e52f1ebc2292c6bae186475d998e00e8140bf5a
+  stage: remainder
+task_scope:
+  tasks_dir: tasks
+  expected_tasks: 34
+  expected_items: 3332
+runtime:
+  vllm_version: 0.26.0
+  python_version: '3.12'
+  runtime_lock_sha256: 4f46101fa493e38b312af034b8d740c612bd0001bab4cb0f624f4a9e1c49f5b3
+  runtime_lock_path: /nfs/hive/scratch/hhilbig/polsci-bakeoff-vllm-0.26.0-py312-cuda130-matched-v2.freeze.txt
+  max_model_len: 16384
+  gpu_memory_utilization: 0.9
+  cuda_toolkit_meta_version: 13.0.2
+  cuda_component_versions:
+    nvidia-cuda-cccl: 13.0.85
+    nvidia-cuda-crt: 13.0.88
+    nvidia-cuda-nvcc: 13.0.88
+    nvidia-cuda-nvrtc: 13.0.88
+    nvidia-cuda-runtime: 13.0.96
+    nvidia-nvvm: 13.0.88
+generation:
+  temperature: 0.0
+  max_tokens: 256
+  seed: 20260910
+  enable_thinking: false
+  structured_outputs: json_schema
+  prompt_margin_tokens: 128
+promotion_gate:
+  baseline_model_key: gemma3_12b_it_fp8_dynamic
+  minimum_mean_f1_gain: 0.01
+  equivalence_tolerance: 0.005
+  maximum_parse_error_increase: 0.005
+  material_throughput_ratio: 1.25
+models:
+  gemma3_12b_it_fp8_dynamic:
+    role: refresh_candidate_no_accuracy_selection
+    model_id: RedHatAI/gemma-3-12b-it-FP8-dynamic
+    revision: 15180966d5519f0bbd815362db005dc67bb2332f
+    display_name: Gemma 3 12B IT FP8 Dynamic
+    quantization: FP8 dynamic (same source and scheme as Gemma 3 27B in the panel)
+    language_model_only: true
+    llm_kwargs:
+      tensor_parallel_size: 1
+      max_num_seqs: 16
+    chat_template_kwargs:
+      enable_thinking: false

@@ -1,0 +1,50 @@
+version: 1
+run_id: refresh_november_qwen3_5_9b_bf16_remainder_20261114
+benchmark_commit: 1cc4b09e55e1e1ac0e4c2c67e15cab8b8c2d6353
+refresh_sample:
+  panel_sha256: 20294ce2229b45dd3d0aa97f5e52f1ebc2292c6bae186475d998e00e8140bf5a
+  stage: remainder
+task_scope:
+  tasks_dir: tasks
+  expected_tasks: 34
+  expected_items: 3332
+runtime:
+  vllm_version: 0.26.0
+  python_version: '3.12'
+  runtime_lock_sha256: 4f46101fa493e38b312af034b8d740c612bd0001bab4cb0f624f4a9e1c49f5b3
+  runtime_lock_path: /nfs/hive/scratch/hhilbig/polsci-bakeoff-vllm-0.26.0-py312-cuda130-matched-v2.freeze.txt
+  max_model_len: 16384
+  gpu_memory_utilization: 0.9
+  cuda_toolkit_meta_version: 13.0.2
+  cuda_component_versions:
+    nvidia-cuda-cccl: 13.0.85
+    nvidia-cuda-crt: 13.0.88
+    nvidia-cuda-nvcc: 13.0.88
+    nvidia-cuda-nvrtc: 13.0.88
+    nvidia-cuda-runtime: 13.0.96
+    nvidia-nvvm: 13.0.88
+generation:
+  temperature: 0.0
+  max_tokens: 256
+  seed: 20260910
+  enable_thinking: false
+  structured_outputs: json_schema
+  prompt_margin_tokens: 128
+promotion_gate:
+  baseline_model_key: qwen3_5_9b_bf16
+  minimum_mean_f1_gain: 0.01
+  equivalence_tolerance: 0.005
+  maximum_parse_error_increase: 0.005
+  material_throughput_ratio: 1.25
+models:
+  qwen3_5_9b_bf16:
+    role: refresh_candidate_no_accuracy_selection
+    model_id: Qwen/Qwen3.5-9B
+    revision: c202236235762e1c871ad0ccb60c8ee5ba337b9a
+    display_name: Qwen3.5 9B BF16
+    quantization: BF16 (no official FP8 release)
+    language_model_only: true
+    llm_kwargs:
+      tensor_parallel_size: 1
+    chat_template_kwargs:
+      enable_thinking: false
