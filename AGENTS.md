@@ -1,5 +1,18 @@
 # Project Agent Instructions
 
+## Repository Identity
+
+- This is `polsci-open-bench`, the main model benchmark (published releases,
+  the report, and the hannohilbig.com/llm-benchmark page). Remote `origin` is
+  `hhilbig/polsci-open-bench`.
+- `../polsci-labeling-bench` is a separate fork that compares labeling
+  workflows. Do not read its outputs, run its code, or commit its changes from
+  this repo, and do not import results across the two without an explicit
+  request.
+- Remote `archive` (`hhilbig/polsci-open-bench-archive`) is a frozen
+  pre-public snapshot from 2026-04-27. Its push URL is disabled; push only to
+  `origin`.
+
 ## Startup Checklist
 
 - At the start of any new session in this repository, read `docs/run_status.md`
