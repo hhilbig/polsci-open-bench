@@ -5,10 +5,11 @@
 - This is `polsci-open-bench`, the main model benchmark (published releases,
   the report, and the hannohilbig.com/llm-benchmark page). Remote `origin` is
   `hhilbig/polsci-open-bench`.
-- `../polsci-labeling-bench` is a separate fork that compares labeling
-  workflows. Do not read its outputs, run its code, or commit its changes from
-  this repo, and do not import results across the two without an explicit
-  request.
+- `polsci-labeling-bench`, a fork that compared labeling workflows, was
+  retired on 2026-11-14. Its GitHub repo is archived (read-only), and a full
+  copy of its working tree, including untracked run outputs, is in Dropbox at
+  `repo-retirements/polsci-labeling-bench-20261114` (see `RESTORE.txt`). Do
+  not treat its results as part of this benchmark.
 - Remote `archive` (`hhilbig/polsci-open-bench-archive`) is a frozen
   pre-public snapshot from 2026-04-27. Its push URL is disabled; push only to
   `origin`.
