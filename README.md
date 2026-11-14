@@ -11,13 +11,13 @@ replication archives and documented public datasets. The
 The repository holds two sets of results. They use different models, items and
 scoring rules for unusable output, so their numbers are not directly comparable.
 
-| | Main release | September 2026 panel |
+| | Main release | November 2026 panel |
 |---|---|---|
-| Models | 6 local (Ollama on an Apple M2 Pro) and 4 API | 20 open-weight (vLLM, one or two GPUs) and 11 API |
+| Models | 6 local (Ollama on an Apple M2 Pro) and 4 API | 21 open-weight (vLLM, one or two GPUs) and 22 API |
 | Tasks and items | 33 tasks, 293 to 500 items each | the same 33 tasks, 100 frozen items each |
 | Unusable output | excluded from F1 and reported as a rate | scored as wrong |
 | Written up in | [report](output/report_pdf.pdf), section "Main Result" below | [results page](https://www.hannohilbig.com/llm-benchmark/), section "Matched Model Comparison" below |
-| Data | [`output/summary.csv`](output/summary.csv), [`output/predictions.csv`](output/predictions.csv) | [`output/sidecar/refresh_20260910_release_33/`](output/sidecar/refresh_20260910_release_33) (summary tables only) |
+| Data | [`output/summary.csv`](output/summary.csv), [`output/predictions.csv`](output/predictions.csv) | [`output/sidecar/refresh_20261106_release_33/`](output/sidecar/refresh_20261106_release_33) (summary tables only) |
 
 Main-release models: `gemma4:26b`, `gemma4:31b-it-q4_K_M`, `qwen3:14b-q4_K_M`,
 `qwen3.5:35b-a3b-q4_K_M`, `qwen3:30b-a3b-q4_K_M`,
@@ -66,28 +66,30 @@ so the crossover lies in the low thousands of labels per task.
 Researchers should test candidate models on labeled examples from their own task
 and report both performance and the rate of unusable output.
 
-## Matched Model Comparison, September 2026
+## Matched Model Comparison, November 2026
 
-A second panel runs 31 models, 11 commercial APIs and 20 open-weight
+A second panel runs 43 models, 22 commercial APIs and 21 open-weight
 checkpoints, on the same 33 tasks with 100 frozen items per task. Every model
-codes the same 3,300 texts under the same prompts and scorer, with one
-exception: Jev 1.13, a model from TypeSafe that answers by choosing among fixed
-options, receives the prompt inside its provider's choice format. Open-weight
-models ran at temperature 0, while most API models ran at their provider's
-default temperature, and each model coded each text once. The results are
-at [hannohilbig.com/llm-benchmark](https://www.hannohilbig.com/llm-benchmark/),
+codes the same 3,300 texts under the same prompts and scorer. Open-weight
+models ran at temperature 0, most API models ran at their provider's default
+temperature, and each model coded each text once. The results are at
+[hannohilbig.com/llm-benchmark](https://www.hannohilbig.com/llm-benchmark/),
 and the release data are in
-[`output/sidecar/refresh_20260910_release_33/`](output/sidecar/refresh_20260910_release_33).
+[`output/sidecar/refresh_20261106_release_33/`](output/sidecar/refresh_20261106_release_33).
 
-Claude Opus 5 has the highest mean task F1 at 0.714. The best open-weight models
-are Qwen3.8 Flash-Next at 0.675, which needs two GPUs, and Llama 3.1 70B in FP8
-at 0.675 on one GPU. Both trail Opus by 0.039 F1, a gap whose paired intervals
-exclude zero, and both score above four of the eleven API models (GPT-5.6 Luna,
-both DeepSeek models and Jev 1.13). Of those eight comparisons, only Flash-Next's
-lead over Jev is distinguishable from zero. Task by task, Llama 3.1 70B matches
-or beats Claude Opus 5 on 9 of 33 tasks. Taking the best of the 19 single-GPU
-open models on each task raises that count to 14, but picking the maximum of 19
-noisy scores per task favours the open side.
+Claude Opus 5 has the highest mean task F1 at 0.714. The best open-weight model,
+MiMo V2.6 Flash in FP8, reaches 0.679, above 11 of the 22 API models. Task by
+task, Llama 3.1 70B matches or beats Claude Opus 5 on 9 of 33 tasks, and Opus
+leads by 0.040 F1 on average. Taking the best of the 19 single-GPU open models
+on each task raises that count to 11, but picking the maximum of 19 noisy
+scores per task favours the open side. Differences of a few hundredths in mean
+F1 often reverse on single tasks.
+
+### Cost and prompt optimisation, September 2026 panel
+
+The paragraphs below come from the earlier September panel (31 models, data in
+[`output/sidecar/refresh_20260910_release_33/`](output/sidecar/refresh_20260910_release_33)).
+The November cost comparison is on the results page.
 
 The panel also measures what each API model costs and how long a request takes.
 
@@ -122,7 +124,7 @@ prices, and the figures draw these models with hollow markers.
 
 - 33 active tasks in [`tasks/`](tasks), one held out (see [`CHANGELOG.md`](CHANGELOG.md))
 - Main release: 6 local and 4 API models, 293 to 500 items per task
-- September panel: 11 API and 20 open-weight models, 100 items per task
+- November panel: 22 API and 21 open-weight models, 100 items per task
 - Metrics: main F1 (`headline_f1` in the CSVs), accuracy, MCC, time per item and
   unusable-output rate
 - Local hardware: Apple M2 Pro, 32 GB
