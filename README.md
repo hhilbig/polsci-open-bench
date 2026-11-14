@@ -237,4 +237,4 @@ Please cite the report and the source papers for the individual tasks, listed in
 
 Code is MIT licensed, see [`LICENSE`](LICENSE). Task CSVs derive from public
 replication archives and documented public datasets, and each inherits the
-license of its source.
+license of its source (see [`DATA_LICENSE.md`](DATA_LICENSE.md)).
