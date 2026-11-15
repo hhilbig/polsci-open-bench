@@ -1,6 +1,6 @@
 version: 1
 run_id: task_ext_20261114_vllm032
-benchmark_commit: e963251c75cfe3fb4e895c87242835bdbea7ead2
+benchmark_commit: 2cae5cb24f5a5d49cbdcf6753c5dbf269c124732
 task_scope:
   tasks_dir: tasks_ext_v2_20261114
   expected_tasks: 47

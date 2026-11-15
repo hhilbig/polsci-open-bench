@@ -8,7 +8,7 @@ MODEL_KEY=$1; shift
 P=/nfs/hive/scratch/$USER/polsci-ext-20261114
 S=/nfs/hive/scratch/$USER
 cd "$P"
-RUN_ROOT=$P/output/sidecar/task_ext_20261114
+RUN_ROOT=${RUN_ROOT:-$P/output/sidecar/task_ext_20261114}
 COMMON="ALL,MODEL_KEY=$MODEL_KEY,PROJECT_ROOT=$P,RUN_ROOT=$RUN_ROOT,OFFLINE_INSTALL=0"
 if [[ "$MODEL_KEY" == mimo_v2_6_flash_mopd_fp8 ]]; then
   sbatch --parsable --account=publicgrp --partition=low --nodes=1 --gpus=6000_blackwell:4 \
