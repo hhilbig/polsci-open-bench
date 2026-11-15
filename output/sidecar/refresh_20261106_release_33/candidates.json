@@ -5965,15 +5965,15 @@
       "model": "Nemotron 3.5 Super VL 120B-A12B",
       "model_id": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16",
       "revision": "fb0ee0bc6b3f70342afd8d84cb80dbadbaa8a1fe",
-      "status": "pending",
-      "reason": "The Hive run had not finished when this release was built."
+      "status": "not evaluated",
+      "reason": "The full Hive run did not complete in three attempts (a job-script error, repeated preemption, and a network outage), and the model was dropped."
     },
     {
       "model": "Intern-S2 397B (FP8)",
       "model_id": "internlm/Intern-S2-397B-FP8",
       "revision": "31b460c8ebb8bdda6f1d77651cfad7ab811910e3",
-      "status": "pending",
-      "reason": "The Hive pilot was still waiting for a GPU when this release was built."
+      "status": "not evaluated",
+      "reason": "The Hive pilot did not get a GPU before the run was cancelled, and the model was dropped."
     }
   ],
   "hardware_scope": "Metadata screening against one node with at most 8xA100 80GB or 4xBlackwell 98GB; no jobs or weight downloads performed.",
