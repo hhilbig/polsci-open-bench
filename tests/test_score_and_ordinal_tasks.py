@@ -153,6 +153,52 @@ class ManifestTest(unittest.TestCase):
             items = task["loader"]()
             self.assertEqual(len(items), len({i["item_id"] for i in items}), name)
 
+    def test_sourcing_pass_manifests_load(self):
+        """The eight tasks built from the 2026-11-14 sourcing pass."""
+        for name, kind in [
+            ("rivlin_angert_pdd_delegitimization", "binary"),
+            ("parlasent_en_sentiment", "categorical"),
+            ("arslan_claimbuster_checkworthy", "categorical"),
+            ("erhard_popbert_populism", "multi_binary"),
+            ("heseltine_politician_tweet_tone", "categorical"),
+            ("chalkidis_trump_populism", "categorical"),
+            ("benson_tucker_unsc_government_stance", "categorical"),
+            ("horak_czech_propaganda", "multi_binary"),
+        ]:
+            task = task_registry.load_task_definition(REPO / "tasks_ext" / f"{name}.yaml")
+            self.assertEqual(task["label_kind"], kind, name)
+            items = task["loader"]()
+            self.assertEqual(len(items), 500, name)
+            self.assertEqual(len(items), len({i["item_id"] for i in items}), name)
+            self.assertTrue(all(i["user_content"].strip() for i in items), name)
+            if kind == "categorical":
+                golds = {i["gt"][task["label_key"]] for i in items}
+                self.assertTrue(golds <= set(task["labels"]), name)
+            self.assertNotIn("\n---\nSource:", task["prompt_path"].read_text(), name)
+
+    def test_long_text_manifests_load_within_budget(self):
+        import pandas as pd
+        sys.path.insert(0, str(REPO / "code"))
+        from long_text_budget import MAX_DOC_TOKENS
+        for name, kind in [
+            ("gpd_speech_populism", "categorical"),
+            ("scdb_opinion_issue_area", "categorical"),
+            ("kiesel_hyperpartisan_article", "binary"),
+            ("cap_executive_order_policy_topic", "categorical"),
+            ("benson_tucker_unsc_government_stance", "categorical"),
+            ("horak_czech_propaganda", "multi_binary"),
+        ]:
+            path = REPO / "tasks_ext" / f"{name}.yaml"
+            task = task_registry.load_task_definition(path)
+            self.assertEqual(task["label_kind"], kind, name)
+            items = task["loader"]()
+            self.assertEqual(len(items), len({i["item_id"] for i in items}), name)
+            frame = pd.read_csv(task["data_path"], usecols=["n_tokens"])
+            self.assertLessEqual(int(frame["n_tokens"].max()), MAX_DOC_TOKENS, name)
+            if kind == "categorical":
+                golds = {i["gt"][task["label_key"]] for i in items}
+                self.assertTrue(golds <= set(task["labels"]), name)
+
     def test_score_gold_is_numeric_and_in_range(self):
         task = task_registry.load_task_definition(REPO / "tasks_ext" / "lemens_gallego_tweet_position.yaml")
         golds = [i["gt"]["score"] for i in task["loader"]()]

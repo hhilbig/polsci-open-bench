@@ -1,0 +1,30 @@
+order: 46
+name: benson_tucker_unsc_government_stance
+# Long-text task (docs/long_text_task_scoping.md). Lives in tasks_ext/ until it has
+# model runs; adding it to tasks/ would break the panels that pin their task count.
+# Built by code/build_benson_tucker_unsc_government_stance_task.py. Documents above 10,000 o200k tokens are dropped, not truncated.
+# Single-conflict resolutions only; side names come from UCDP/PRIO ACD v4-2016 for the resolution's year.
+family: Sentiment / Stance / Tone
+source: Benson and Tucker (UNCR) and CR-UNSC 2024
+data_file: ../data/benson_tucker_unsc_government_stance.csv
+prompt_file: ../prompts/benson_tucker_unsc_government_stance.txt
+label_kind: categorical
+label_key: government_stance
+labels:
+  - none
+  - supportive
+  - condemning
+  - mixed
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Conflict country: {conflict_country}
+    Government side: {government_side}
+    Opposition side: {opposition_side}
+
+    Resolution:
+    {text}
+ground_truth:
+  column: gt_government_stance

@@ -1,0 +1,46 @@
+order: 43
+name: cap_executive_order_policy_topic
+# Long-text task (docs/long_text_task_scoping.md). Lives in tasks_ext/ until it has
+# model runs; adding it to tasks/ would break the panels that pin their task count.
+# Built by code/build_cap_executive_order_policy_topic_task.py. Documents above 10,000 o200k tokens are dropped, not truncated.
+# Same labels and instructions as cap_crs_policy_topic (v1), so the two form a
+# short-versus-long pair on one coding scheme.
+family: Policy-topic coding
+source: Policy Agendas Project 2025 and Federal Register executive orders
+data_file: ../data/cap_executive_order_policy_topic.csv
+prompt_file: ../prompts/cap_executive_order_policy_topic.txt
+label_kind: categorical
+label_key: policy_topic
+labels:
+  - Macroeconomics
+  - Civil Rights
+  - Health
+  - Agriculture
+  - Labor
+  - Education
+  - Environment
+  - Energy
+  - Immigration
+  - Transportation
+  - Law and Crime
+  - Social Welfare
+  - Housing
+  - Domestic Commerce
+  - Defense
+  - Technology
+  - Foreign Trade
+  - International Affairs
+  - Government Operations
+  - Public Lands
+  - Culture
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Executive order:
+    {text}
+ground_truth:
+  column: gt_policy_topic
+  label_map:
+    'Labor and Immigration': Labor

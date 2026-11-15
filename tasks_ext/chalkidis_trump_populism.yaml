@@ -1,0 +1,31 @@
+order: 51
+name: chalkidis_trump_populism
+# Lives in tasks_ext/ until it has model runs; adding it to tasks/ would break the
+# panels that pin their task count.
+# Built by code/build_chalkidis_trump_populism_task.py from Hugging Face
+# parisaslanidis/populism-trump-2016 (train + test). Licence CC BY-NC-ND 4.0: the
+# four codes and the sentence text are kept exactly as released; the builder only
+# selects rows. Labels are one trained student's code per sentence, assigned while
+# reading the full speech; the model sees the sentence alone.
+# Released draw: the stratified 100-item draw (code/release_sampling.py), because
+# the three populist classes are 2-9% of rows; it gives 83 / 7 / 5 / 5.
+family: Rhetoric / Populism
+source: Chalkidis, Brandl and Aslanidis 2026
+data_file: ../data/chalkidis_trump_populism.csv
+prompt_file: ../prompts/chalkidis_trump_populism.txt
+label_kind: categorical
+label_key: populism
+labels:
+  - no populism
+  - anti-elitism
+  - people-centrism
+  - both
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Sentence:
+    {text}
+ground_truth:
+  column: gt_populism

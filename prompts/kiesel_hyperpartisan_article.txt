@@ -1,0 +1,13 @@
+You will be shown a political news article: its title and its text.
+
+Decide whether the article is hyperpartisan. In the SemEval-2019 task definition, "Hyperpartisan articles mimic the form of regular news articles, but are one-sided in the sense that opposing views are either ignored or fiercely attacked." The direction of the bias (left or right) does not matter.
+
+Classify as:
+- `1` if the article has a fair amount of, or extreme, hyperpartisan content
+- `0` if the article has no hyperpartisan content or is mostly unbiased
+
+Return JSON only, with exactly one field:
+
+  {"hyperpartisan": 0}
+
+Do not return any explanation or extra text.

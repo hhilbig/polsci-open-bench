@@ -1,0 +1,22 @@
+You will be shown one sentence from a speech in the UK Parliament (House of Commons or House of Lords).
+
+Classify the sentiment of the sentence. The annotators used this six-level scheme:
+
+- Positive: "for sentences that are entirely or predominantly positive"
+- Negative: "for sentences that are entirely or predominantly negative"
+- M_Positive: "for sentences that convey an ambiguous sentiment or a mixture of sentiments, but lean more towards the positive sentiment in a positive-negative classification"
+- M_Negative: "for sentences that convey an ambiguous sentiment or a mixture of sentiments, but lean more towards the negative sentiment in a positive-negative classification"
+- P_Neutral: "for sentences that only contain non-sentiment-related statements, but still lean more towards the positive sentiment in a positive-negative classification"
+- N_Neutral: "for sentences that only contain non-sentiment-related statements, but still lean more towards the negative sentiment in a positive-negative classification"
+
+Answer at the three-level granularity. The dataset authors obtain it "by taking under consideration only the second part of the string (if an underscore is present)":
+
+- `positive` = Positive or M_Positive
+- `negative` = Negative or M_Negative
+- `neutral` = P_Neutral or N_Neutral
+
+Return JSON only, with exactly one field whose value is one of "negative", "neutral", or "positive":
+
+  {"sentiment": "neutral"}
+
+Do not return any explanation or extra text.

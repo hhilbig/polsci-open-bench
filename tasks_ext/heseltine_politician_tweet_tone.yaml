@@ -1,0 +1,29 @@
+order: 50
+name: heseltine_politician_tweet_tone
+# Lives in tasks_ext/ until it has model runs; adding it to tasks/ would break the
+# panels that pin their task count.
+# Built by code/build_heseltine_politician_tweet_tone_task.py from Harvard Dataverse
+# doi:10.7910/DVN/V2P6YL (CC0). Gold is the expert three-way sentiment code.
+# US tweets were double-coded and reconciled; German, Italian and Chilean tweets
+# were single-coded by one expert each (OSF preprint cx752, SI A). Mojibake in the
+# released text was repaired mechanically; truncated retweets are kept as released.
+family: Sentiment / Stance / Tone
+source: Heseltine and Clemm von Hohenberg 2024
+data_file: ../data/heseltine_politician_tweet_tone.csv
+prompt_file: ../prompts/heseltine_politician_tweet_tone.txt
+label_kind: categorical
+ordinal: true
+label_key: tone
+labels:
+  - negative
+  - neutral
+  - positive
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Tweet:
+    {text}
+ground_truth:
+  column: gt_tone

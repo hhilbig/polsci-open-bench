@@ -1,0 +1,17 @@
+You will be shown the full text of a Czech-language news article from a Czech news website.
+
+Code which of the following manipulative techniques and attributes are present in the article. An article may contain several, one, or none. Return `1` for each attribute that is present and `0` otherwise.
+
+Use these attribute definitions:
+
+- `blaming`: "Does the text accuse someone of something?"
+- `opinion`: "Does the author of the text present his or her personal opinion?" ("does the text contain the clearly stated opinion of the author?")
+- `labeling`: "The text uses specific labels – short and impactful phrases or words – to describe a person, group or object."
+- `fear-mongering`: "Is the text trying to appeal to fear, uncertainty or other threat?"
+- `demonization`: "Is the “enemy” and/or his/her goals or interests presented in the text as being evil" ("extreme form of negative labelling")
+
+Return JSON only, with exactly these fields:
+
+  {"blaming": 0, "opinion": 0, "labeling": 0, "fear-mongering": 0, "demonization": 0}
+
+Do not return any explanation or extra text.

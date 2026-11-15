@@ -751,3 +751,89 @@ Models` was screened but not implemented. The visible Dataverse archive contains
 notebooks and a README; the notebooks reference `data_and_models.zip`, but that
 zip is absent from the visible Dataverse file list, so the labeled corpus was
 not directly ingestible from the archive as inspected.
+
+## Sourcing pass with a quality gate (2026-11-14)
+
+**Verdict.** Of 18 sources that passed a first screen, 14 are admissible with
+conditions and 4 are rejected. The top eight were built on 2026-11-14 as
+`tasks_ext/` tasks (no model runs yet); provenance is in
+[`prompts_provenance.md`](prompts_provenance.md). Eight would be solid additions:
+Hebrew delegitimization, UN Security Council resolution stance, Czech
+propaganda articles, ParlaSent, ClaimBuster, PopBERT, expert-coded politician
+tweets, and Trump-speech populism. The other six are usable but weaker (small,
+single-coded, licence problems, or overlapping). Rows for all 18 are in
+[`task_expansion_candidates.csv`](task_expansion_candidates.csv) with status
+`verified_admit_conditions_20261114` or `rejected_20261114_*`.
+
+### Why
+
+The benchmark is thin in four places: long documents (4 tasks), answer types
+other than one label (1 multi-label, 1 numeric), kinds of coding outside
+stance, topic, incivility and events, and languages other than English. The
+November audit found 4 of 33 released tasks measuring the wrong thing, so every
+candidate had to pass a gate built from those failures.
+
+### The gate
+
+A candidate passes only with evidence from files or papers actually opened:
+
+1. G1: the gold label is a human coding of the construct the prompt asks
+   about, not a model prediction or a proxy such as a news section.
+2. G2: the label was assigned to the same text the model sees.
+3. G3: text and labels are downloadable without registration, with a stated
+   licence.
+4. G4: the coders' definitions are public.
+5. G5: the label can be judged from the text alone.
+6. G6: about 300 or more items, with every class present in a 500-item pool.
+7. G7: coder agreement is reported (reported, not thresholded).
+8. G8: political-science use, and not a near-duplicate of an existing task.
+9. G9: an item fits the 10,000-token limit.
+
+Seven search agents (two rounds: by gap, then by source type: journal
+replication archives, official texts, communication and NLP venues) proposed
+candidates. A separate checker then re-downloaded each dataset, re-counted it
+and tried to falsify the claims. The checkers corrected the searchers on
+something material for most candidates (swapped columns, single rather than
+double coding, overstated agreement, licence terms).
+
+### Admitted with conditions, ranked
+
+| Candidate | Text and labels | Items after cleaning | Main conditions |
+|---|---|---|---|
+| Hebrew delegitimization (Rivlin-Angert and Mor-Lan 2025) | Hebrew sentences from news, Knesset and Facebook; binary | 10,084 (1,812 positive) | Swap the mislabeled `source` values; sampling enriched and undocumented; hide the machine translation |
+| UN Security Council stance (Benson and Tucker; CR-UNSC text) | Whole resolutions, median 744 words; stance toward the government: none, pro, anti, mixed | 725 | Single-conflict resolutions only (umbrella resolutions dropped, 36% of rows); give the conflict's side names in the prompt; agreement is 95% pooled percent agreement only |
+| Czech propaganda (Horák et al. 2024) | Czech news articles, median 230 words; multi-label: blaming, opinion, labeling, fear-mongering, demonization | 3,085 | Only the triple-coded 2017-18 articles (64% drop, set by the gold procedure); agreement is low (ESWA 2024 Table A.7: kappa 0.14-0.26 across the five labels) |
+| ParlaSent, English (Mochtak et al. 2023) | UK parliamentary sentences; 3-class sentiment | 2,600 | Seed-word sample; Bosnian/Croatian/Serbian set is the best second language |
+| ClaimBuster (Arslan et al. 2020) | US debate sentences; non-factual, unimportant factual, check-worthy factual | 22,401 | Use the crowd file only (README swaps the file names); no chance-corrected agreement; likely in training data |
+| PopBERT (Erhard et al. 2025) | German Bundestag sentences; populism with left or right host ideology | 8,770 | Majority-of-5 gold is our rule (authors use any coder); low kappa; enriched sample |
+| Politician tweets (Heseltine and Clemm von Hohenberg 2024) | Tweets in English, German, Italian, Spanish; negative, neutral, positive tone | 1,995 | Non-US tweets single-coded; repair encoding |
+| Trump 2016 populism (Chalkidis et al. 2026) | Campaign speech sentences; none, anti-elitism, people-centrism, both | 12,429 | No-derivatives licence (codes and text as released); single-student labels coded with speech context |
+| Interview evasion (Thomas et al. 2024) | Question, sub-question and full answer, median 291 words; clear reply, ambivalent, clear non-reply | 308 | Test split only; no-derivatives licence; sub-question written by ChatGPT and checked by people |
+| Gun-violence frames (Liu et al. 2019) | Headlines; 9 issue frames | 970 | No licence stated; episodic/thematic label has no reported agreement |
+| Nostalgia (Müller and Proksch 2024) | Translated manifesto sentences; binary | 1,197 (149 positive) | 144 of 149 positives come from the keyword-selected half |
+| Moral foundations, political subreddits (Trager et al. 2022) | Reddit comments; multi-label foundations | 10,647 | Low agreement; conflicting duplicate annotations; 1,000 items already used in this repo |
+| Estonian immigration stance (Mets et al. 2024) | Estonian news sentences; against, neutral, supportive | 3,261 | Single coder; full-sample kappa 0.49-0.57; GPL licence on publisher text |
+| UK Prime Minister's Questions (UK Policy Agendas) | Questions, median 79 words; 21 CAP topics | 8,676 | Agreement figure not found; same scheme as existing CAP tasks |
+
+### Rejected
+
+- PA-X peace agreements: no reliability found, and its English translations
+  may be shared only as the original PDFs.
+- UK Speech from the Throne: the text column repeats whole sentences across
+  differently coded quasi-sentences.
+- EU delegation provisions (Anastasopoulos and Bertelli 2020): no reliability,
+  and half the positive provisions need a cross-referenced article.
+- FraTerr territorial demands: coder-chosen fragments whose labels follow the
+  surrounding document.
+
+### Gaps after this pass
+
+- Long documents: the UN resolutions, Czech articles and interview answers
+  would add three, for seven in total.
+- Multi-label: Czech propaganda and moral foundations would add two.
+- Numeric scores: none found.
+- New languages: Hebrew, Czech, Estonian, plus more German, Italian and
+  Spanish. Portuguese, Arabic, Chinese and Hindi sources all failed G3.
+
+Search and checker reports are in the session scratchpad and are not part of
+the repo.

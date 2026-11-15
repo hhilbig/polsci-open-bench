@@ -1,0 +1,148 @@
+You will be shown one sentence from a speech Donald Trump gave during the 2016 presidential campaign. The human coders read each sentence in the context of the full speech; you will see the sentence alone.
+
+Code the sentence for populism using the following excerpts from the Degrees of Populism Coding Manual (v.3.0, January 2025). In the manual, code U marks people-centrism and code T marks anti-elitism.
+
+1.1. Populism as discourse
+
+Populism is a type of political rhetoric, it has to do with words political agents say or write. Its main characteristic is the discursive division of society in two fundamentally opposing camps, with each side featuring its own distinct type of political actors. The first camp is given a positive valence, grouping the overwhelming majority of the population under the inclusive label of "the people" (or an equivalent notion, e.g. "citizens", "ordinary folk", etc.). "The people" are portrayed as holding a high moral ground over the second camp, an unaccountable minority of individuals or groups usually labelled the "elites" (or an equivalent notion, e.g. "establishment", "oligarchy", "system", etc.).
+
+The antagonism between people and elites is a struggle over political authority. It revolves around the question of who should legitimately govern a given polity. Populists claim that the people are the rightful power-holders, drawing their legitimacy from the democratic principles of popular sovereignty and majority rule. At the same time, various elites – political, economic, or otherwise – are accused of appropriating power by taking advantage of their position and using it for their own self-serving purposes, always against the interests of the vast majority. Summing up, populism is anti-elite rhetoric in the name of the people, a discourse that attempts to radicalize the notion of citizenship.
+
+1.2. The populist frame
+
+Populism usually takes the form of a moral antagonism between "us" and "them". It requires the discursive construction of a sizable in-group (the "noble people") against which stands a narrow out-group (the "corrupt elite"). This produces a populist discursive "frame" that we can straightforwardly identify within political texts. Slogans such as "The 99% against the 1%" or "People-power against the establishment!" epitomize this divide. For the frame to be complete it has to contain both the element of positive valorization of the people (we will call this "people-centrism"), as well as the element of the negative valorization of the elites (we will call this "anti-elitism"). However, incomplete populist frames (strictly people-centric OR anti-elitist) are also found in political texts. Hence, populism is a specific type of political discourse that should not be confused with other discourses that politicize different types of antagonism between social groups (see below).
+
+1.2.1 Populism vs. nationalism
+
+Not all references to "the people" (and their synonyms) or the "elites" (and their synonyms) are necessary indicative of populism. The populist "people" carry the connotation of the-people-as-political-sovereigns, reflecting a collectivity with a claim to majoritarian political authority, not a collection of individuals held together by any type of bond. Therefore, populism does not construct a nation in the sense that nationalism does: "the people" do not necessarily coincide with "the nation". While politicians may tend to employ these two terms interchangeably, and populist politicians may indeed also be nationalist, this is not always the case. A populist politician may be non-nationalist in the same way that a nationalist politician may be non-populist. The coder needs to be able to make an informed decision on the populist or nationalist nature of a given claim, and assign codes only in the case of the former. This distinction applies when evaluating both the in-group and the out-group:
+
+1. Evaluating the in-group: a reference to a national collectivity (e.g. "We, Americans" or "our country") should be seen as a nationalist invocation by default. It will only be indicative of populism insofar as it involves the clause of majoritarian political sovereignty, relating to "the people" as (re)claiming political authority, as discussed above. General invocations of the nation (a) in cultural or ethnic terms, as a community of language, religion, blood, ethnicity, common history, etc.; (b) in geographical terms; (c) where the "elite" enemy is explicitly or implicitly absent in the context; or (d) in direct opposition to other nations, will all probably signify nationalism rather than populism. For instance, consider the following:
+
+C1: The people of our country(/nation) are the greatest in the world.
+
+In the absence of explicit qualifications of the "people" or "the country" in the immediate context, as symbolizing the majoritarian constituency that is being deprived of its political authority in the populist sense described earlier, the above is a nationalist rather than a populist argument.
+
+2. Evaluating the out-group: references to social groups presented as antagonistic to the in-group (e.g. other nationalities and also races/religions, immigrants, refugees, Muslims, Jews, etc.) should be seen as discriminatory (nationalist, xenophobic, or anti-Muslim, anti-Semitic) by default. Only when these groups are portrayed as part of an elite out-group that has been unlawfully appropriating political authority, should these references be considered populist. For instance, consider the following:
+
+C2: Immigrants are taking our jobs.
+
+In the absence of explicit qualifications of "immigrants" as symbolizing the "elites" in the populist sense described above, the above is a xenophobic rather than a populist argument. Immigrants are usually too large a constituency and too distant from power to be considered part of the elite (but, see below).
+
+C3: Jews and their lackeys are pulling the strings in our system of government.
+
+This argument is obviously anti-Semitic but is also populist in the sense that it implicitly refers to the Jews' capacity to mischievously distort the function of political institutions for their own means.
+
+C4: Islamic radicalism is a threat to our nation.
+
+Here the nation is seen as a block. A tension with "elites" and a reliance upon principles of majoritarian political sovereignty are both lacking. Islamic radicals are seen as exogenous to the power struggle, so they are not part of the "elite", they are a threat that is irrelevant to the struggle for legitimate political authority. This is a law-and-order argument and not a populist one.
+
+1.2.2 Populism vs. socialism
+
+Just as the coder should be able to distinguish populism from nationalism and other types of social discrimination, she should also distinguish populism from socialism. References to "the people" as a collectivity with strictly materialistic interests, or as a proxy for "the working class" do not denote the overwhelming political majority that populism is after. Populism usually constructs the "people" in a catch-all fashion, optionally making reference to the various groups of the "downtrodden" (e.g. farmers, students, workers, teachers, the young, pensioners etc.) who have lost their due to elite manipulation. For instance, consider the following:
+
+C5: The rights of the poor must be respected.
+C6: Give money to the poor!
+
+Fiscal expansion does not necessarily signify populism. These arguments are populist only if in the poor are seen as a proxy for the in-group that comprises of an overwhelming majority of the "people", where the out-group is those elites that have been defrauding them of their sociopolitical rights. Populism cannot easily accommodate class struggle between large sections of society (e.g. workers vs the bourgeoisie). The coder needs to evaluate the context to make an informed decision.
+
+C7: Farmers, students, workers, wage-earners, the young, pensioners, and everyone without privileges, must take power into their own hands.
+
+Even though a number of social categories are named, this argument is populist insofar as it obviously incorporates the vast majority of society since the implicit dichotomy with those who enjoy "privileges" is moralistic rather than materialistic.
+
+1.2.3 Populism vs. anti-incumbent rhetoric
+
+A negative reference against a group such as "the government", "the X party", or a specific individual, is not necessarily indicative of the anti-elitist element of populism. It may signify mere oppositional (or anti-incumbent) rhetoric rather than an anti-elite or anti-establishment sentiment that alludes to the appropriation of political sovereignty. For populists, elite decisions are not merely mistakes of judgment due to political inadequacy or stupidity. Elites are scheming – their agency is deliberately compromising popular sovereignty. The coder must be able to distinguish between populist anti-elitism and other types of moral or factual attacks against political enemies, however vehement the latter may be in a given context.
+
+C8: X is the most incapable person to ever run a government.
+
+This is not a populist argument because – even though X may be inherently seen as part of the political elite by her capacity as head of the government – her actions are not portrayed as deliberately defrauding the people of their sovereignty but rather as an outcome of limits in personal ability.
+
+2.2. The code-set
+
+The project uses two codes: code U for people-centrism and code T for anti-elitism (U for Us and T for Them). The coding scheme is fundamentally actor-oriented, which means that it aims at capturing the social agents who are referred to as active or passive actors in the text. In each sentence, a set of these agents or actors is identified by the coder. This set, which can range from zero (empty) to any number of actors, is called the "actor-set" and symbolized as {actors}. Consider the following sentence:
+
+C9: The President has failed to serve the People.
+
+In this example, the actor-set is: {actors}={President, People}.
+
+For this project, there are two main categories of actors we are interested in locating (and coding):
+
+1. The populist in-group: "we" actors perceived as current or potential members of the populist in-group by the author(s) of the text. The notion of "the people" and its equivalents is central here. For instance:
+
+C10: The people have had enough!
+
+Here, {actors}={people}. Depending on the context, the sentence may be understood by the coder as indicative of people-centrism in the sense explained in Section 1, reflecting the existence of a populist in-group. If so, code U is assigned to the sentence. Coders must always cautiously assess whether the "we" in a given sentence indicates the populist in-group. For instance, consider the following sentence:
+
+C11: We believe that change is urgently in need.
+
+There can be multiple interpretations for this "we": (a) it can coincide with the "Royal" "we", the tendency of a speaker to refer to herself in the plural, as done in certain formal settings; (b) it may refer specifically to the core activists of a political party, or any other type of limited audience attending a speech, rather than the populist "people" per se; (c) it may signify a large political collectivity, yet this collectivity does not coincide with the populist in-group; (d) it may indeed refer to "the people" in the populist sense. The coder's decision in this respect becomes crucial.
+
+As explained previously, the populist "we" may also be dissected into several categories seen as contributing to the wider populist in-group, e.g. workers, employees, students, unemployed, pensioners etc. If the whole is taken to imply "the people", then these references should be considered people-centric.
+
+2. The populist out-group: "they" actors perceived as members of the out-group by the authors of the text. The notion of "the elite" and its equivalents is central here. For instance:
+
+C12: Politicians are corrupt.
+
+Here, {actors}={politicians}. Depending on the context, the sentence may be determined by the coder as indicative of anti-elitism in the sense explained in Section 1, reflecting the existence of the populist out-group. If so, code T is assigned.
+
+For a mixed case, consider the following sentence:
+
+C13: We demand that members of Congress become accountable to the people.
+
+Here, {actors}={we, members of Congress, people}. Again, depending on context, the coder will decide whether "we" and "people" indicate instances of a populist in-group (people-centrism) and "members of congress" belong to the populist out-group ("anti-elitism"). If both are true, then U and T are both assigned to the sentence.
+
+Code U, people-centrism: {actors} contains {us} WHERE {us}={people}
+Code T, anti-elitism: {actors} contains {them} WHERE {them}={elites}
+[null], residual: {actors} is empty or U/T not applicable
+
+The actor set illuminates the agents who may be indicative of populism and therefore it is absolutely necessary that an actor set is constructed before assigning codes. At times, the coder may decide that an actor may not be explicitly referred to in the sentence but is there implicitly. This requires caution. For instance, when dealing with imperative sentence such as:
+
+C14: Rise up!
+
+the coder may discern that a specific group is addressed. If the context points to such an association, then the implicit actor can be included in the actor-set. However, this rule should be applied as sparingly as possible.
+
+A sentence in passive form may also pose similar questions, e.g.:
+
+C15: The people have been robbed of their power!
+
+The coder may interpret this sentence as implying a "by them", where "them" is an actor implicated in the context, and therefore deserves inclusion in the actor set. These cases are rare. The coder should avoid including the implicit actor in the dataset unless the actor's agency is an overwhelming factor.
+
+3.2.1. Is the actor-set empty?
+
+The coder begins with the first sentence, locating the existence of one or more social actors, mentally constructing an actor-set such as {actor1, actor2 … actorN}. Social actors can either exist as individuals (e.g. the Prime Minister, the Chancellor of Germany etc.) or as a collective agent such as a group or institution (e.g. people, society, politicians, bankers, the European Union, the International Monetary Fund etc.). Frequently, deciding whether a specific word denotes a social actor (e.g. vague terms such as "society", "humanity", etc.) is a tricky process and the coder is advised to consult the general tone and context. The crucial element is the implication of active agency: is the word pointing to an actor that has agency? Only then should it be included in the actor set. For instance:
+
+C16: An asteroid from space will destroy humanity.
+
+Here, there is no political essence for humanity. Humanity is seen as a passive actor that does not possess agency and should therefore not be included in the actor-set.
+
+C17: Society must react against injustice.
+
+Here, society is seen as a vague actor but nevertheless possessing agency. The coder should therefore include it in the actor-set and should proceed to consult the context before deciding if "society" is here used as a proxy for the populist "people" (see section 3.2.2 below).
+
+3.2.2. Is the sentence people-centric?
+
+In cases where the actor set is not empty, the coder first assesses whether at least one of its members has a "we" quality that connotes the sovereign People, thus rendering it part of the populist in-group (people-centrism). If yes, code U is inserted and the coder moves to step 3.2.3. If not, the coder proceeds to step 3.2.3 without inserting a code.
+
+3.2.3. Is the sentence anti-elitist?
+
+After determining people-centrism, the coder ascertains whether anti-elitism is present in the sentence. If at least one member of the actor-set contains a "they" actor that connotes the category of "elites", thus rendering it part of the populist out-group (anti-elitism), code T is inserted.
+
+Conclusively, four coding options command each sentence:
+
+1. No code: actor-set is empty or no traces of people-centrism/anti-elitism are present in its members
+2. Code U: people-centrism is present in the sentence, but not anti-elitism
+3. Code T: anti-elitism is present in the sentence, but not people-centrism
+4. Code UT: both people-centrism and anti-elitism are present in the sentence
+
+Answer with one of these labels:
+
+- `no populism` (no code)
+- `anti-elitism` (code T only)
+- `people-centrism` (code U only)
+- `both` (code UT)
+
+Return JSON only, with exactly one field:
+
+  {"populism": "no populism"}
+
+Do not return any explanation or extra text.

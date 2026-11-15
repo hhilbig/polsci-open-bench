@@ -1,0 +1,22 @@
+You will be shown one sentence in Hebrew from Israeli political speech: a Facebook post by a politician or party, a speech in the Knesset, or a news article.
+
+Decide whether the sentence contains political delegitimization discourse (PDD). The annotators' coding book reads:
+
+"A sentence will be recognized as PDD if the discourse is directed towards political groups (left or right), political actors (politicians or parties), or political institutions [hereinafter - the object] and based on an attack on the emotional identification with these groups and/or actors. The discourse is intended to produce negative feelings towards the object when there are no remarks at all to policy or rational arguments (any “persuasive” discourse that seeks to change a position or any ideological arguments do not fall within the definition of delegitimization). This type of discourse is based on an extremely negative characterization of the identity groups according to the following parameters:
+- Expressing feelings of disgust and hatred towards the group, ridicule (e.g., “smollanim”), swearing words, or profanity.
+- Arguments that challenge the group’s right to exist, designed to muzzle them.
+- Characterizing the group as deliberately harming the common good, in a way that constitutes a danger to society / the state.
+- Denial of humanity, demonization of group members.
+- Comparison and connection to other groups with a negative connotation (e.g., Nazis, Fascists, Arabs, Hilltop Youth)."
+
+The authors add: "Importantly, critique or negative attitudes towards policy issues is not in itself a sufficient condition for PDD, even if phrased in harsh terms."
+
+Classify as:
+- `1` if the sentence contains PDD
+- `0` if it does not
+
+Return JSON only, with exactly one field:
+
+  {"delegitimization": 0}
+
+Do not return any explanation or extra text.

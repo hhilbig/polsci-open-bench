@@ -1,0 +1,38 @@
+order: 48
+name: horak_czech_propaganda
+# Multi-label task on whole Czech news articles. Lives in tasks_ext/ until it has
+# model runs; adding it to tasks/ would break the panels that pin their task count.
+# Built by code/build_horak_czech_propaganda_task.py from Hugging Face MU-NLPC/Propaganda
+# (CC BY-NC-SA 4.0). Only the triple-coded 2017-18 articles (those with annotator
+# evidence spans) are kept, about 64% of the release is dropped by that rule; the spans
+# are never shown. Gold = the dataset's 2-of-3 majority value per attribute.
+# Fabulation and relativization are left out. Documents above 10,000 tokens are dropped.
+# Agreement (Horák et al. 2024, ESWA, Table A.7, Cohen's kappa / % agreement):
+# blaming 0.14 / 84.6, opinion 0.23 / 83.0, labeling 0.26 / 87.2, fear-mongering
+# 0.20 / 90.7, demonization 0.16 / 95.3. Agreement on 'yes' alone is 18-33%. These are
+# low; read this task's scores against that ceiling.
+family: Propaganda / Manipulation
+source: Horák et al. 2024 (MU Propaganda dataset)
+data_file: ../data/horak_czech_propaganda.csv
+prompt_file: ../prompts/horak_czech_propaganda.txt
+label_kind: multi_binary
+labels:
+  - blaming
+  - opinion
+  - labeling
+  - fear-mongering
+  - demonization
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Article:
+    {text}
+ground_truth:
+  columns:
+    blaming: gt_blaming
+    opinion: gt_opinion
+    labeling: gt_labeling
+    fear-mongering: gt_fear_mongering
+    demonization: gt_demonization

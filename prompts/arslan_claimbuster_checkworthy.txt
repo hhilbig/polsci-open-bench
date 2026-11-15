@@ -1,0 +1,40 @@
+You will be shown one sentence spoken by a candidate or moderator in a US presidential debate. The sentence is shown on its own, without the surrounding debate.
+
+Classify the sentence into one of three categories, using the ClaimBuster annotation guideline (Arslan et al. 2020):
+
+- `check-worthy factual`: "Check-worthy Factual Sentence (CFS): These sentences contain factual claims that the general public will be interested in learning about their veracity. Journalists look for these types of claims for fact-checking. Some examples are:
+  - In the last month, we've had a net loss of one hundred and sixty-three thousand jobs.
+  - We've spent $4.7 billion a year in the State of Texas for uninsured people.
+  - When they tried to reduce taxes, he voted against that 127 times.
+  - China and India are graduating more graduates in technology and science than we are.
+  - My opponent opposed the missile defenses."
+
+- `unimportant factual`: "Unimportant Factual Sentence (UFS): These are factual claims but not check-worthy. In other words, the general public will not be interested in knowing whether these sentences are true or false. Fact-checkers do not find these sentences as significant for checking. A few examples are as follows:
+  - I am a son of a Methodist minister.
+  - Just yesterday, I was in Toledo shaking some hands in a line.
+  - Well, the Vice President and I came to the Congress together 1946; we both served in the Labor Committee.
+  - And I've got two daughters and I want to make sure that they have the same opportunities that anybody's sons have."
+
+- `non-factual`: "Non-factual Sentence (NFS): These sentences do not contain any factual claims. Subjective sentences (opinions, beliefs, declarations) and many questions fall under this category. Below are some examples.
+  - The worst thing we could do in this economic climate is to raise people's taxes.
+  - I think the Head Start program is a great program.
+  - We need to cut the business tax rate in America.
+  - I'll get America and North America energy independent."
+
+Further examples with explanations, from the annotators' training samples:
+
+- Sentence: "Well, you know, nailing down Senator Obama's various tax proposals is like nailing Jell-O to the wall." | Label: non-factual | "This statement does not contain any factual information. It is a rhetorical expression."
+- Sentence: "I'm simply not going to do that." | Label: non-factual | "This statement does not contain any factual information. The speaker is making a promise and/or talking about his/her future plan."
+- Sentence: "In addition to that, we've suffered because we haven't had leadership in this administration." | Label: non-factual | "This statement does not contain any factual information. It is about the speaker's opinion or position on a certain topic."
+- Sentence: "I was Governor of Georgia for four years." | Label: unimportant factual | "This statement contains factual information. However, the general public would not be interested in checking the presented factual claim."
+- Sentence: "In Puerto Rico this year, I met with six of the leading industrial nations' heads of state to meet the problem of inflation so we would be able to solve it before it got out of hand." | Label: unimportant factual | "This statement contains factual information. However, the general public would not be interested in checking the presented factual claim."
+- Sentence: "But first of all, this is a nation of immigrants." | Label: unimportant factual | "This statement contains factual information. However, the general public would not be interested in checking the presented factual claim."
+- Sentence: "I think everybody understands at this point that we are experiencing the worst financial crisis since the Great Depression." | Label: check-worthy factual | "This statement contains both opinions and factual information. The factual information is worthy of veracity checking."
+- Sentence: "Government spending has gone completely out of control; $10 trillion dollar debt we're giving to our kids, a half-a-trillion dollars we owe China." | Label: check-worthy factual | "This statement is presenting data with a quantity. People in general would be interested to know whether the quantity is correct or not."
+- Sentence: "In the first place I've never suggested that Cuba was lost except for the present." | Label: check-worthy factual | "This statement is presenting a factual claim regarding a past incident. People in general would be interested to know whether the statement is true or false."
+
+Return JSON only, with exactly one field:
+
+  {"claim_type": "non-factual"}
+
+Do not return any explanation or extra text.

@@ -1,0 +1,26 @@
+order: 45
+name: parlasent_en_sentiment
+# Sentence-level task. Lives in tasks_ext/ until it has model runs; adding it to tasks/
+# would break the panels that pin their task count.
+# Built by code/build_parlasent_en_sentiment_task.py from classla/ParlaSent (pinned revision),
+# ParlaSent_EN.jsonl only; the single-annotator ParlaSent_EN_test.jsonl is not used.
+family: Sentiment / Stance / Tone
+source: Mochtak, Rupnik and Ljubešić 2023 (ParlaSent 1.0, English)
+data_file: ../data/parlasent_en_sentiment.csv
+prompt_file: ../prompts/parlasent_en_sentiment.txt
+label_kind: categorical
+ordinal: true
+label_key: sentiment
+labels:
+  - negative
+  - neutral
+  - positive
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Sentence:
+    {text}
+ground_truth:
+  column: gt_sentiment

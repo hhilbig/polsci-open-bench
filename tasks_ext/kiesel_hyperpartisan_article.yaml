@@ -1,0 +1,24 @@
+order: 42
+name: kiesel_hyperpartisan_article
+# Long-text task (docs/long_text_task_scoping.md). Lives in tasks_ext/ until it has
+# model runs; adding it to tasks/ would break the panels that pin their task count.
+# Built by code/build_kiesel_hyperpartisan_article_task.py. Documents above 10,000 o200k tokens are dropped, not truncated.
+family: Sentiment / Stance / Tone
+source: Kiesel et al. 2019
+data_file: ../data/kiesel_hyperpartisan_article.csv
+prompt_file: ../prompts/kiesel_hyperpartisan_article.txt
+label_kind: binary
+label_key: hyperpartisan
+labels:
+  - hyperpartisan
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Title: {title}
+
+    Article:
+    {body}
+ground_truth:
+  column: gt_hyperpartisan

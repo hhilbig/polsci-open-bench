@@ -1,0 +1,40 @@
+You will be shown the full text of a UN Security Council resolution, together with one civil conflict it addresses. The conflict's two sides are given as the Uppsala Conflict Data Program (UCDP/PRIO) lists them: the government side and the opposition (rebel) side.
+
+Classify the resolution's sentiment toward the government side of this conflict. Use the UN Security Council Resolutions and Civil Conflict (UNCR) codebook definitions:
+
+"The sentiment variables are meant to capture whether a resolution condemns or praises the actions of a conflict disputant. Sentiments can either be directed at the government (GOV), the rebel factions (REB), or towards conflict participants where the target of the sentiment is unclear (ALL). Given the standardized vernacular of council resolutions over time, these sentiments are able to be objectively identified and cataloged."
+
+"Typical language within resolutions denoting sentiment include:"
+
+Praising: Applauds; Welcomes; Commends; Approves; Affirms; Acknowledges; Notes with appreciation; Pays tribute to
+Condemning: Deplores; Condemns; Denounces; Indignant of; Deeply disturbed by; Expresses concern by
+
+"Below is example of this sentiment being displayed in UNSCR 2164, addressing one of Mali's intrastate conflicts:"
+
+"Pro-Government Sentiment: "Welcoming the appointment by the Malian President on 23 April 2014 of a High-Representative for the Inter-Malian Inclusive Dialogue and his initial efforts to consult with national and international actors on the peace process,""
+
+"Anti-Rebel Sentiment: "Condemning strongly the violent clashes in Kidal on 17 and 18 May 2014 in the context of the Malian Prime Minister's visit, which resulted in the death of Malian Defence and Security Forces personnel, as well as eight civilians, including six Government officials, the unacceptable seizure by the armed groups, notably the Mouvement national de Libration de l'Azawad (MNLA), of administrative buildings,""
+
+"Importantly, sentiment is action-specific; expressions such as "concerned by the ongoing crisis/deterioration of humanitarian situation" are not coded because they are not attributed to a specific action. In contrast, "concerned by the violations of human rights/violence resulting from conflict" would be coded because they are attributed to some sort of action by the conflict actors."
+
+"Generally, codings for the government or rebel factions require that the names of factions be explicitly cited. However, some exceptions apply:
+- The use of "government", "authorities", or "regime" will be treated as sentiments directed towards the government faction.
+- The use of "rebel", "opposition", "armed groups", or "militias" can be treated as sentiment directed towards the rebel faction, provided sufficient evidence exists that delineates them from other conflict disputants not listed by UCDP as a rebel faction to a conflict.
+- Sometimes rebel forces seize power from the government or other means of power transfer take place, in which "Transitional Authorities" or "Unity Government" can be used to justify a sentiment coding directed towards the government faction.
+- If the resolution addresses "all parties," "parties," or "actors" in the context of a formal agreement (e.g., peace agreement, ceasefire, etc.), actors can be identified through use of prior UNSC resolutions and/or historical documentation to attribute codings toward the government and rebel factions where possible.
+- ALL is coded when it is not possible to clearly make a determination of the target of the sentiment in the resolution."
+
+"Importantly, sentiments are coded only by their presence or absence within a resolution; this data does not count the number of sentiments expressed within a single resolution."
+
+Choose exactly one label:
+
+- `supportive`: "pro-government sentiment (those that praise the government faction)". The resolution praises the government side and does not condemn it.
+- `condemning`: "anti-government sentiment (those that condemn the government faction)". The resolution condemns the government side and does not praise it.
+- `mixed`: "sentiment that simultaneously praises and condemns the government". The resolution both praises and condemns the government side.
+- `none`: the resolution neither praises nor condemns the government side of this conflict. Sentiment directed only at the rebel side, only at unidentified parties (ALL), or at actors who are not the government side of this conflict does not count.
+
+Return JSON only, with exactly one field:
+
+  {"government_stance": "none"}
+
+Do not return any explanation or extra text.

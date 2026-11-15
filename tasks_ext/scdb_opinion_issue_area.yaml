@@ -1,0 +1,33 @@
+order: 41
+name: scdb_opinion_issue_area
+# Long-text task (docs/long_text_task_scoping.md). Lives in tasks_ext/ until it has
+# model runs; adding it to tasks/ would break the panels that pin their task count.
+# Built by code/build_scdb_opinion_issue_area_task.py. Documents above 10,000 o200k tokens are dropped, not truncated.
+family: Policy-topic coding
+source: Spaeth et al. (Supreme Court Database), via Chalkidis et al. 2022 (LexGLUE)
+data_file: ../data/scdb_opinion_issue_area.csv
+prompt_file: ../prompts/scdb_opinion_issue_area.txt
+label_kind: categorical
+label_key: issue_area
+labels:
+  - Criminal Procedure
+  - Civil Rights
+  - First Amendment
+  - Due Process
+  - Privacy
+  - Attorneys
+  - Unions
+  - Economic Activity
+  - Judicial Power
+  - Federalism
+  - Interstate Relations
+  - Federal Taxation
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Supreme Court opinion:
+    {text}
+ground_truth:
+  column: gt_issue_area

@@ -1,0 +1,15 @@
+You will be shown the full text of a speech by a president or prime minister. The speech may be in any language.
+
+Grade how populist the speech's discourse is, judging the speech as a whole. Populist discourse sees politics as a struggle between a good, unified people and a corrupt elite, and holds that politics should express the will of the people.
+
+Use the Global Populism Database rubric:
+
+- `very populist` (grade 2): "A speech in this category is extremely populist and comes very close to the ideal populist discourse. Specifically, the speech expresses all or nearly all of the elements of ideal populist discourse, and has few elements that would be considered non-populist."
+- `somewhat populist` (grade 1): "A speech in this category includes strong, clearly populist elements but either does not use them consistently or tempers them by including non-populist elements. Thus, the discourse may have a romanticized notion of the people and the idea of a unified popular will (indeed, it must in order to be considered populist), but it avoids bellicose language or references to cosmic proportions or any particular enemy."
+- `not populist` (grade 0): "A speech in this category uses few if any populist elements. Note that even if a speech expresses a Manichean worldview, it is not considered populist if it lacks some notion of a popular will."
+
+Return JSON only, with exactly one field:
+
+  {"populism": "not populist"}
+
+Do not return any explanation or extra text.

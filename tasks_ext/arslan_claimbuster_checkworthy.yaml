@@ -1,0 +1,24 @@
+order: 47
+name: arslan_claimbuster_checkworthy
+# Lives in tasks_ext/ until it has model runs; adding it to tasks/ would break the
+# panels that pin their task count.
+# Built by code/build_arslan_claimbuster_checkworthy_task.py from crowdsourced.csv only
+# (the bundled README swaps the file names); the computed Sentiment column is never shown.
+family: Rhetoric / Discourse Function
+source: Arslan et al. 2020 (ClaimBuster)
+data_file: ../data/arslan_claimbuster_checkworthy.csv
+prompt_file: ../prompts/arslan_claimbuster_checkworthy.txt
+label_kind: categorical
+label_key: claim_type
+labels:
+  - non-factual
+  - unimportant factual
+  - check-worthy factual
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Sentence: {text}
+ground_truth:
+  column: gt_claim_type

@@ -1,0 +1,25 @@
+order: 40
+name: gpd_speech_populism
+# Long-text task (docs/long_text_task_scoping.md). Lives in tasks_ext/ until it has
+# model runs; adding it to tasks/ would break the panels that pin their task count.
+# Built by code/build_gpd_speech_populism_task.py. Documents above 10,000 o200k tokens are dropped, not truncated.
+family: Rhetoric / Populism
+source: Hawkins et al. 2025 (Global Populism Database v2.1)
+data_file: ../data/gpd_speech_populism.csv
+prompt_file: ../prompts/gpd_speech_populism.txt
+label_kind: categorical
+ordinal: true
+label_key: populism
+labels:
+  - not populist
+  - somewhat populist
+  - very populist
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Speech:
+    {text}
+ground_truth:
+  column: gt_populism

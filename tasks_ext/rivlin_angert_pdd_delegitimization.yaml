@@ -1,0 +1,23 @@
+order: 44
+name: rivlin_angert_pdd_delegitimization
+# Hebrew sentence-level task. Lives in tasks_ext/ until it has model runs; adding it
+# to tasks/ would break the panels that pin their task count.
+# Built by code/build_rivlin_angert_pdd_delegitimization_task.py from github.com/guymorlan/pdd
+# (pinned commit). Model sees the Hebrew sentence only, never the machine-translated English column.
+family: Relevance / Incivility
+source: Rivlin-Angert and Mor-Lan 2025 (PDD, EMNLP 2025)
+data_file: ../data/rivlin_angert_pdd_delegitimization.csv
+prompt_file: ../prompts/rivlin_angert_pdd_delegitimization.txt
+label_kind: binary
+label_key: delegitimization
+labels:
+  - delegitimization
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Sentence (Hebrew):
+    {text}
+ground_truth:
+  column: gt_delegitimization

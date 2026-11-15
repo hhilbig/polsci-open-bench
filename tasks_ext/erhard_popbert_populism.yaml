@@ -1,0 +1,33 @@
+order: 49
+name: erhard_popbert_populism
+# Multi-label populism task on German Bundestag sentences. Lives in tasks_ext/ until it
+# has model runs; adding it to tasks/ would break the panels that pin their task count.
+# Built by code/build_erhard_popbert_populism_task.py from Harvard Dataverse
+# doi:10.7910/DVN/HZMSUR labelled_data (CC0). Gold per label = at least 3 of 5 coders;
+# this majority rule is ours (one gold per item). The authors train on "at least one
+# coder". The codebook codes host ideology (left/right) only for populist sentences,
+# so a host label counts only when the sentence also has a populism majority (40 set to 0).
+# The sample is enriched for populism (dictionary strata plus active learning).
+family: Rhetoric / Populism
+source: Erhard et al. 2025 (PopBERT)
+data_file: ../data/erhard_popbert_populism.csv
+prompt_file: ../prompts/erhard_popbert_populism.txt
+label_kind: multi_binary
+labels:
+  - anti_elitism
+  - people_centrism
+  - left_wing
+  - right_wing
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Sentence:
+    {text}
+ground_truth:
+  columns:
+    anti_elitism: gt_anti_elitism
+    people_centrism: gt_people_centrism
+    left_wing: gt_left_wing
+    right_wing: gt_right_wing

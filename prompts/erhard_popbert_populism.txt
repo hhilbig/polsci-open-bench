@@ -1,0 +1,43 @@
+You will be shown one sentence from a speech in the German Bundestag. The sentence is in German.
+
+Code which dimensions of populism, and which populist host ideology, the sentence expresses. A sentence may express several, one, or none. Return `1` for each dimension that is present and `0` otherwise.
+
+Use the project codebook (translated from German by its authors):
+
+Definition of populism: "A conflicting relationship between the corrupt elites (anti-elitism) and the virtuous people (people-centrism) is assumed. For populists, politics should be an expression of the will of the people, which is understood to be homogeneous."
+
+"It is not enough for the people or the elites to be mentioned in a text. The mentions of the people and the elites must be linked to evaluative statements, e.g. normative statements (this is how it should be) or moral statements (this is right or wrong). Only then can the statement be seen and coded as populist."
+
+"A populist statement is not, for example "The government has made a mistake." A populist statement is, for example "The Merkel dictatorship has made a mistake." These two differ primarily in the moralizing undertone that resonates in the word "Merkel dictatorship"."
+
+"Only code statements that are meant to be populist. If it is clear that the speaker is accusing someone of populism or quoting someone, this is not coded."
+
+- `anti_elitism`: "Anti-elitism includes all statements where the characteristics of the elite are criticized (1), they are blamed for a bad development/situation (2), and it is criticized that the elites do not represent the people (3).
+  (1) The characteristics of the elite are described as negative. The elites are accused of being malicious, criminal, lazy, stupid, extremist, racist, undemocratic, etc. The elite is insulted and denied morality, charisma, credibility, intelligence, competence, consistency, etc.
+  (2) The elite are blamed for a situation, either because they are responsible for causing the bad situation or because they have no answers for solving the bad situation. Elites are described as a threat/burden, as responsible for negative developments/situations or as those who have committed mistakes or crimes. Elites are not described as a source of enrichment or as responsible for positive developments/situations.
+  (3) The description of the elite often implies that they do not belong to the people, are not close to the people, do not know the people, do not speak for the people, do not care about the people or do not perform everyday tasks."
+
+- `people_centrism`: "All statements where the characteristics of the people are praised (1), they are made responsible for a positive development/situation (2), the people are described as uniform and homogeneous (3) or the speaker describes themself as belonging to the people (4) fall under people-centrism.
+  (1) The characteristics of the people are described as positive. The people are endowed with morality, charisma, credibility, intelligence, competence, constancy, etc. The people are not malicious, criminal, lazy, stupid, extremist, racist, undemocratic.
+  (2) The people are ascribed responsibility for a positive situation. The people are described as an asset or responsible for a positive development/situation. The people are described as not a threat/burden, not responsible for negative developments/situations and not as having committed mistakes or crimes.
+  (3) The description of the people is characterized by common, homogeneous feelings, wishes or opinions.
+  (4) The speaker describes him/herself as belonging to the people, being close to the people, knowing the people, speaking for the people, caring for the people, agreeing with the people or performing everyday tasks. The speaker claims to represent or embody the people."
+
+Host ideology (`left_wing`, `right_wing`): "populism can be combined with a "host ideology". This can relate to class (left) or nativism (right). Populism may or may not be associated with these ideologies. This is why these types are coded separately. Therefore, you should
+  1. first code the populism dimension
+  2. if you can then determine whether the statement is a left-wing or right-wing statement, you also assign the corresponding code. If you cannot determine whether it is a left-wing or right-wing statement, do not assign a code."
+"if something like this occurs [clear left and right host ideology], then and only then code both host ideologies (left & right). If you are not sure, then do not code "host ideology"."
+
+Who is the elite in left and right host ideology?
+- Left: "The economic elites are seen as supporting the political elites; or the political elites as being infiltrated/corrupted by economic elites. Both economic elites per se (international economic organizations e.g., WTO, IMF, World Bank, corporations, etc) and politicians guided by economic interests, as well as capitalism or neoliberalism are criticized."
+- Right: "Non-Natives are seen as supporting the political elites; or the political elites as being infiltrated/corrupted/influenced by non-Natives (elites). Political and other elites (e.g. media, courts) are criticized as a "leftist/woke establishment" that is in cahoots with or represents non-Natives. Non-Natives can be immigrants, asylum seekers and (indigenous) ethnic minorities, religious minorities, LGBTQI+, feminists, "social parasites", leftists/progressives and foreign states and international organizations."
+
+Who is the people in left and right host ideology?
+- Left: "Addressing in particular excluded/ socio-economically "marginalized" groups such as immigrants, LGBTQI, women, disabled, unemployed.... Emphasis is on the need for social, economic and political inclusion. The people are described as belonging to the "working class" or the (socio-economically) disadvantaged majority."
+- Right: "The state belongs to the "native" group. The "native" group is often defined by distinguishing it from out-groups, such as immigrants, asylum seekers, and (indigenous) ethnic minorities; religious minorities; LGBTQI+; feminists; welfare recipients; left-wingers/progressives; foreign states and international organizations. This means that the native "(German) people" are mentioned in distinction to migrants, but also to the other groups mentioned above."
+
+Return JSON only, with exactly these fields:
+
+  {"anti_elitism": 0, "people_centrism": 0, "left_wing": 0, "right_wing": 0}
+
+Do not return any explanation or extra text.

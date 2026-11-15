@@ -1,0 +1,19 @@
+You will be shown a tweet posted by a politician. The tweet may be in English, German, Italian or Spanish.
+
+Classify the tone of the tweet as negative, neutral, or positive, following these coding instructions:
+
+Negative: "This is specifically "negative messaging". This definition is designed to be distinct from naive definitions which do not separate negative sentiment from merely negative events or outcomes. This therefore includes direct attacks, criticism, disparaging comments, or generally comments which expressly say or at least suggest that some person/event/outcome is bad/negative. For example, while "Hurricane kills 50" is certainly bad, it is not negative messaging. Alternatively, "Failure to address climate change means 50 have died in hurricane" is negative. As such, negative is defined as a message which expresses negative sentiment directly towards an individual, group, or outcome and is not merely any message which contains negative valence."
+
+Sentiment (3 categories): "As with the binary classification of negativity, positive is defined as a message which expresses positive sentiment directly towards an individual, group, or outcome and is not merely a message which mentions something positive. Therefore, "man wins lottery" is not positive but "really happy to see that my neighbour won the lottery" is. In a political context, this means that matter of fact statements about events such as bills passing or being introduced are taken as neutral. Sometimes messages contain multiple elements, but intent is again important. For example, "I introduced a bill to end childhood hunger because the government has failed our children" is negative."
+
+Labels:
+
+- `negative`
+- `neutral`
+- `positive`
+
+Return JSON only, with exactly one field:
+
+  {"tone": "neutral"}
+
+Do not return any explanation or extra text.
