@@ -34,6 +34,7 @@ def main() -> None:
     ap.add_argument("--models", nargs="*", help="model keys (default: all in the config)")
     args = ap.parse_args()
 
+    from huggingface_hub import snapshot_download
     from transformers import AutoTokenizer
 
     cfg = yaml.safe_load((REPO / args.config).read_text())
@@ -48,7 +49,11 @@ def main() -> None:
         m = cfg["models"][key]
         kwargs = m.get("chat_template_kwargs") or {"enable_thinking": False}
         try:
-            tok = AutoTokenizer.from_pretrained(m["model_id"], revision=m["revision"],
+            # Load from the cached snapshot directory, as the runner's sbatch does;
+            # repo-id lookups ask the hub for optional files and fail offline.
+            path = snapshot_download(repo_id=m["model_id"], revision=m["revision"],
+                                     local_files_only=True)
+            tok = AutoTokenizer.from_pretrained(path,
                                                 trust_remote_code=bool(m.get("reviewed_remote_code")))
         except Exception as exc:  # report, do not stop the other models
             report["models"][key] = {"error": f"{type(exc).__name__}: {exc}"[:400]}

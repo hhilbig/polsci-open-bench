@@ -8,7 +8,9 @@ QEvasion, 1,000 for yan_bernhard_offensive). Any release draw is a subset.
 Each model's entry is copied unchanged from the config of its panel run, so
 model id, revision and kwargs match the release. Two settings differ from most
 panel runs and are the same for every model here:
-  - max_model_len 16384 (long documents; 18 of the panel runs used 8192),
+  - max_model_len 24576 (long documents: with 16384 the Gemma tokenizers put
+    one Supreme Court opinion over the input budget and the Qwen3.x ones came
+    within one token of it; 18 of the panel runs used 8192),
   - one runtime lock per group: vLLM 0.26.0 matched-v2 (sha 4f46101f) for the
     single-GPU models, vLLM 0.32.0 for MiMo. The three models from the
     2026-08-04 bakeoff ran on an older lock that no longer exists on Hive, so
@@ -64,7 +66,7 @@ RUNTIME_026 = {
     "vllm_version": "0.26.0", "python_version": "3.12",
     "runtime_lock_sha256": "4f46101fa493e38b312af034b8d740c612bd0001bab4cb0f624f4a9e1c49f5b3",
     "runtime_lock_path": "/nfs/hive/scratch/hhilbig/polsci-bakeoff-vllm-0.26.0-py312-cuda130-matched-v2.freeze.txt",
-    "max_model_len": 16384, "gpu_memory_utilization": 0.9,
+    "max_model_len": 24576, "gpu_memory_utilization": 0.9,
     "cuda_toolkit_meta_version": "13.0.2", "cuda_component_versions": CUDA_COMPONENTS,
 }
 GENERATION = {
@@ -91,7 +93,7 @@ def main(commit: str) -> None:
     (OUT / "vllm026.yaml").write_text(yaml.safe_dump(cfg, sort_keys=False))
     mimo = yaml.safe_load((REPO / SOURCES["mimo_v2_6_flash_mopd_fp8"]).read_text())
     rt = dict(mimo["runtime"])
-    rt["max_model_len"] = 16384
+    rt["max_model_len"] = 24576
     cfg32 = {"version": 1, "run_id": "task_ext_20261114_vllm032", "benchmark_commit": commit,
              "task_scope": scope, "runtime": rt, "generation": GENERATION,
              "promotion_gate": dict(gate, baseline_model_key="mimo_v2_6_flash_mopd_fp8"),
