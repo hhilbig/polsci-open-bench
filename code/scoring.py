@@ -68,7 +68,8 @@ def scored_labels(task_def, frame, support_only=True):
     back in as `label_subset` for any resampling (e.g. the bootstrap), so the
     label set does not fluctuate between replicates.
     """
-    labels = list(task_def["labels"])
+    dropped = {str(x) for x in (task_def.get("headline_exclude_labels") or [])}
+    labels = [lbl for lbl in task_def["labels"] if str(lbl) not in dropped]
     if not support_only:
         return labels
 

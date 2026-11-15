@@ -30,6 +30,15 @@ text:
     {text}
 ground_truth:
   column: gt_event_type
-# v2 changes the prompt only: the source codebook's contradictory
-# "Output Reminder" line was removed. Same data, same sampling, so this
+# ASSASSINATION stays a label the model can choose and its items stay in the
+# sample, but it is left out of the headline macro average (decision
+# 2026-11-14). Gold codes domestic and honour killings as ASSASSINATION, while
+# the codebook shown to the model gives such a killing as its OTHER example
+# (9 of 31 sampled ASSASSINATION items in the Nov 2026 audit). The original
+# BFRS codebook is not public, so the conflict cannot be resolved from source.
+headline_exclude_labels:
+  - ASSASSINATION
+# v2 changes the prompt and the headline class set: the source codebook's contradictory
+# "Output Reminder" line was removed, and a stray '""",' left from the source
+# Python string after the ASSASSINATION negative clarification was deleted. Same data, same sampling, so this
 # task IS item-paired with v1.

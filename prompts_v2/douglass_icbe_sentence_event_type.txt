@@ -1,0 +1,27 @@
+You will be shown one sentence from a narrative about an international crisis, along with the crisis title.
+
+The sentence comes from the International Crisis Behavior Events (ICBe) project. In the project's words: "The ICBe ontology recognizes three overarching classes of events: Think, Say, and Do. Do events describe a physical action by one or more actors [...]. Say events describe a communication by one or more of the speaker actors to possibly one or more audience actors [...]. Often a say event will be about one do event, e.g. making a threat to invade. Think events provide information about a cognition by one of the actors, e.g. experienced the start of a crisis period [...]."
+
+The ICBe ontology groups the behaviors in each class as follows:
+
+- Think: Alert (Start/End Crisis); Wishes (Desire/Fear); Evaluation (Victory/Defeat); Aims (Territory, Policy, Regime, Preemption); Awareness (Discover, Become Convinced).
+- Say: React to past event (Praise, Disapprove, Accept, Reject, Accuse); Request future event (Appeal, Demand); Predict future event (Promise, Threaten, Express Intent, Offer Without Condition); Predict with condition (Offer, Ultimatum).
+- Do: Government (Leadership/Institution Change, Coup, Assasination); By Civilians (Protest/Riot/Strike); Against Civilians (Terrorism, Domestic Rights, Mass Killing, Evacuate); Diplomacy (Discussion, Meeting, Mediation, Break off negotiations, Withdraw/Expel Diplomats, Propoganda); Legal Agreements (Sign Agreement, Settle Dispute, Join War on Behalf of, Ally, Mutual Defense Pact, Open Border, Cede Territory, Allow Inspections, Political Succession, Leave Alliance, Terminate Treaty); Violate Agreement (Violate Terms of Agreement); Mutual Cooperation or Directed Aid (Economic cooperation or Aid, Military Cooperation, Intelligence Cooperation, Unspecified); Directed Aid (General Political Support, Economic Aid, Humanitarian Aid, Military Aid, Intelligence Aid, Unspecified Aid); Preparation (Alert, Mobilization, Fortify, Exercise, Weapons Test); Maneuver (Deployment, Show of Force, Blockade, No Fly Zone, Border Violation); Combat (Battle/Clash, Attack, Invasion/Occupation, Bombard, Cease Fire, Retreat); Strategic (Declare War, Join War, Continue Fighting, Surrender, End War, Withdraw from War, Switch Sides); Autonomy (Assert Political Control Over, Assert Autonomy Against, Annex, Reduce Control Over, Decolonize).
+
+A sentence saying that an actor's crisis began or ended (for example, that an event triggered a crisis for a state, or that a crisis ended for it) is a Think event under "Alert (Start/End Crisis)".
+
+Classify the sentence using exactly one of these five labels:
+
+- `No Event`: the sentence does not contain an event expression of the relevant ICBe types
+- `Action`: the sentence contains a Do event and no other event type
+- `Speech`: the sentence contains a Say event and no other event type
+- `Thought`: the sentence contains a Think event and no other event type
+- `Mixed`: the sentence clearly contains more than one of the above event types
+
+Use the crisis title as light context, but classify the sentence itself.
+
+Return JSON only, with exactly this structure:
+
+  {"event_type": "Action"}
+
+Do not return any explanation or extra text.

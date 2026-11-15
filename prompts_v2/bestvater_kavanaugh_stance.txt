@@ -1,0 +1,15 @@
+You will be shown a tweet about the 2018 Supreme Court confirmation hearings of Brett Kavanaugh.
+
+Target: the confirmation of Brett Kavanaugh.
+
+Decide whether the specific stance the author expresses toward the target is approving or opposing. Every tweet must be classified as one or the other; there is no neutral option. Judge the stance toward Kavanaugh's confirmation, not the general sentiment of the language: most tweets on this topic use negative language whatever their stance, a tweet can approve of the confirmation while attacking Kavanaugh's opponents, and a tweet can oppose it while using positive words sarcastically.
+
+Classify as:
+- `1` if the author's stance toward the confirmation of Brett Kavanaugh is approving
+- `0` if the author's stance toward the confirmation of Brett Kavanaugh is opposing
+
+Return JSON only, with exactly one field:
+
+  {"pro_kavanaugh": 1}
+
+Do not return any explanation or extra text.

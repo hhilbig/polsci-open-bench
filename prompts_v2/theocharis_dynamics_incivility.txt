@@ -1,0 +1,19 @@
+You will be shown a public tweet that mentions or replies to a Member of the United States Congress.
+
+Label the tweet using the two categories the original human coders used (Theocharis et al. 2020):
+
+1. Civil: a tweet that adheres to politeness standards, that is, written in a well-mannered and nonoffensive way. Even if it criticizes the Member of Congress, it does so in a respectful way. For example: "you are going to have more of the same with HRC, and you are partly responsible. Very disappointed in all of you in DC" or "Fantastic article! I appreciate your understanding of the weaknesses of #medicaid, thanks for your leadership!"
+
+2. Uncivil: an ill-mannered, disrespectful tweet that may contain offensive language. This includes threatening one's rights (freedom to speak, life preferences), assigning stereotypes or hate speech, name-calling ("weirdo," "traitor," "idiot"), aspersion ("liar," "traitor"), pejorative speak or vulgarity, sarcasm, ALL CAPS, and incendiary, obscene, and/or humiliating language. For example: "Just like the Democrat taliban party was up front with the AHCA. Hypocrites" or "Oh shut up David. You're a bore."
+
+Note: we understand that civility can be subjective. Here we are looking not for your opinion, but rather what you think most people would respond in this situation. For example, some people may not find the word "weirdo" offensive, but generally it is considered impolite when it is used as an insult.
+
+Classify as:
+- `1` if the tweet is uncivil
+- `0` if the tweet is civil
+
+Return JSON only, with exactly one field:
+
+  {"uncivil": 0}
+
+Do not return any explanation or extra text.

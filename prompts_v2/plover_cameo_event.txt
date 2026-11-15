@@ -1,0 +1,35 @@
+You will be shown a news sentence describing a political event.
+
+Classify the main event type using the PLOVER event ontology. Use exactly one of the labels below. Each label is followed by its PLOVER definition and the CAMEO category it replaces.
+
+- `AGREE` (CAMEO 03, EXPRESS INTENT TO COOPERATE): Agree to, offer, promise, or otherwise indicate willingness or commitment to cooperate. All cooperative actions reported in future tense are also taken to imply intentions.
+- `CONSULT` (CAMEO 04, CONSULT): All consultations and meetings: this includes visiting and hosting visits, as well as meeting at a neutral location, and consultation by phone or other media. Other useful keywords: "Holding talks" and "discussions", "negotiations, bargaining, or discussions".
+- `SUPPORT` (CAMEO 05, ENGAGE IN DIPLOMATIC COOPERATION): Initiate, resume, improve, or expand diplomatic, non-material cooperation; express support for, commend, approve policy, action, or actor. This event form is a verbal act. Use this code only for political, diplomatic, and non-material support. including recognition of newly independent states, new governments that might have come to power through unconventional means, and initiation of diplomatic ties with an entity for the first time, as are actions which ratify, sign, or finalize an agreement or treaty.
+  - Formal pardons and amnesties of arrested persons should be coded as CONCEDE; the actual release or exchange of prisoners should be coded as RETREAT.
+  - Expressions of regret or remorse for an action or situation should be coded as CONCEDE.
+  - Promises to sign or ratify agreements and treaties are coded as AGREE
+  - Military cooperation or defense should be coded as COOPERATE with a military context.
+- `CONCEDE` (CAMEO 08, YIELD, 081 to 083): This covers verbal concessions which have no immediate material consequences, including promised of future concessions, including easing of administrative or legal restrictions on persons and organizations, remove curfews, suspending protests, declarations (but not implementations) of ceasefires and withdrawals from territory.
+- `COOPERATE` (CAMEO 06, ENGAGE IN MATERIAL COOPERATION): Initiate, resume, improve, or expand mutual material cooperation or exchange, including: Initiate, resume, improve, or expand economic exchange or cooperation. Military exchanges such as joint military games and maneuvers. Cooperation on judicial matters, such as extraditions and war crimes. Voluntary exchanges or sharing of intelligence and other significant information. COOPERATE is distinguished AID because the activity is generally understood to directly benefit both parties, whereas AID is understood to primarily benefit the recipient.
+- `AID` (CAMEO 07, PROVIDE AID): All provisions of providing material aid whose material benefits primarily accrue to the recipient. Examples include: Monetary aid and financial guarantees, grants, gifts and credit. Military and police assistance including arms and personnel. Humanitarian aid such as emergency assistance. Asylum, both to persons in its territories (territorial asylum) and diplomatic asylum on the premises of an embassy.
+- `RETREAT` (CAMEO 08, YIELD, 084 to 087): RETREAT covers any events—not just military "retreat" from territory—which have an immediate (not simply promised) material consequences, such as the release of prisoners and hostages, repatriation of refugees, the return of confiscated property, allowing the entry of observers, peacekeepers, or humanitarian workers, disarming, observing a ceasefire or otherwise ending active conflicts, and, of course, a military retreat from, or ceding, territory. RETREAT also covers resignations of government officials.
+- `INVESTIGATE` (CAMEO 09, INVESTIGATE): All investigations, including those of historical cases. Examples include investigations of criminal activity (theft, killing, etc) and corruption, human rights abuses, war crime, and violations of basic freedoms, military activities such as violations of ceasefire, seizures, and invasions.
+- `DEMAND` (CAMEO 10, DEMAND): All demands and orders. Demands are stronger or more forceful than a request or appeal—which is not coded in PLOVER—and potentially carry more serious repercussions, although not as much as threats. Coding will need to rely primarily on the language used by reporters to make this distinction. All demands are verbal acts.
+  - This category only applies to verbal demands: demands that take the form of demonstrations, protests, etc. are coded as PROTEST.
+  - When one or more parties to a conflict call for ending the conflict, that is taken to be an expression of intent on the part of that source actor and is thus coded as AGREE.
+- `DISAPPROVE` (CAMEO 11, DISAPPROVE): Express disapprovals, objections, and complaints; condemn, decry a policy or an action; criticize, defame, denigrate responsible parties.
+- `REJECT` (CAMEO 12, REJECT): All rejections and refusals.
+- `THREATEN` (CAMEO 13, THREATEN): All threats, coercive or forceful warnings with serious potential repercussions. Threats are typically verbal acts.
+- `PROTEST` (CAMEO 14, PROTEST): All civilian demonstrations and other collective actions carried out as protests against the target actor: Dissent collectively, publicly show negative feelings or opinions; rally, gather to protest a policy, action, or actor(s).
+- `SANCTION` (CAMEO 16, REDUCE RELATIONS): All reductions in normal, routine, or cooperative relations not otherwise specified. Note that this is not confined to formal "sanctions"—SANCTION was just the best word we could find for WEIS and CAMEO's "REDUCE RELATIONS"
+  - Expulsions or deportations of individuals—typically a legal matter—are coded as COERCE
+- `MOBILIZE` (CAMEO 15, EXHIBIT FORCE POSTURE): All military or police moves that fall short of the actual use of force. This category is different from ASSAULT and FIGHT, as they refer to uses of force, while military posturing falls short of actual use of force and is typically a demonstration of military capabilities and readiness. MOBILIZE is also distinct from THREAT in that the latter refers merely to threats, is typically verbal, and does not involve any activity that is undertaken to demonstrate military power.
+- `COERCE` (CAMEO 17, COERCE): Repression, violence against civilians, or their rights or properties.
+- `ASSAULT` (CAMEO 18, ASSAULT): ASSAULT events are deliberate actions which can potentially result in substantial physical harm.
+- `FIGHT` (CAMEO 19, FIGHT, and CAMEO 20, USE UNCONVENTIONAL MASS VIOLENCE).
+
+Return JSON only, with exactly one field:
+
+  {"event_type": "PROTEST"}
+
+Do not return any explanation or extra text.

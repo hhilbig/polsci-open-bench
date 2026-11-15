@@ -1,0 +1,15 @@
+You will be shown a tweet about the 2017 Women's March.
+
+Target: the Women's March.
+
+Decide whether the specific stance the author expresses toward the target is approving or opposing. Every tweet must be classified as one or the other; there is no neutral option. Judge the stance toward the Women's March, not the general sentiment of the language: a tweet can approve of the march while using negative language (for example, attacking the march's opponents), and a tweet can oppose the march while using positive language (for example, sarcasm or praise for the status quo).
+
+Classify as:
+- `1` if the author's stance toward the Women's March is approving
+- `0` if the author's stance toward the Women's March is opposing
+
+Return JSON only, with exactly one field:
+
+  {"pro_womens_march": 1}
+
+Do not return any explanation or extra text.

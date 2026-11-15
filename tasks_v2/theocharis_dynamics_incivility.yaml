@@ -1,0 +1,30 @@
+order: 18
+name: theocharis_dynamics_incivility
+version: 2
+supersedes: ../tasks/theocharis_dynamics_incivility.yaml
+family: Relevance / Incivility
+source: Theocharis et al. 2020
+data_file: ../data/theocharis_dynamics_incivility_v2.csv
+prompt_file: ../prompts_v2/theocharis_dynamics_incivility.txt
+label_kind: binary
+label_key: uncivil
+labels:
+  - uncivil
+id:
+  kind: column
+  column: source_tweet_id
+text:
+  template: |
+    Tweet:
+    {text}
+ground_truth:
+  column: gt_uncivil
+# v2 changes both prompt and data, so it is NOT item-paired with v1.
+# Prompt: the two category definitions, examples and coder note are quoted
+# from the coding scheme in Theocharis et al. (2020, Sage Open). The v1 prompt
+# said sarcasm was not uncivil; the source scheme lists sarcasm and ALL CAPS
+# as uncivil.
+# Data (code/build_theocharis_dynamics_incivility_task.py --version 2): tweet
+# ids read as strings (v1 stored floats); HTML entities unescaped; 261 source
+# rows with no text beyond URLs, @-mentions and punctuation dropped by rule
+# (3997 -> 3737 rows after deduplication).

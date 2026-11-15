@@ -1,0 +1,42 @@
+order: 25
+name: plover_cameo_event
+version: 2
+supersedes: ../tasks/plover_cameo_event.yaml
+family: Event coding
+source: Halterman et al. 2023
+data_file: ../data/plover_cameo_event_v2.csv
+prompt_file: ../prompts_v2/plover_cameo_event.txt
+label_kind: categorical
+label_key: event_type
+labels:
+  - AGREE
+  - AID
+  - ASSAULT
+  - COERCE
+  - CONCEDE
+  - CONSULT
+  - COOPERATE
+  - DEMAND
+  - DISAPPROVE
+  - FIGHT
+  - INVESTIGATE
+  - MOBILIZE
+  - PROTEST
+  - REJECT
+  - RETREAT
+  - SANCTION
+  - SUPPORT
+  - THREATEN
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Sentence:
+    {text}
+ground_truth:
+  column: gt_event_type
+# v2: PLOVER 0.6b1 definitions in the prompt (v1 was a bare label list), and
+# item ids hashed from the text because the source ids contain the gold label
+# (source id kept as source_original_id). Same rows in the same order, so the
+# sampled items are the v1 items under new ids.

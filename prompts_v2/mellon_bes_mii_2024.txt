@@ -1,0 +1,70 @@
+Here is an open-ended response from the British Election Study to the question "what is the most important issue facing the country?". Please assign one of the following categories to the response. Only use the labels provided and always code the response.
+
+Each line gives the label to return, followed by the category description where one is given. Where the category's full name differs from the label, the full name is given in parentheses.
+
+health: include NHS but DO NOT include covid-related responses
+education
+election outcome
+pol-neg: complaints about politics, the system, the media, corruption where no politician or party is mentioned
+partisan-neg: use this code for negative statements about a party or politician
+societal divides
+morals: including abortion, complaints about religiosity and society's character
+nat ident, goals-loss (national identity, goals-loss): ethnonationalism
+racism/discrimination (concerns about racism and discrimination)
+welfare
+terrorism
+immigration: include overpopulation. do not include refugees
+asylum: asylum seekers/refugees
+crime
+europe: including Brexit
+constitutional: UK constitutional issues except brexit, devolution and scottish independence. Include electoral system here.
+international trade
+devolution
+scot-ind (scot-independence)
+foreign affairs: not including war
+war: including Ukraine, Russia and Syria include desire for peace
+defence
+foreign emergency: short-term not including war
+domestic emergency: short-term e.g. Flooding, storms and Grenfell Tower but not COVID
+economy-general
+economy-personal (personal finances)
+unemployment
+taxation
+debt/deficit: national/government debt not personal debt
+inflation: price rises
+living costs: including energy crisis
+poverty
+austerity: cuts and lack of spending on services
+inequality
+housing: including homelessness
+social care: including care for elderly, adults, disabled and children
+pensions/ageing
+transport/infrastructure: including HS2
+environment
+pol value-auth (pol values-authoritarian): pro-authoritarian responses or anti-socially liberal responses that don't fit better anywhere else: e.g. complaints about political correctness, LGBT people, wokeness etc
+pol values-liberal: pro- socially liberal responses or anti-authoritarian responses that don't fit better anywhere else e.g. responses that are pro women's rights, LGBT people, free speech and other minorities or responses that are concerned about authoritarian groups
+pol values-right: pro-economic right wing or anti-left wing responses that don't fit better anywhere else
+pol values-left: pro-economic left wing or anti-right wing responses that don't fit better anywhere else
+Referendum unspecified: where you can't tell whether response is about Brexit or indyref
+Coronavirus: covid but not its economic impacts (use this in preference to health where possible)
+COVID-economy (Covid-economy)
+BLM and responses (Black Lives Matter and backlash to it)
+other: for responses that do not fit into any other category
+uncoded: for responses that cannot be reliably assigned to a category
+
+For context, Russia invaded Ukraine prior to the fieldwork for this survey, so references to Ukraine or Russia are about war.
+
+If multiple issues are mentioned, use the label for the first issue mentioned.
+
+---
+
+### Output format ###
+
+Your response MUST be a JSON object of exactly this form:
+
+  {"issue": "Coronavirus"}
+
+The value of `"issue"` must be exactly one of these strings:
+  Referendum unspecified, Coronavirus, COVID-economy, BLM and responses, health, education, election outcome, pol-neg, partisan-neg, societal divides, morals, nat ident, goals-loss, racism/discrimination, welfare, terrorism, immigration, asylum, crime, europe, constitutional, international trade, devolution, scot-ind, foreign affairs, war, defence, foreign emergency, domestic emergency, economy-general, economy-personal, unemployment, taxation, debt/deficit, inflation, living costs, poverty, austerity, inequality, housing, social care, pensions/ageing, transport/infrastructure, environment, pol value-auth, pol values-liberal, pol values-right, pol values-left, other, uncoded
+
+Do NOT output the bare label alone. Do NOT output explanations, markdown, or any other text. Output ONLY the JSON object.

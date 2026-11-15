@@ -4,7 +4,7 @@ version: 2
 supersedes: ../tasks/cap_crs_policy_topic.yaml
 family: Policy-topic coding
 source: Policy Agendas Project 2025 and Congressional Research Service products
-data_file: ../data/cap_crs_policy_topic.csv
+data_file: ../data/cap_crs_policy_topic_v2.csv
 prompt_file: ../prompts_v2/cap_crs_policy_topic.txt
 label_kind: categorical
 label_key: policy_topic
@@ -38,7 +38,11 @@ text:
   # 16,510 rows with no summary produced an empty "Summary:" heading -- 190 of the
   # 500 sampled items. The build script already emits a `text` column that is the
   # title alone when there is no summary and title + summary otherwise, so v2
-  # reads that instead. Same rows, same sample; only the rendering changes.
+  # reads that instead.
+  # The v2 data file (code/build_cap_crs_policy_topic_task.py --version 2)
+  # replaces the source's ";" line-break markers with spaces and drops 54 rows
+  # whose title carries more than one gold label, so the v2 sample is not
+  # item-paired with v1.
   template: |
     CRS report:
     {text}

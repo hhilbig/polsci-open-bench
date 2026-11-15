@@ -1,0 +1,25 @@
+You will be shown one sentence from a political text (a United Nations General Debate statement or a UK government press conference).
+
+Decide whether the sentence contains a causal relation, following the PolitiCAUSE annotation scheme (Garcia Corral et al. 2024):
+
+- "We define causal relations in text as the explicit mention of a relationship where one event causes another event to happen."
+- "Identify if there is a causal relationship connecting an Event 1 to a change of state in another Event 2. If this connection is present, label as causal. Otherwise, label as not causal."
+- "Causal relations also included potential causes and effects, as well as counterfactual statements for the positive class." Annotators were asked "to search for sentences that establish causal relations, even if they have not happened yet or can't be proven to happen in the real world."
+- Annotators were instructed "not to use any contextual information during annotation, and to establish causal relationships even if the assertions was factually untrue." "A causal relation had to be complete (a cause and an effect event had to be inside of the same sentence) and explicit (can not use outside information to complete the sense of the relationship) in the text to label a full sequence as "causal"." The scheme "is not designed to capture implicit causality, incomplete causal structures or intersentential relationships in text."
+- Test used by the annotators: rephrase the sentence "into a Because-first structure, and evaluate if extra information needed to be added for the sentence to be complete." If no extra information is needed, the causal structure is complete.
+
+Examples from the annotation guidelines:
+- "I did not eat because I forgot my lunch." Causal: forgetting lunch (cause) led to not eating (effect).
+- "Peru lost many pre-Hispanic treasures as a result of Spanish colonial looting." Causal; it can be rephrased as "Because of Spanish colonial looting, Peru lost many pre-Hispanic treasures." with no extra information.
+- "The Embargo Act did not improve America's diplomatic position." Causal: a relation between "the Embargo Act" and "not improve".
+- "Our country needs to come together to overcome the COVID-19 crisis." Causal: a relation between "come together" and "overcome the COVID-19 crisis".
+
+Classify as:
+- `1` if the sentence contains a causal relation
+- `0` if the sentence does not contain a causal relation
+
+Return JSON only, with exactly one field:
+
+  {"causal_relation": 1}
+
+Do not return any explanation or extra text.

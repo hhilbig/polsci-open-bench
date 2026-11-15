@@ -1,0 +1,35 @@
+order: 16
+name: muller_fujimura_campaign_policy_area
+version: 2
+supersedes: ../tasks/muller_fujimura_campaign_policy_area.yaml
+family: Policy-topic coding
+source: Müller and Fujimura 2025
+data_file: ../data/muller_fujimura_campaign_policy_area_v2.csv
+prompt_file: ../prompts_v2/muller_fujimura_campaign_policy_area.txt
+label_kind: categorical
+label_key: policy_area
+labels:
+  - Agriculture, Forestry, and Fisheries
+  - Committees on Cabinet
+  - Economy, Trade and Industry
+  - Education, Culture, Sports, Science, and Technology
+  - Environment
+  - Financial Affairs
+  - Foreign Affairs
+  - Health, Labour, and Welfare
+  - Internal Affairs and Communications
+  - Land, Infrastructure, Transport, and Tourism
+  - No Policy Area
+  - Security
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Japanese campaign statement:
+    {text}
+ground_truth:
+  column: gt_policy_area
+  # Same items, ids and gold as v1. The v2 data file re-reads the source .tab
+  # files with backslash as the escape character, which removes the \" residue
+  # from 15 texts (see code/build_muller_fujimura_campaign_policy_area_task.py).

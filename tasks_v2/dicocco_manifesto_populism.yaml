@@ -1,0 +1,24 @@
+order: 29
+name: dicocco_manifesto_populism
+version: 2
+supersedes: ../tasks/dicocco_manifesto_populism.yaml
+family: Rhetoric / Populism
+source: Di Cocco and Monechi 2022
+data_file: ../data/dicocco_manifesto_populism.csv
+prompt_file: ../prompts_v2/dicocco_manifesto_populism.txt
+label_kind: binary
+label_key: populist
+labels:
+  - populist
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Manifesto sentence:
+    {text}
+ground_truth:
+  # Same items and gold as v1. v2 replaces the derived definition with the
+  # coding rule the authors state for this manually coded corpus (Political
+  # Analysis 30(3), Section 5.2.4) and says which languages the sentences are in.
+  column: gt_populist

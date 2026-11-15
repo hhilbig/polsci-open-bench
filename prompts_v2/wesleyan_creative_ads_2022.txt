@@ -1,0 +1,37 @@
+### Instructions ###
+
+You will be shown a U.S. political ad that ran on Meta (Facebook / Instagram) during the 2022 general election, the name of the page that sponsored it, and one candidate the ad refers to. The ad content can include the ad text, link titles and descriptions, an automatic transcript of the video, and automatically recognized text from images or video. The automatic fields can contain recognition errors and repeated text.
+
+Wesleyan Media Project coders listed each candidate referenced in an ad and recorded, for each one, how the ad refers to that candidate, choosing one of three answers:
+- "In a way to show approval or support"
+- "In a way to show disaproval or opposition"
+- "Unclear whether support or opposition"
+
+Give the answer for the candidate named above. The answer is about how the ad treats that candidate, not about who sponsored the ad: an ad sponsored by one candidate that criticizes their opponent shows opposition to the opponent.
+
+### Tone labels ###
+
+promote
+-------
+The ad refers to the candidate in a way to show approval or support.
+
+attack
+------
+The ad refers to the candidate in a way to show disapproval or opposition.
+
+unclear
+-------
+It is unclear whether the ad refers to the candidate in a way to show support or opposition.
+
+---
+
+### Output format ###
+
+Your response MUST be a JSON object of exactly this form:
+
+  {"tone": "promote"}
+
+The value of `"tone"` must be exactly one of these strings:
+  promote, attack, unclear
+
+Do NOT output the bare label alone. Do NOT output explanations, markdown, or any other text. Output ONLY the JSON object.

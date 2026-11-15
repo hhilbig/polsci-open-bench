@@ -1,21 +1,35 @@
-You will be shown a short event summary from the Global Terrorism Database.
+You will be shown a short event summary from the Global Terrorism Database (GTD).
 
-Classify the primary attack type described in the summary. Use exactly one of these labels:
+Classify the attack type of the incident, using the GTD codebook's definitions and its attack-type hierarchy. The GTD codebook describes the attack type field as follows:
 
-- `Assassination`: an attack whose primary purpose is killing a specific, prominent, or individually targeted person.
-- `Armed Assault`: a direct attack using firearms, knives, or other weapons, without explosives as the primary method.
-- `Bombing/Explosion`: an attack using bombs, grenades, rockets, mines, suicide explosives, or other explosive devices.
-- `Facility/Infrastructure Attack`: sabotage or physical attack against a building, facility, vehicle, pipeline, communications asset, or other infrastructure.
-- `Hijacking`: seizure or attempted seizure of an aircraft, vehicle, vessel, or other transport while it is in transit.
-- `Hostage Taking (Barricade Incident)`: seizure of hostages in a fixed location during a standoff or barricade situation.
-- `Hostage Taking (Kidnapping)`: abduction, seizure, or attempted abduction of people for ransom, coercion, or intimidation.
-- `Unarmed Assault`: attack or attempted attack without firearms, explosives, or other conventional weapons.
+"This field captures the general method of attack and often reflects the broad class of tactics used. It consists of nine categories, which are defined below. Up to three attack types can be recorded for each incident. Typically, only one attack type is recorded for each incident unless the attack is comprised of a sequence of events."
+
+"When multiple attack types may apply, the most appropriate value is determined based on the hierarchy below. For example, if an assassination is carried out through the use of an explosive, the Attack Type is coded as Assassination, not Bombing/Explosion. If an attack involves a sequence of events, then the first, the second, and the third attack types are coded in the order of the hierarchy below rather than the order in which they occurred."
+
+Attack type hierarchy, from highest to lowest. If more than one attack type applies, return the one that is highest in this list:
+
+1. `Assassination`
+2. `Hijacking`
+3. `Hostage Taking (Kidnapping)`
+4. `Hostage Taking (Barricade Incident)`
+5. `Bombing/Explosion`
+6. `Armed Assault`
+7. `Unarmed Assault`
+8. `Facility/Infrastructure Attack`
+
+Definitions from the GTD codebook:
+
+- `Assassination`: "An act whose primary objective is to kill one or more specific, prominent individuals. Usually carried out on persons of some note, such as high-ranking military officers, government officials, celebrities, etc. Not to include attacks on non-specific members of a targeted group. The killing of a police officer would be an armed assault unless there is reason to believe the attackers singled out a particularly prominent officer for assassination."
+- `Armed Assault`: "An attack whose primary objective is to cause physical harm or death directly to human beings by use of a firearm, incendiary, or sharp instrument (knife, etc.). Not to include attacks involving the use of fists, rocks, sticks, or other handheld (less-than-lethal) weapons. Also includes attacks involving certain classes of explosive devices in addition to firearms, incendiaries, or sharp instruments. The explosive device subcategories that are included in this classification are grenades, projectiles, and unknown or other explosive devices that are thrown."
+- `Bombing/Explosion`: "An attack where the primary effects are caused by an energetically unstable material undergoing rapid decomposition and releasing a pressure wave that causes physical damage to the surrounding environment. Can include either high or low explosives (including a dirty bomb) but does not include a nuclear explosive device that releases energy from fission and/or fusion, or an incendiary device where decomposition takes place at a much slower rate. If an attack involves certain classes of explosive devices along with firearms, incendiaries, or sharp objects, then the attack is coded as an armed assault only. The explosive device subcategories that are included in this classification are grenades, projectiles, and unknown or other explosive devices that are thrown in which the bombers are also using firearms or incendiary devices."
+- `Hijacking`: "An act whose primary objective is to take control of a vehicle such as an aircraft, boat, bus, etc. for the purpose of diverting it to an unprogrammed destination, force the release of prisoners, or some other political objective. Obtaining payment of a ransom should not the sole purpose of a Hijacking, but can be one element of the incident so long as additional objectives have also been stated. Hijackings are distinct from Hostage Taking because the target is a vehicle, regardless of whether there are people/passengers in the vehicle."
+- `Hostage Taking (Barricade Incident)`: "An act whose primary objective is to take control of hostages for the purpose of achieving a political objective through concessions or through disruption of normal operations. Such attacks are distinguished from kidnapping since the incident occurs and usually plays out at the target location with little or no intention to hold the hostages for an extended period in a separate clandestine location."
+- `Hostage Taking (Kidnapping)`: "An act whose primary objective is to take control of hostages for the purpose of achieving a political objective through concessions or through disruption of normal operations. Kidnappings are distinguished from Barricade Incidents (above) in that they involve moving and holding the hostages in another location."
+- `Facility/Infrastructure Attack`: "An act, excluding the use of an explosive, whose primary objective is to cause damage to a non-human target, such as a building, monument, train, pipeline, etc. Such attacks include arson and various forms of sabotage (e.g., sabotaging a train track is a facility/infrastructure attack, even if passengers are killed). Facility/infrastructure attacks can include acts which aim to harm an installation, yet also cause harm to people incidentally (e.g. an arson attack primarily aimed at damaging a building, but causes injuries or fatalities)."
+- `Unarmed Assault`: "An attack whose primary objective is to cause physical harm or death directly to human beings by any means other than explosive, firearm, incendiary, or sharp instrument (knife, etc.). Attacks involving chemical, biological or radiological weapons are considered unarmed assaults."
 
 Return JSON only, with exactly one field:
 
   {"attack_type": "Bombing/Explosion"}
 
-Do not return any explanation or extra text.
-
----
-Source: v2 of prompts/brandt_gtd_attack_type.txt. The `Unknown` label was removed. The v1 prompt defined it as "the summary does not provide enough information to identify the primary attack type", but GTD assigns attacktype1 = Unknown when the underlying source report does not specify the method, which is not a property of the summary the model is shown. Those rows are excluded from the v2 sample via ground_truth.exclude_labels.
+Use exactly one of the eight labels above. Do not return any explanation or extra text.

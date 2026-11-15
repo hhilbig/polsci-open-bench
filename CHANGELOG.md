@@ -12,6 +12,23 @@ Two conventions hold throughout:
   reproduces it exactly.
 - **A change that moves a published number says so, with the number.**
 
+## Unreleased (decided 2026-11-14) Task set and scoring for the next release
+
+No published number changes: the frozen panels keep their task set and metric.
+
+- `brandt_political_relevance` will be left out. Its gold label
+  is the BBC News "politics" section, not coded political relevance.
+- `burnham_polnli_event_entailment` will be left out. All its pairs are already in
+  `burnham_polnli_entailment`, so that subtask was counted twice.
+- `halterman_keith_bfrs` v2 leaves ASSASSINATION out of the headline macro
+  average (new manifest field `headline_exclude_labels`). The class stays an
+  answer option and its items stay in the sample; its per-class F1 is still
+  reported. Gold codes domestic and honour killings as ASSASSINATION, while the
+  codebook's OTHER example is one.
+- Both stay in `tasks/` unchanged, because the frozen panels load them; the
+  next release's task list leaves them out. Fixes for 25 tasks are in `tasks_v2/`; see
+  `docs/task_quality_audit_20261114.md` and `docs/prompts_provenance.md`.
+
 ## 2026-10-19 Corrected claims, chance baselines, constrained-decoding data
 
 No score changes. Several sentences in the README, report and page compared

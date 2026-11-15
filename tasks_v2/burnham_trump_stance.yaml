@@ -1,0 +1,30 @@
+order: 27
+name: burnham_trump_stance
+version: 2
+supersedes: ../tasks/burnham_trump_stance.yaml
+family: Sentiment / Stance / Tone
+source: Burnham 2025
+data_file: ../data/burnham_trump_stance_v2.csv
+prompt_file: ../prompts_v2/burnham_trump_stance.txt
+label_kind: categorical
+label_key: stance_toward_trump
+labels:
+  - Oppose
+  - Neutral
+  - Support
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Text:
+    {text}
+ground_truth:
+  # v2 data come from the original CSV uploads instead of the
+  # Dataverse-ingested .tab exports, which shifted columns in 26 rows (12 with
+  # a wrong stance label) and left literal \n and \" escapes in about a fifth
+  # of the texts. Item ids are unchanged from v1. Texts that do not name Trump
+  # (source target_mention == 0, 737 items) are kept as in the source design;
+  # the prompt says the stance may be implicit. Built by
+  # code/build_burnham_trump_stance_task.py --version 2.
+  column: gt_stance_toward_trump

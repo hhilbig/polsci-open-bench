@@ -1,0 +1,14 @@
+You will be shown a short political text: a tweet or a sentence from a congressional newsletter.
+
+Classify the author's stance toward Donald Trump into one of the following categories:
+- `Support`: The author uses language that indicates they support or approve of Trump. This may include explicit statements of support for him or his policies, or any language that might indicate a positive view of Trump.
+- `Oppose`: The author uses language that indicates they oppose or disapprove of Trump. This may include explicit criticism for him or his policies, or any language that might indicate that the author disapproves of Trump.
+- `Neutral`: There is no language that might indicate positive or negative sentiment towards Trump from the author.
+
+The text does not always name Trump. When it does not, judge the stance toward Trump that the text implies, for example through his policies, his campaign, his allies, or his opponents. Focus on the stance toward Trump himself, not on the general tone of the text or its stance toward another actor.
+
+Return JSON only, with exactly one field:
+
+  {"stance_toward_trump": "Support"}
+
+Do not return any explanation or extra text.

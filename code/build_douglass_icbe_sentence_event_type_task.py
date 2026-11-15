@@ -7,6 +7,23 @@ The resulting task keeps every public sentence and assigns one of five labels:
 `No Event`, `Action`, `Speech`, `Thought`, or `Mixed`. The `Mixed` label
 captures sentences with multiple agreed event types, while `No Event` captures
 sentences with no agreed event type in the public agreed-event file.
+
+`--version 2` (needs `--coder-input`, the coder-level
+replication_data/in/icb_coder_crisis_sentence_event.Rds) writes
+data/douglass_icbe_sentence_event_type_v2.csv. v1 labels every sentence
+without an agreed event `No Event`. The coder file shows why a sentence has no
+agreed event: coders answer each sentence with a number of events (1-3), "No
+Action", "Background", "Covered by Previous Sentence" or "Error". Only "No
+Action" means the coder read the sentence as containing no event; the other
+answers mean the sentence was not coded. v2 keeps the v1 rows and labels and
+drops, in order:
+
+1. sentences absent from the agreed-event file (not aligned to any coding);
+2. `No Event` sentences whose most frequent coder answer is not "No Action"
+   (strictly more "No Action" answers than any other single answer, counting
+   1-3 events as one answer; coder sentences are matched to benchmark
+   sentences on crisis and letters-and-digits text; unmatched rows drop);
+3. fragments: text with no letter, or not ending in . ? ! " ' ) ] : ;
 """
 import argparse
 import re
@@ -23,6 +40,9 @@ DEFAULT_EVENTS_INPUT = Path("/tmp/ICBe_V1.1_events_agreed.Rds")
 DEFAULT_SENTENCES_INPUT = Path("/tmp/icb_long_crisis_sentence_unique.Rds")
 DEFAULT_TITLES_INPUT = Path("/tmp/icb_corpus_V1.0_May_16_2022.Rds")
 DEFAULT_OUTPUT = REPO / "data" / "douglass_icbe_sentence_event_type.csv"
+DEFAULT_OUTPUT_V2 = REPO / "data" / "douglass_icbe_sentence_event_type_v2.csv"
+DEFAULT_CODER_INPUT = Path("/tmp/icb_coder_crisis_sentence_event.Rds")
+V2_TERMINAL = re.compile(r"[.?!\"')\]:;]$")
 
 BASE_TYPES = {"action", "speech", "thought"}
 LABEL_MAP = {
@@ -163,13 +183,72 @@ def build_douglass_icbe_sentence_event_type_task(
     return final.reset_index(drop=True)
 
 
+def _norm_text(value) -> str:
+    return re.sub(r"[^a-z0-9]", "", str(value).lower())
+
+
+def build_douglass_icbe_sentence_event_type_task_v2(
+    events_path: Path,
+    sentences_path: Path,
+    titles_path: Path,
+    coder_path: Path,
+) -> pd.DataFrame:
+    v1 = build_douglass_icbe_sentence_event_type_task(events_path, sentences_path, titles_path)
+
+    events = _read_rds(events_path)
+    aligned = set(
+        zip(
+            pd.to_numeric(events["crisno"]).astype(int),
+            pd.to_numeric(events["sentence_number_int_aligned"]).astype(int),
+        )
+    )
+    in_agreed = [
+        (c, n) in aligned for c, n in zip(v1["source_crisno"], v1["source_sentence_number"])
+    ]
+    out = v1[in_agreed].copy()
+    print(f"v2 rule 1: dropped {len(v1) - len(out)} sentences absent from the agreed-event file")
+
+    coder = _read_rds(coder_path)
+    coder["crisno"] = pd.to_numeric(coder["crisno"]).astype(int)
+    coder = coder.drop_duplicates(["email_id", "crisno", "sentence_number_int"])
+    answer = coder["sentence_events"].map(
+        lambda v: "NA" if pd.isna(v) else ("events" if str(v) in {"1", "2", "3"} else str(v))
+    )
+    counts = (
+        pd.DataFrame({"crisno": coder["crisno"], "n": coder["sentence"].map(_norm_text), "a": answer})
+        .groupby(["crisno", "n", "a"])
+        .size()
+        .unstack(fill_value=0)
+    )
+    no_action = counts.get("No Action", pd.Series(0, index=counts.index))
+    other_max = counts.drop(columns=["No Action"], errors="ignore").max(axis=1)
+    annotated_no_event = set(counts.index[no_action > other_max])
+    keys = list(zip(out["source_crisno"], out["text"].map(_norm_text)))
+    is_no_event = out["gt_event_type"].eq("No Event")
+    keep = ~is_no_event | pd.Series([k in annotated_no_event for k in keys], index=out.index)
+    print(
+        f"v2 rule 2: dropped {int((~keep).sum())} of {int(is_no_event.sum())} No Event "
+        "sentences whose modal coder answer is not 'No Action'"
+    )
+    out = out[keep].copy()
+
+    fragment = ~out["text"].str.contains("[A-Za-z]") | ~out["text"].str.strip().str.contains(V2_TERMINAL)
+    print(f"v2 rule 3: dropped {int(fragment.sum())} fragments")
+    out = out[~fragment].reset_index(drop=True)
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--events-input", default=str(DEFAULT_EVENTS_INPUT))
     ap.add_argument("--sentences-input", default=str(DEFAULT_SENTENCES_INPUT))
     ap.add_argument("--titles-input", default=str(DEFAULT_TITLES_INPUT))
-    ap.add_argument("--output", default=str(DEFAULT_OUTPUT))
+    ap.add_argument("--coder-input", default=str(DEFAULT_CODER_INPUT))
+    ap.add_argument("--output", default=None)
+    ap.add_argument("--version", type=int, choices=[1, 2], default=1)
     args = ap.parse_args()
+    if args.output is None:
+        args.output = str(DEFAULT_OUTPUT_V2 if args.version == 2 else DEFAULT_OUTPUT)
 
     events_path = Path(args.events_input)
     sentences_path = Path(args.sentences_input)
@@ -184,11 +263,19 @@ def main():
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    df = build_douglass_icbe_sentence_event_type_task(
-        events_path=events_path,
-        sentences_path=sentences_path,
-        titles_path=titles_path,
-    )
+    if args.version == 2:
+        df = build_douglass_icbe_sentence_event_type_task_v2(
+            events_path=events_path,
+            sentences_path=sentences_path,
+            titles_path=titles_path,
+            coder_path=Path(args.coder_input),
+        )
+    else:
+        df = build_douglass_icbe_sentence_event_type_task(
+            events_path=events_path,
+            sentences_path=sentences_path,
+            titles_path=titles_path,
+        )
     df.to_csv(output_path, index=False)
 
     print(f"wrote {output_path} ({len(df)} rows)")

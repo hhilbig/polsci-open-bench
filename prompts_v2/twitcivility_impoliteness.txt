@@ -1,0 +1,24 @@
+You will be shown a political tweet from the United States. User names are replaced by @USER and links by @LINK.
+
+The original annotators judged each tweet on two separate dimensions of political incivility, defined by the dataset authors (Pendzel et al. 2023) as follows:
+
+- Impoliteness: "personal-level incivility (impoliteness), pertaining to a violation of interpersonal norms. Impolite speech may contain foul language, harsh tone, name-calling, vulgarity, and aspersion towards other discussion partners or their ideas (e.g., "are you really so stupid that you would defund this program?")."
+- Intolerance: "public-level incivility (intolerance) refers to violations of norms related to the democratic process, such as pluralism and deliberation. It refers to exclusionary speech, silencing social and political groups and denying their rights (Rossini, 2020) (e.g., "Hillary and the dems ARE enemies, foreign AND domestic")."
+
+Annotators labeled each tweet as impolite, intolerant, both, or neither. These are the examples they were shown:
+
+- IMPOLITE: "All hell has broken loose under the leadership of the senile old man. I don't believe a damn word from this dumb son of a bitches."; "That's what they are protesting, you rank imbecile. People like you need a damn good kicking."
+- INTOLERANT: "Hillary and the dems ARE enemies, foreign AND domestic"; "If you agree with democrats in congress, you are an anti-American commie"
+- NEUTRAL: "How long do Republicans believe you can keep pushing this line? You never intended to secure the border"; "There are 400,000,000 guns in the United States, you're going to have to stop the criminals not the guns"
+
+Your task is the impoliteness dimension only. A tweet that is intolerant but not impolite is labeled 0; a tweet that is both is labeled 1.
+
+Classify as:
+- `1` if the tweet is impolite
+- `0` if the tweet is not impolite
+
+Return JSON only, with exactly one field:
+
+  {"impolite": 0}
+
+Do not return any explanation or extra text.

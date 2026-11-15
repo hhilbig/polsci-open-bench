@@ -7,8 +7,14 @@ The source file is a JSON list of event examples. This builder removes the
 documentation record, keeps event text and high-level CAMEO/PLOVER event type,
 normalizes whitespace, drops exact duplicate texts with conflicting event
 labels, and deduplicates repeated text-label pairs.
+
+`--version 2` writes data/plover_cameo_event_v2.csv: the same rows in the same
+order, but `source_id` is "plover_" plus the first 12 hex digits of the SHA-256
+of the item text, because the source ids (e.g. PLOVER-GSR01-AGREE-0014) contain
+the gold label. The source id is kept as `source_original_id` for tracing.
 """
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -20,6 +26,7 @@ REPO = HERE.parent
 
 DEFAULT_INPUT = Path("/tmp/plover_gsr_cameo.txt")
 DEFAULT_OUTPUT = REPO / "data" / "plover_cameo_event.csv"
+DEFAULT_OUTPUT_V2 = REPO / "data" / "plover_cameo_event_v2.csv"
 
 EVENT_LABELS = [
     "AGREE",
@@ -83,11 +90,26 @@ def build_plover_cameo_event_task(input_path: Path) -> pd.DataFrame:
     )
 
 
+def to_v2(df: pd.DataFrame) -> pd.DataFrame:
+    out = df.rename(columns={"source_id": "source_original_id"})
+    out.insert(
+        0,
+        "source_id",
+        out["text"].map(lambda t: "plover_" + hashlib.sha256(t.encode("utf-8")).hexdigest()[:12]),
+    )
+    if out["source_id"].duplicated().any():
+        raise ValueError("Hashed ids collided")
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--input", default=str(DEFAULT_INPUT))
-    ap.add_argument("--output", default=str(DEFAULT_OUTPUT))
+    ap.add_argument("--output", default=None)
+    ap.add_argument("--version", type=int, choices=[1, 2], default=1)
     args = ap.parse_args()
+    if args.output is None:
+        args.output = str(DEFAULT_OUTPUT_V2 if args.version == 2 else DEFAULT_OUTPUT)
 
     input_path = Path(args.input)
     if not input_path.exists():
@@ -100,6 +122,8 @@ def main():
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     df = build_plover_cameo_event_task(input_path)
+    if args.version == 2:
+        df = to_v2(df)
     df.to_csv(output_path, index=False)
 
     print(f"wrote {output_path} ({len(df)} rows)")

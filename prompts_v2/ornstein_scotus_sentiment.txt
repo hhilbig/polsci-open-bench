@@ -1,0 +1,43 @@
+You will be shown a tweet that references the US Supreme Court. Each tweet was collected the day after one of two Supreme Court decisions, named in the "Case" line. Not every tweet is about that decision; some are about the Court or its justices more generally.
+
+Classify the sentiment of the tweet as Positive, Neutral, or Negative. Use the instructions and labeled examples for the tweet's case.
+
+If the case is "masterpiece":
+
+Read these tweets posted the day after the US Supreme Court ruled in favor of a baker who refused to bake a wedding cake for a same-sex couple. For each tweet, decide whether its sentiment is Positive, Neutral, or Negative.
+
+Tweet: #SCOTUS set a dangerous precedent today. Although the Court limited the scope to which a business owner could deny services to patrons, the legal argument has been legitimized that one's subjective religious convictions trump (no pun intended) #humanrights. #LGBTQRights
+Sentiment: Negative
+Tweet: Thank you Supreme Court I take pride in your decision!!!!✝️ #SCOTUS
+Sentiment: Positive
+Tweet: Supreme Court rules in favor of baker who would not make wedding cake for gay couple
+Sentiment: Neutral
+Tweet: Supreme Court rules in favor of Colorado baker! This day is getting better by the minute!
+Sentiment: Positive
+Tweet: Can’t escape the awful irony of someone allowed to use religion to discriminate against people in love. Not my Jesus. #opentoall #SCOTUS #Hypocrisy #MasterpieceCakeshop
+Sentiment: Negative
+Tweet: I can’t believe this cake case went all the way to #SCOTUS . Can someone let me know what cake was ultimately served at the wedding? Are they married and living happily ever after?
+Sentiment: Neutral
+
+If the case is "mazars":
+
+Read these tweets posted the day after the US Supreme Court ruled that sitting presidents are not immune to state criminal subpoenas, and that President Trump was obliged to disclose his tax returns to the Manhattan District Attorney. For each tweet, decide whether its sentiment is Positive, Neutral, or Negative.
+
+Tweet: SCOTUS just ruled Manhattan DA CAN get trumps financials and tax returns.  This is a great day for the ruke of law and America.
+Sentiment: Positive
+Tweet: Justice #ClarenceThomas is waste of space on the #scotus
+Sentiment: Negative
+Tweet: BREAKING: Supreme Court Justice Ruth Bader Ginsburg has been hospitalized for a possible infection, per a SCOTUS spokesperson. @Scotus @ruthbadergins
+Sentiment: Neutral
+Tweet: Today the Supreme Court let @realDonaldTrump know that he is not above the law!
+Sentiment: Positive
+Tweet: The Supreme Court is going to disappoint us tomorrow. And trump will feel even more untouchable. He’ll brag about it at his Klan rallies. Sweaty orange spray tan pooling above his lip, smug faced as he gloats and brags. It makes me sick.
+Sentiment: Negative
+Tweet: Both SCOTUS rulings in Trump financial records sent back to lower courts. Practically speaking that means no turnover of records immediately in either case. #7News
+Sentiment: Neutral
+
+Return JSON only, with a single field `sentiment` whose value is exactly one of the strings "Positive", "Negative", or "Neutral":
+
+  {"sentiment": "Negative"}
+
+Do not return any explanation or extra text.

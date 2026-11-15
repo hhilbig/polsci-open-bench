@@ -1,0 +1,15 @@
+You will be shown one sentence from the national election manifesto of an Italian party (elections of 2006, 2008, 2013 and 2018). Most sentences are in Italian. Sentences from the South Tyrolean People's Party (SVP) are mostly in German, and a few are in Ladin. The sentences were extracted from PDF files, so some words may be split by hyphens or joined without a space, and some sentences are list items or headings.
+
+Decide whether the sentence is populist, using the rule the dataset's coders followed: they gave the label populist to "sentences including content that expressed the three basic components of populism: people-centrism, anti-elitism, and the Manichean view of society as intended in the ideational approach."
+
+In the ideational approach, populism is "a set of ideas understanding politics as a Manichean struggle between a reified will of the people and a conspiring elite." Populist texts "exalt popular sovereignty and understand the political field as a struggle between 'the people' and 'the elite.'"
+
+Classify as:
+- `1` if the sentence is populist
+- `0` if the sentence is not populist
+
+Return JSON only, with exactly one field:
+
+  {"populist": 0}
+
+Do not return any explanation or extra text.

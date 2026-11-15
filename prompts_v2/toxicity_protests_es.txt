@@ -1,0 +1,13 @@
+Se le mostrará un mensaje de Twitter en español sobre protestas en Argentina (agosto de 2020) o Chile (octubre de 2019).
+
+Clasifique la categoría del comentario como TÓXICO o NO TÓXICO. TÓXICO: Comentarios groseros, irrespetuosos o poco razonables que probablemente hagan que alguien abandone la conversación o deje de compartir su punto de vista. NO TÓXICO: Comentarios civiles o amables que probablemente no desalienten la conversación.
+
+Clasifique como:
+- `1` si el comentario es TÓXICO
+- `0` si el comentario es NO TÓXICO
+
+Responda solo con JSON, con exactamente un campo:
+
+  {"toxic": 0}
+
+No incluya ninguna explicación ni texto adicional.

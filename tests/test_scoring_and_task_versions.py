@@ -19,6 +19,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import yaml
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "code"))
@@ -217,19 +218,29 @@ class LabelMapTests(unittest.TestCase):
                 self.assertNotIn("Labor and Immigration", gold)
                 self.assertTrue(gold <= set(task["labels"]))
 
-    def test_label_map_preserves_item_pairing_with_v1(self):
-        """Renaming a label must not change which rows are sampled."""
+    def test_prompt_only_v2_tasks_stay_item_paired_with_v1(self):
+        """A v2 task on the v1 data file with no excluded labels must sample
+        the same rows as v1 (label renames must not change the draw)."""
         v1 = {t["name"]: t for t in task_registry.load_task_definitions()}
-        v2 = {
-            t["name"]: t
-            for t in task_registry.load_task_definitions(tasks_dir=REPO / "tasks_v2")
-        }
-        for name in ("cap_crs_policy_topic", "cap_party_platform_policy_topic"):
-            with self.subTest(task=name):
+        v2_dir = REPO / "tasks_v2"
+        checked = 0
+        for path in sorted(v2_dir.glob("*.yaml")):
+            spec = yaml.safe_load(path.read_text())
+            v1_spec = yaml.safe_load((v2_dir / spec["supersedes"]).read_text())
+            if spec["data_file"] != v1_spec["data_file"]:
+                continue
+            if spec.get("ground_truth", {}).get("exclude_labels"):
+                continue
+            if spec.get("sampling") != v1_spec.get("sampling"):
+                continue
+            v2 = task_registry.load_task_definition(path)
+            with self.subTest(task=spec["name"]):
                 self.assertEqual(
-                    [i["item_id"] for i in v1[name]["loader"]()],
-                    [i["item_id"] for i in v2[name]["loader"]()],
+                    [i["item_id"] for i in v1[spec["name"]]["loader"]()],
+                    [i["item_id"] for i in v2["loader"]()],
                 )
+            checked += 1
+        self.assertGreater(checked, 5)
 
     def test_label_map_rejects_a_target_outside_the_label_list(self):
         spec = {
@@ -286,11 +297,53 @@ class TaskVersionIsolationTests(unittest.TestCase):
                 )
 
     def test_v2_prompts_exist_and_record_their_provenance(self):
+        provenance = (REPO / "docs" / "prompts_provenance.md").read_text()
         for task in task_registry.load_task_definitions(tasks_dir=REPO / "tasks_v2"):
             with self.subTest(task=task["name"]):
                 text = Path(task["prompt_path"]).read_text()
                 self.assertTrue(Path(task["prompt_path"]).exists())
-                self.assertIn("Source:", text)
+                # The whole prompt file is sent to the model, so v2 prompts
+                # carry no provenance footer; provenance lives in the doc.
+                self.assertNotIn("\n---\nSource:", text)
+                self.assertIn(f"`{task['name']}`", provenance)
+
+
+class HeadlineExcludeLabelsTests(unittest.TestCase):
+    """`headline_exclude_labels` keeps a class answerable but out of the headline."""
+
+    def setUp(self):
+        self.task = task_registry.load_task_definition(
+            REPO / "tasks_v2" / "halterman_keith_bfrs.yaml")
+        self.frame = pd.DataFrame({
+            "gt_event_type": ["ASSASSINATION", "OTHER", "RIOT", "OTHER"],
+            "pred_event_type": ["OTHER", "OTHER", "RIOT", "OTHER"],
+            "parse_error": [np.nan] * 4,
+        })
+
+    def test_class_stays_in_schema_and_items(self):
+        self.assertIn("ASSASSINATION", self.task["labels"])
+        self.assertEqual(self.task["headline_exclude_labels"], ["ASSASSINATION"])
+        enum = self.task["json_schema"]["properties"]["event_type"]["enum"]
+        self.assertIn("ASSASSINATION", enum)
+        gold = {x["gt"]["event_type"] for x in self.task["loader"]()}
+        self.assertIn("ASSASSINATION", gold)
+
+    def test_headline_skips_excluded_class(self):
+        self.assertEqual(scoring.scored_labels(self.task, self.frame), ["RIOT", "OTHER"])
+        self.assertNotIn("ASSASSINATION",
+                         scoring.scored_labels(self.task, self.frame, support_only=False))
+        # OTHER: tp 2, gold 2, predicted 3 -> 0.8; RIOT 1.0.
+        self.assertAlmostEqual(scoring.headline_f1(self.task, self.frame), 0.9)
+
+    def test_release_fast_scorer_agrees(self):
+        import build_refresh_release as brr
+        fast = brr.headline_replicates(self.frame, self.task, np.ones((1, 4)), True)[0]
+        self.assertAlmostEqual(float(fast), 0.9)
+
+    def test_v1_manifest_unaffected(self):
+        v1 = task_registry.load_task_definition(REPO / "tasks" / "halterman_keith_bfrs.yaml")
+        self.assertEqual(v1["headline_exclude_labels"], [])
+        self.assertIn("ASSASSINATION", scoring.scored_labels(v1, self.frame))
 
 
 if __name__ == "__main__":

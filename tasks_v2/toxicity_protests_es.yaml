@@ -1,0 +1,29 @@
+order: 19
+name: toxicity_protests_es
+version: 2
+supersedes: ../tasks/toxicity_protests_es.yaml
+family: Relevance / Incivility
+source: González-Bustamante 2024
+data_file: ../data/toxicity_protests_es.csv
+prompt_file: ../prompts_v2/toxicity_protests_es.txt
+label_kind: binary
+label_key: toxic
+labels:
+  - toxic
+id:
+  kind: column
+  column: source_id_obs
+text:
+  template: |
+    Post:
+    {text}
+ground_truth:
+  column: gt_toxic
+# v2 changes the prompt only (same data, same sampling), so this task IS
+# item-paired with v1. The second paragraph of the prompt is the Spanish
+# question the human coders answered in Labelbox, copied verbatim from the
+# classification name in the project's Labelbox export
+# (training-datalab/gold-standard-toxicity,
+# data/tidy/gold-standard-toxicity-9_6_2024.ndjson). It is the Spanish form of
+# the Perspective API toxicity definition quoted in arXiv:2409.09741. The v1
+# prompt asked for insulting or abusive wording instead.

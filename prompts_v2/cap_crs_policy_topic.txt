@@ -1,28 +1,34 @@
 You will be shown the title of a Congressional Research Service report, and its summary when the archive provides one. Some reports have no summary; classify from the title alone in those cases.
 
-Classify the main policy topic of the report using exactly one Comparative Agendas Project major-topic label:
+Classify the main policy topic of the report using exactly one Comparative Agendas Project major-topic label. Each label is followed by the codebook's description of its general subtopic and the names of its other subtopics:
 
-- `Macroeconomics`: inflation, prices, interest rates, unemployment rate, monetary and fiscal policy, the national budget, taxation, and general industrial policy.
-- `Civil Rights`: discrimination on grounds of race, ethnicity, gender, age, disability or sexual orientation; voting rights; freedom of speech and religion; privacy; anti-government activity.
-- `Health`: health care organisation and financing, insurance, the drug industry and its regulation, medical facilities, disease prevention and treatment, mental health.
-- `Agriculture`: agricultural trade and subsidies, food inspection and safety, agricultural research and extension, animal and crop disease, fisheries.
-- `Labor`: worker safety, employment and training programmes, employee benefits and pensions, labour unions and collective bargaining, parental leave, seasonal and agricultural labour. Immigration belongs under `Immigration`, not here.
-- `Education`: schooling at all levels, school funding, special and vocational education, higher education, education research.
-- `Environment`: drinking water, waste and hazardous-waste disposal, air and water pollution, recycling, species and habitat protection, conservation.
-- `Energy`: nuclear power, electricity, natural gas and oil, coal, alternative and renewable energy, energy conservation.
-- `Immigration`: immigration policy, border control, refugees and asylum, naturalisation and citizenship.
-- `Transportation`: mass transit, highways, air travel, railroads, maritime transport, and related public works.
-- `Law and Crime`: law enforcement agencies, white-collar and organised crime, illegal drugs, courts, prisons and sentencing, juvenile crime, family and child-protection law.
-- `Social Welfare`: food and poverty assistance, social security and elderly assistance, disability assistance, child care, volunteer and charitable associations.
-- `Housing`: housing and community development, urban and rural housing, homelessness, housing assistance for elderly and disabled people.
-- `Domestic Commerce`: banking, finance and securities regulation, consumer finance, insurance regulation, bankruptcy, corporate governance, small business, copyright and patents, disaster relief, tourism.
-- `Defense`: defence alliances, military intelligence and readiness, nuclear arms and arms control, military aid, military personnel and veterans' service matters, weapons procurement, defence contractors, civil defence, the conduct of war.
-- `Technology`: space, civilian science and technology research, telecommunications and broadcasting, weather forecasting, computing.
-- `Foreign Trade`: trade agreements and negotiations, exports and export promotion, private investment abroad, competitiveness, tariffs and non-tariff barriers, exchange rates.
-- `International Affairs`: foreign aid, developing countries, international finance and organisations, diplomacy and diplomats, human rights abroad, international terrorism, relations with specific regions.
-- `Government Operations`: intergovernmental relations, government efficiency and bureaucratic oversight, the postal service, government employees and appointments, currency, procurement and contracting, government property, the census, regulation of political campaigns.
-- `Public Lands`: national parks and forests, indigenous affairs, public land and water management, territorial and dependency issues.
-- `Culture`: cultural policy where no other topic applies.
+- `Macroeconomics`: Includes issues related to general domestic macroeconomic policy. Subtopics: Interest Rates; Unemployment Rate; Monetary Policy; National Budget; Tax Code; Industrial Policy; Price Control.
+- `Civil Rights`: Includes issues related generally to civil rights and minority rights. Subtopics: Minority Discrimination; Gender Discrimination; Age Discrimination; Handicap Discrimination; Voting Rights; Freedom of Speech; Right to Privacy; Anti-Government.
+- `Health`: Includes issues related generally to health care, including appropriations for general health care government agencies. Subtopics: Health Care Reform; Insurance; Drug Industry; Medical Facilities; Insurance Providers; Medical Liability; Manpower; Disease Prevention; Infants and Children; Mental Health; Long-term Care; Drug Coverage and Cost; Tobacco Abuse; Drug and Alcohol Abuse; R&D.
+- `Agriculture`: Includes issues related to general agriculture policy, including appropriations for general agriculture government agencies. Subtopics: Trade; Subsidies to Farmers; Food Inspection & Safety; Food Marketing & Promotion; Animal and Crop Disease; Fisheries & Fishing; R&D.
+- `Labor`: Includes issues generally related to labor, employment, and pensions, including appropriations for government agencies regulating labor policy. Subtopics: Worker Safety; Employment Training; Employee Benefits; Labor Unions; Fair Labor Standards; Youth Employment; Migrant and Seasonal.
+- `Education`: Includes issues related to general education policy, including appropriations for government agencies regulating education policy. Subtopics: Higher; Elementary & Secondary; Underprivileged; Vocational; Special; Excellence; R&D.
+- `Environment`: Includes issues related to general environmental policy, including appropriations for government agencies regulating environmental policy. Subtopics: Drinking Water; Waste Disposal; Hazardous Waste; Air Pollution; Recycling; Indoor Hazards; Species & Forest; Land and Water Conservation; R&D.
+- `Energy`: Includes issues generally related to energy policy, including appropriations for government agencies regulating energy policy. Subtopics: Nuclear; Electricity; Natural Gas & Oil; Coal; Alternative & Renewable; Conservation; R&D.
+- `Immigration`: Includes issues related to immigration, refugees, and citizenship.
+- `Transportation`: Includes issues related generally to transportation, including appropriations for government agencies regulating transportation policy. Subtopics: Mass; Highways; Air Travel; Railroad Travel; Maritime; Infrastructure; R&D.
+- `Law and Crime`: Includes issues related to general law, crime, and family issues. Subtopics: Agencies; White Collar Crime; Illegal Drugs; Court Administration; Prisons; Juvenile Crime; Child Abuse; Family Issues; Criminal & Civil Code; Crime Control; Police.
+- `Social Welfare`: Includes issues generally related to social welfare policy. Subtopics: Low-Income Assistance; Elderly Assistance; Disabled Assistance; Volunteer Associations; Child Care.
+- `Housing`: Includes issues related generally to housing and urban affairs. Subtopics: Community Development; Urban Development; Rural Housing; Rural Development; Low-Income Assistance; Veterans; Elderly; Homeless; R&D.
+- `Domestic Commerce`: Includes issues generally related to domestic commerce, including appropriations for government agencies regulating domestic commerce. Subtopics: Banking; Securities & Commodities; Consumer Finance; Insurance Regulation; Bankruptcy; Corporate Management; Small Businesses; Copyrights and Patents; Disaster Relief; Tourism; Consumer Safety; Sports Regulation; R&D.
+- `Defense`: Includes issues related generally to defense policy, and appropriations for agencies that oversee general defense policy. Subtopics: Alliances; Intelligence; Readiness; Nuclear Arms; Military Aid; Personnel Issues; Procurement; Installations & Land; Reserve Forces; Hazardous Waste; Civil; Civilian Personnel; Contractors; Foreign Operations; Claims against Military; R&D.
+- `Technology`: Includes issues related to general space, science, technology, and communications. Subtopics: Space; Commercial Use of Space; Science Transfer; Telecommunications; Broadcast; Weather Forecasting; Computers; R&D.
+- `Foreign Trade`: Includes issues generally related to foreign trade and appropriations for government agencies generally regulating foreign trade. Subtopics: Trade Agreements; Exports; Private Investments; Competitiveness; Tariff & Imports; Exchange Rates.
+- `International Affairs`: Includes issues related to general international affairs and foreign aid, including appropriations for general government foreign affairs agencies. Subtopics: Foreign Aid; Resources Exploitation; Developing Countries; International Finance; Western Europe; Specific Country; Human Rights; Organizations; Terrorism; Diplomats.
+- `Government Operations`: Includes issues related to general government operations, including appropriations for multiple government agencies. Subtopics: Intergovernmental Relations; Bureaucracy; Postal Service; Employees; Appointments; Currency; Procurement & Contractors; Property Management; Tax Administration; Scandals; Branch Relations; Political Campaigns; Census & Statistics; Capital City; Claims against the government; National Holidays.
+- `Public Lands`: Includes issues related to general public lands, water management, and territorial issues. Subtopics: National Parks; Indigenous Affairs; Public Lands; Water Resources; Dependencies & Territories.
+- `Culture`: Includes issues related to general cultural policy issues.
+
+Coding rules from the Policy Agendas Project codebook:
+
+- "Observations are coded according to the single predominant, substantive policy area rather than the targets of particular policies or the policy instrument utilized."
+- "Observations that discuss Native American affairs [Public Lands], D.C. affairs [Government Operations], or the affairs of U.S. Dependencies and Territories [Public Lands] are placed in their corresponding subtopic codes regardless of substantive policy area. This is an exception to the first guideline."
+- Subtopic "Agricultural Trade", under Agriculture: "Observations related to domestic and international trade in agricultural goods and supplies."
 
 Choose the topic that best captures the main substantive policy content of the report.
 
@@ -31,6 +37,3 @@ Return JSON only, with exactly one field:
   {"policy_topic": "Health"}
 
 Do not return any explanation or extra text.
-
----
-Source: v2 of prompts/cap_crs_policy_topic.txt. Three documented changes. (1) Major topic 5 is renamed from the legacy "Labor and Immigration" to "Labor", because the v1 list carried it alongside a separate topic 9 "Immigration"; the rename is applied to gold values through ground_truth.label_map. (2) Short definitions from the CAP master codebook were added; the v1 prompt listed the 21 labels with no definitions at all (36 characters per label). (3) The opening sentence no longer promises a summary unconditionally: 6,492 of 16,510 rows in the cleaned file have no summary, and the v1 item template rendered an empty "Summary:" heading for 190 of 500 sampled items. The v2 manifest reads the prebuilt `text` column, which is the title alone when no summary exists. Because these three changes ship together, a v1-to-v2 difference cannot be attributed to any one of them.

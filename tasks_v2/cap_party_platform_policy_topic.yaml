@@ -4,7 +4,10 @@ version: 2
 supersedes: ../tasks/cap_party_platform_policy_topic.yaml
 family: Policy-topic coding
 source: Policy Agendas Project 2025
-data_file: ../data/cap_party_platform_policy_topic.csv
+# v2 data (code/build_cap_party_platform_policy_topic_task.py --version 2):
+# source read as UTF-8, encoding residue repaired, "[p.N]" page markers
+# removed, integer years, bare section headers dropped. Not item-paired with v1.
+data_file: ../data/cap_party_platform_policy_topic_v2.csv
 prompt_file: ../prompts_v2/cap_party_platform_policy_topic.txt
 label_kind: categorical
 label_key: policy_topic

@@ -8,6 +8,13 @@ whitespace, drops exact duplicate texts with conflicting labels, and then
 deduplicates repeated text-label pairs. The resulting benchmark slice keeps the
 released supervised classification setup rather than reconstructing a broader
 raw corpus.
+
+Version 2 (`--version 2`) reads the .tab files with backslash as the escape
+character. The source files escape quotation marks inside quoted fields as
+\" (for example "改革のまさに\"本丸\"です"); the v1 parse did not treat the
+backslash as an escape, so 15 v1 texts keep literal backslashes and stray
+quotation marks. Labels and row order are unchanged; v2 output goes to
+data/muller_fujimura_campaign_policy_area_v2.csv.
 """
 import argparse
 from pathlib import Path
@@ -22,6 +29,7 @@ DEFAULT_TRAIN = Path("/tmp/campaign_data_sentences_train.tab")
 DEFAULT_TEST = Path("/tmp/campaign_data_sentences_test.tab")
 DEFAULT_EVAL = Path("/tmp/campaign_data_sentences_eval.tab")
 DEFAULT_OUTPUT = REPO / "data" / "muller_fujimura_campaign_policy_area.csv"
+DEFAULT_OUTPUT_V2 = REPO / "data" / "muller_fujimura_campaign_policy_area_v2.csv"
 
 LABEL_MAP = {
     "Agriculture, Forestry, and Fisheries": "Agriculture, Forestry, and Fisheries",
@@ -53,10 +61,12 @@ def build_muller_fujimura_campaign_policy_area_task(
     train_path: Path,
     test_path: Path,
     eval_path: Path,
+    version: int = 1,
 ) -> pd.DataFrame:
     parts = []
+    read_kwargs = {"escapechar": "\\"} if version == 2 else {}
     for split_name, path in [("train", train_path), ("test", test_path), ("eval", eval_path)]:
-        df = pd.read_csv(path, sep="\t", low_memory=False)
+        df = pd.read_csv(path, sep="\t", low_memory=False, **read_kwargs)
         required = {"policy_area_num", "policy_area", "text", "ntoken"}
         missing = required - set(df.columns)
         if missing:
@@ -124,7 +134,8 @@ def main():
     ap.add_argument("--train-input", default=str(DEFAULT_TRAIN))
     ap.add_argument("--test-input", default=str(DEFAULT_TEST))
     ap.add_argument("--eval-input", default=str(DEFAULT_EVAL))
-    ap.add_argument("--output", default=str(DEFAULT_OUTPUT))
+    ap.add_argument("--output")
+    ap.add_argument("--version", type=int, choices=[1, 2], default=1)
     args = ap.parse_args()
 
     train_path = Path(args.train_input)
@@ -137,13 +148,15 @@ def main():
                 "and pass them explicitly if they are not in /tmp."
             )
 
-    output_path = Path(args.output)
+    default_output = DEFAULT_OUTPUT_V2 if args.version == 2 else DEFAULT_OUTPUT
+    output_path = Path(args.output) if args.output else default_output
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     df = build_muller_fujimura_campaign_policy_area_task(
         train_path=train_path,
         test_path=test_path,
         eval_path=eval_path,
+        version=args.version,
     )
     df.to_csv(output_path, index=False)
 

@@ -1,0 +1,17 @@
+You will be shown a public tweet addressed to a politician (a member of the Canadian federal or a provincial cabinet, or a US Senator). Your job is to decide whether the tweet is UNCIVIL.
+
+Use the definition the original human coders were given (Rheault, Rayment, and Musulan 2019): "An uncivil text was defined as a tweet containing at least one of the following elements: (1) swear words; (2) vulgarities; (3) insults; (4) threats; (5) personal attacks on someone's private life; or (6) attacks targeted at groups (hate speech)."
+
+The authors describe this as a conservative definition: uncivil messages are those "containing explicit forms of offensive language that human coders can readily detect—namely swear words, vulgarities, and direct insults (for instance, "idiot", "stupid")—as well as forms of incivility along the lines of those used in Papacharissi (2004)—namely threats, personal attacks directed at one's private life, and attacks toward groups (hate speech)." They allow "for the adversarial tone and heated exchanges to be expected in online debates."
+
+The authors give this example of a tweet that falls within the boundaries of civility: "You have no idea what rights and freedoms even mean to Canadians. Youre out of touch." In their words, it "expresses a forceful criticism of a politician's character," but "the message does not contain offensive language or attacks referring to someone's private life."
+
+Classify as:
+- `1` if the tweet is uncivil
+- `0` if the tweet is not uncivil
+
+Return JSON only, with exactly one field:
+
+  {"uncivil": 0}
+
+Do not return any explanation or extra text.

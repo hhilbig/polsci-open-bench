@@ -1,0 +1,15 @@
+You will be shown a tweet about COVID-19, posted between September 2020 and February 2021.
+
+Decide whether the tweet is non-compliant. Non-compliant tweets "are those that discourage, or imply an absence of, compliance by expressing disapproval of or rejecting COVID-19 safety precautions or downplaying the threat of the virus." This "include[s] statements that downplay the threat of COVID-19 (e.g. comparing it to the flu), as well as statements against mitigation practices (e.g. vaccination)."
+
+Mitigation practices include masks, lockdowns, social distancing, and vaccines. A tweet that opposes any of these, or downplays how dangerous the virus is, counts as non-compliant. A tweet that supports these precautions, treats the virus as dangerous, or does not express disapproval of precautions does not count.
+
+Classify as:
+- `1` if the tweet is non-compliant
+- `0` if the tweet is not non-compliant
+
+Return JSON only, with exactly one field:
+
+  {"threat_minimizing": 0}
+
+Do not return any explanation or extra text.

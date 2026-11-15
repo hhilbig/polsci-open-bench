@@ -364,6 +364,25 @@ def load_task_definition(manifest_path: Path):
     if ordinal and label_kind != "categorical":
         raise ValueError(f"{manifest_path}: ordinal is only supported for categorical tasks")
 
+    # `headline_exclude_labels` keeps a class in the label list, the JSON schema
+    # and the items, but leaves it out of the headline macro average. Use it when
+    # a class's gold labels contradict the task's own codebook, so the class's F1
+    # would measure agreement with the coders' habit rather than with the
+    # definitions shown to the model. Per-class F1 is still reported for it.
+    headline_exclude = [str(x) for x in (spec.get("headline_exclude_labels") or [])]
+    if headline_exclude:
+        if label_kind not in ("categorical", "multi_binary"):
+            raise ValueError(
+                f"{manifest_path}: headline_exclude_labels is only supported for "
+                f"categorical and multi_binary tasks, not {label_kind}"
+            )
+        unknown = [lbl for lbl in headline_exclude if lbl not in [str(x) for x in labels]]
+        if unknown:
+            raise ValueError(
+                f"{manifest_path}: headline_exclude_labels names labels that are "
+                f"not in the task's label list: {unknown}"
+            )
+
     data_path = _manifest_default_path(manifest_path, spec.get("data_file", ""), "data.csv")
     prompt_path = _manifest_default_path(manifest_path, spec.get("prompt_file", ""), "prompt.txt")
     sampling = _sampling_config(spec)
@@ -382,6 +401,7 @@ def load_task_definition(manifest_path: Path):
         "label_key": label_key,
         "score_range": score_range,
         "ordinal": ordinal,
+        "headline_exclude_labels": headline_exclude,
         "json_schema": _build_json_schema(label_kind, label_key, labels, score_range),
         "sampling": sampling,
         "loader": _make_loader(

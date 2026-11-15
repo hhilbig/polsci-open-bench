@@ -108,8 +108,13 @@ def decisions(group, task, support_only=False):
 def headline_replicates(group, task, weights, support_only=False):
     """Weighted confusion counts reproduce scorer F1 without slow sklearn loops."""
     scores = []
-    for _, gold, pred, classes in decisions(group, task, support_only):
+    dropped = {str(x) for x in (task.get('headline_exclude_labels') or [])}
+    for key, gold, pred, classes in decisions(group, task, support_only):
+        if task['label_kind'] == 'multi_binary' and str(key) in dropped:
+            continue
         for label in classes if task['label_kind'] == 'categorical' else [1]:
+            if task['label_kind'] == 'categorical' and str(label) in dropped:
+                continue
             tp = weights @ ((gold == label) & (pred == label)).astype(float)
             den = weights @ ((gold == label).astype(float) + (pred == label).astype(float))
             scores.append(np.divide(2 * tp, den, out=np.zeros_like(tp), where=den != 0))
@@ -390,7 +395,7 @@ def build(source=SOURCE, output=OUTPUT, open_manifest=None, iterations=2000,
                               api_cost_usd_upper=report['cost_usd_upper'] + api_addition_cost,
                               reserve_usd=report['reserve_usd'], baseline='Qwen3.6 27B',
                               uncertainty='95% percentile intervals; paired item resampling within each fixed task versus resampling tasks. Not simultaneous intervals.',
-                              scoring='Equal-task mean F1. Binary positive-class F1; multi-binary mean positive-class F1; categorical macro F1 over declared classes. Malformed decisions incorrect. Absent-class F1 remains zero per existing scorer. Undefined MCC is null.',
+                              scoring='Equal-task mean F1. Binary positive-class F1; multi-binary mean positive-class F1; categorical headline macro F1 over declared classes present in the gold sample of the task (classes with no gold item are left out). Malformed decisions incorrect. Undefined MCC is null.',
                               public_data='Aggregate metrics only; no raw texts, responses, or row-level predictions.')
     result = clean_json(result)
     output.mkdir(parents=True, exist_ok=True)

@@ -9,7 +9,7 @@ assassination
 Label: ASSASSINATION
 Definition: An attempt (successful or failed) by a non-state entity aimed to kill a specific individual.
 Clarification: Targets may include military, political, civil society or civilian state or federal leadership. In some case, there may be a suspected government agency behind the assassination.  This Label applies when a body is found with bullet wounds or other marks of violence and/or torture.
-Negative Clarification: Does not include assassination using drone attacks (coded separately) or deaths from attacks on military, paramilitary, police or intelligence targets, or state violence against a group of civilians.""",
+Negative Clarification: Does not include assassination using drone attacks (coded separately) or deaths from attacks on military, paramilitary, police or intelligence targets, or state violence against a group of civilians.
 Positive Example: "An Imam of a mosque was brutally murdered by unknown assailants in Jehanian on Friday." This is an ASSASSINATION because the imam appears to have been deliberately targeted.
 Negative Example: "A woman and her son were injured by unidentified assailants in Mominabad on Sunday." This is an example of TERRORISM, not ASSASSINATION, because the attack does not appear to be specifically targeted at the victims.
 
@@ -123,6 +123,3 @@ The value of `"event_type"` must be exactly one of these strings:
   ASSASSINATION, DRONE_ASSASSINATION, ATTACK_ON_STATE, CONVENTIONAL_ATTACK_ON_GOV_FORCES, GUERILLA_ATTACK_ON_GOV_FORCES, GOV_ATTACK_ON_NONSTATE_COMBATANTS, GOV_ATTACK_ON_CIVILIANS, RIOT, TERRORISM, THREAT_OF_VIOLENCE, VIOLENT_POLITICAL_DEMONSTRATION, OTHER
 
 Do NOT output the bare label alone. Do NOT output explanations, markdown, or any other text. Output ONLY the JSON object.
-
----
-Source: v2 of the v1 prompt of the same name. One change: the source codebook's "Output Reminder" line was removed. It instructed the model to write the bare label "with no other text", which directly contradicted the appended JSON-output block at the end of the same prompt ("Do NOT output the bare label alone. Output ONLY the JSON object."). The line is an artefact of carrying the source header verbatim and then appending a format directive. Nothing about the task, the categories or their definitions changed.

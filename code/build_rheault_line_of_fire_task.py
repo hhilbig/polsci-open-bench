@@ -1,14 +1,31 @@
 #!/usr/bin/env python3
-"""
+r"""
 Build the cleaned Politicians in the Line of Fire task file from the public
 training samples in the Harvard Dataverse archive.
 
 This task combines the human-coded US and Canadian training samples from
 Rheault, Rayment, and Musulan (2019). It keeps the public natural-language
-tweet text (`clean_text`) and the binary human label (`code`), then removes
-exact duplicate texts with no label conflict.
+tweet text (`clean_text`) and the binary human label (`code`), replaces e-mail
+addresses with "[EMAIL]", then removes exact duplicate texts with no label
+conflict.
+
+Source: Harvard Dataverse doi:10.7910/DVN/B97TGX (CC0), files usa_training
+(datafile 3301018) and canada_training (datafile 3301012). The labels are
+human codes: FigureEight (CrowdFlower) workers coded a random sample of 5,000
+tweets per country (Rheault, Rayment and Musulan 2019, Research & Politics).
+
+v1 (default) reads the Dataverse archival `.tab` files with pandas' default
+parser. That parser does not understand the `\"` escapes in the `.tab`
+export, so 567 v1 texts carry residue such as `By \we\" you mean ...`; the
+labels are unaffected (checked row by row against the original CSV).
+
+`--version 2` reads the original-format CSV files instead
+(`/api/access/datafile/<id>?format=original`), which hold the text with
+standard CSV quoting, and writes data/rheault_line_of_fire_incivility_v2.csv.
+Same rows, same labels, clean quotes. The v1 output is unchanged.
 """
 import argparse
+import re
 from pathlib import Path
 
 import pandas as pd
@@ -20,14 +37,25 @@ REPO = HERE.parent
 DEFAULT_USA_INPUT = Path("/tmp/usa_training.tab")
 DEFAULT_CANADA_INPUT = Path("/tmp/canada_training.tab")
 DEFAULT_OUTPUT = REPO / "data" / "rheault_line_of_fire_incivility.csv"
+DEFAULT_USA_INPUT_V2 = Path("/tmp/usa_training.csv")
+DEFAULT_CANADA_INPUT_V2 = Path("/tmp/canada_training.csv")
+DEFAULT_OUTPUT_V2 = REPO / "data" / "rheault_line_of_fire_incivility_v2.csv"
+
+# Same pattern as build_ornstein_scotus_sentiment_task.py. It also matches a
+# few non-address strings such as "job@PR.Confused"; v1 was built with it, so
+# it is kept for byte-identical reproduction.
+EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 
 
 def _clean_text(value):
-    return " ".join(str(value).split())
+    return EMAIL_RE.sub("[EMAIL]", " ".join(str(value).split()))
 
 
-def _load_training_file(path: Path, country: str) -> pd.DataFrame:
-    df = pd.read_csv(path, sep="\t", low_memory=False)
+def _load_training_file(path: Path, country: str, version: int = 1) -> pd.DataFrame:
+    if version == 2:
+        df = pd.read_csv(path, low_memory=False)
+    else:
+        df = pd.read_csv(path, sep="\t", low_memory=False)
     required = {"code", "clean_text", "text", "maxscore", "sentiment"}
     missing = required - set(df.columns)
     if missing:
@@ -55,9 +83,9 @@ def _load_training_file(path: Path, country: str) -> pd.DataFrame:
     return out
 
 
-def build_line_of_fire_task(usa_input: Path, canada_input: Path) -> pd.DataFrame:
-    usa = _load_training_file(usa_input, country="USA")
-    canada = _load_training_file(canada_input, country="Canada")
+def build_line_of_fire_task(usa_input: Path, canada_input: Path, version: int = 1) -> pd.DataFrame:
+    usa = _load_training_file(usa_input, country="USA", version=version)
+    canada = _load_training_file(canada_input, country="Canada", version=version)
     combined = pd.concat([usa, canada], ignore_index=True)
 
     conflict_counts = combined.groupby("text")["gt_uncivil"].nunique()
@@ -75,10 +103,18 @@ def build_line_of_fire_task(usa_input: Path, canada_input: Path) -> pd.DataFrame
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--usa-input", default=str(DEFAULT_USA_INPUT))
-    ap.add_argument("--canada-input", default=str(DEFAULT_CANADA_INPUT))
-    ap.add_argument("--output", default=str(DEFAULT_OUTPUT))
+    ap.add_argument("--version", type=int, choices=[1, 2], default=1)
+    ap.add_argument("--usa-input", default=None)
+    ap.add_argument("--canada-input", default=None)
+    ap.add_argument("--output", default=None)
     args = ap.parse_args()
+    v2 = args.version == 2
+    if args.usa_input is None:
+        args.usa_input = str(DEFAULT_USA_INPUT_V2 if v2 else DEFAULT_USA_INPUT)
+    if args.canada_input is None:
+        args.canada_input = str(DEFAULT_CANADA_INPUT_V2 if v2 else DEFAULT_CANADA_INPUT)
+    if args.output is None:
+        args.output = str(DEFAULT_OUTPUT_V2 if v2 else DEFAULT_OUTPUT)
 
     usa_input = Path(args.usa_input)
     canada_input = Path(args.canada_input)
@@ -86,14 +122,16 @@ def main():
         if not path.exists():
             raise FileNotFoundError(
                 f"Input file not found: {path}. "
-                "Download the Dataverse training samples first and pass them via "
+                "Download the Dataverse training samples first "
+                "(https://dataverse.harvard.edu/api/access/datafile/3301018 and "
+                "/3301012; add ?format=original for --version 2) and pass them via "
                 "--usa-input and --canada-input."
             )
 
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    df = build_line_of_fire_task(usa_input, canada_input)
+    df = build_line_of_fire_task(usa_input, canada_input, version=args.version)
     df.to_csv(output_path, index=False)
 
     print(f"wrote {output_path} ({len(df)} rows)")

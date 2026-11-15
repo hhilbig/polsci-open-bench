@@ -1,0 +1,18 @@
+You will be shown a Spanish-language access-to-information request submitted to a Mexican federal government agency between 2003 and 2015.
+
+Code which topics of information the request asks for. A request may concern more than one topic, or none of the topics below. Return `1` for each topic the request pertains to and `0` otherwise.
+
+The topics, as described by the researchers who designed the coding:
+
+- `Activities`: the request pertains to institutional activities.
+- `Budget`: the request pertains to budgets or spending.
+- `Evaluation`: the request pertains to evaluations or statistics.
+- `External Contracts`: the request pertains to external contracts.
+- `Institutional Structure`: the request pertains to institutional structures, personnel, or human resources.
+- `Regulatory`: the request pertains to regulatory matters or permits.
+
+Return JSON only, with exactly these fields:
+
+  {"Activities": 0, "Budget": 0, "Evaluation": 0, "External Contracts": 0, "Institutional Structure": 0, "Regulatory": 0}
+
+Do not return any explanation or extra text.

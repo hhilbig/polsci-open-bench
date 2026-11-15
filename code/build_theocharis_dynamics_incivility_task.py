@@ -6,8 +6,20 @@ training data in the incivility-sage-open replication repository.
 The source file exposes tweet text and a direct yes/no incivility label. The
 builder normalizes whitespace, maps labels to 1/0, drops exact duplicate texts
 with conflicting labels, and deduplicates repeated text-label pairs.
+
+`--version 2` (writes data/theocharis_dynamics_incivility_v2.csv; v1 output is
+unchanged) additionally:
+- reads `id_str` as a string, so tweet ids keep all digits (v1 read them as
+  floats and stored values such as 8.754835097412444e+17);
+- unescapes HTML entities left by the Twitter API (`&amp;`, `&gt;`, ...);
+- drops tweets with no text left after removing URLs, @-mentions and the
+  truncation ellipsis, since their label depends on a linked page, image, or
+  parent tweet the benchmark does not show.
 """
 import argparse
+import html
+import re
+import string
 from pathlib import Path
 
 import pandas as pd
@@ -18,6 +30,11 @@ REPO = HERE.parent
 
 DEFAULT_INPUT = Path("/tmp/incivility_training_data.csv")
 DEFAULT_OUTPUT = REPO / "data" / "theocharis_dynamics_incivility.csv"
+DEFAULT_OUTPUT_V2 = REPO / "data" / "theocharis_dynamics_incivility_v2.csv"
+
+URL_RE = re.compile(r"https?://\S+")
+MENTION_RE = re.compile(r"@\w+")
+RESIDUE_STRIP = set(string.punctuation) | set(string.whitespace) | {"\u2026"}
 
 LABEL_MAP = {
     "no": 0,
@@ -40,8 +57,17 @@ def _clean_tweet_id(value) -> str:
     return text
 
 
-def build_theocharis_dynamics_incivility_task(input_path: Path) -> pd.DataFrame:
-    df = pd.read_csv(input_path, low_memory=False)
+def _has_own_text(text: str) -> bool:
+    """True if anything other than URLs, @-mentions and punctuation remains."""
+    residue = MENTION_RE.sub("", URL_RE.sub("", text))
+    return any(ch not in RESIDUE_STRIP for ch in residue)
+
+
+def build_theocharis_dynamics_incivility_task(input_path: Path, version: int = 1) -> pd.DataFrame:
+    if version == 2:
+        df = pd.read_csv(input_path, low_memory=False, dtype={"id_str": str})
+    else:
+        df = pd.read_csv(input_path, low_memory=False)
     required = {"uncivil", "id_str", "created_at", "text"}
     missing = required - set(df.columns)
     if missing:
@@ -57,6 +83,16 @@ def build_theocharis_dynamics_incivility_task(input_path: Path) -> pd.DataFrame:
         }
     )
     out["gt_uncivil"] = out["source_uncivil_raw"].map(LABEL_MAP)
+
+    if version == 2:
+        out["text"] = out["text"].map(html.unescape).map(_clean_text)
+        own_text = out["text"].map(_has_own_text)
+        print(
+            f"v2: dropping {(~own_text).sum()} of {len(out)} rows with no text beyond "
+            f"URLs/@-mentions/punctuation (labels: "
+            f"{out.loc[~own_text, 'gt_uncivil'].value_counts().sort_index().to_dict()})"
+        )
+        out = out[own_text].reset_index(drop=True)
 
     if out["text"].eq("").any():
         bad = out.index[out["text"].eq("")].tolist()[:5]
@@ -101,8 +137,11 @@ def build_theocharis_dynamics_incivility_task(input_path: Path) -> pd.DataFrame:
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--input", default=str(DEFAULT_INPUT))
-    ap.add_argument("--output", default=str(DEFAULT_OUTPUT))
+    ap.add_argument("--output", default=None)
+    ap.add_argument("--version", type=int, choices=[1, 2], default=1)
     args = ap.parse_args()
+    if args.output is None:
+        args.output = str(DEFAULT_OUTPUT_V2 if args.version == 2 else DEFAULT_OUTPUT)
 
     input_path = Path(args.input)
     if not input_path.exists():
@@ -115,7 +154,7 @@ def main():
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    df = build_theocharis_dynamics_incivility_task(input_path)
+    df = build_theocharis_dynamics_incivility_task(input_path, version=args.version)
     df.to_csv(output_path, index=False)
 
     print(f"wrote {output_path} ({len(df)} rows)")

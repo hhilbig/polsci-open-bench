@@ -1,0 +1,31 @@
+order: 15
+name: douglass_icbe_sentence_event_type
+version: 2
+supersedes: ../tasks/douglass_icbe_sentence_event_type.yaml
+family: Event coding
+source: Douglass et al. 2024
+# v2 data (code/build_douglass_icbe_sentence_event_type_task.py --version 2):
+# v1 labelled every sentence without an agreed ICBe event "No Event", including
+# sentences the coders marked "Background" or "Covered by Previous Sentence"
+# and never coded. v2 keeps No Event only where the modal coder answer is
+# "No Action", drops sentences absent from the agreed-event file, and drops
+# fragments. 12,676 -> 9,119 rows; not item-paired with v1.
+data_file: ../data/douglass_icbe_sentence_event_type_v2.csv
+prompt_file: ../prompts_v2/douglass_icbe_sentence_event_type.txt
+label_kind: categorical
+label_key: event_type
+labels:
+  - No Event
+  - Action
+  - Speech
+  - Thought
+  - Mixed
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Crisis title: {crisis_title}
+    Sentence: {text}
+ground_truth:
+  column: gt_event_type

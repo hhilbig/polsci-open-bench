@@ -1,0 +1,120 @@
+### Instructions ###
+You will be shown one statement from a candidate manifesto (選挙公報) issued in a Japanese House of Representatives election between 2003 and 2014. Assign the statement to exactly one policy area.
+
+Each policy area corresponds to one standing committee of the House of Representatives (衆議院常任委員会). Assign the statement to the committee whose jurisdiction covers the policy the statement is about. A committee's jurisdiction is set by the ministries and agencies it oversees (Rules of the House of Representatives, Article 92), so classify by the responsible ministry or agency, not by the everyday topic name. For example, disaster prevention and public safety belong to the Committee on Cabinet, taxation belongs to Financial Affairs, and postal services belong to Internal Affairs and Communications.
+
+If you cannot determine the policy area of a statement (for example, a slogan, a self-introduction, or a statement without a specific policy), choose `No Policy Area`.
+
+Task: single-label multi-class
+Output Reminder: return exactly one label in JSON.
+
+### Policy areas ###
+
+Agriculture, Forestry, and Fisheries
+------------------------------------
+Committee on Agriculture, Forestry and Fisheries (農林水産委員会): matters under the Ministry of Agriculture, Forestry and Fisheries (農林水産省): farming, forestry, fisheries, food supply and self-sufficiency, farm income support, agricultural tariffs and TPP negotiations as they affect agriculture.
+Example statements from the coding instructions:
+- 運転資金の円滑な継承や漁船漁業の再生など、水産業の安定強化に努めます。
+- ☆日本の農林水産業を守るため、TPP 交渉参加に反対します。
+- 米価の下落により窮地に立たされている農家の代弁者として、国に支援を強力に要請します。
+
+Committees on Cabinet
+---------------------
+Committee on Cabinet (内閣委員会): matters under the Cabinet (内閣), the National Personnel Authority (人事院), the Imperial Household Agency (宮内庁), the National Public Safety Commission (国家公安委員会, which oversees the police), and matters of the Cabinet Office (内閣府) not assigned to another committee. This covers public safety, crime and policing (治安), disaster prevention and disaster recovery and reconstruction (防災, 復旧・復興), gender equality and women's participation (男女共同参画), measures against the declining birthrate (少子化対策), and reform of public administration and the civil service.
+Example statements from the coding instructions:
+- 近年急増している振り込め詐欺やストーカー事件など治安への不安。
+- また、かつて世界一安全な国と讃えられた日本を再び取り戻すために、長期的な視野に立ち、「治安・防災対策」を強化します。
+- 災害からの復旧、復興を着実に進めます。
+- 女性の能力を存分に発揮できるようにします。
+- まず復興。
+
+Economy, Trade and Industry
+---------------------------
+Committee on Economy, Trade and Industry (経済産業委員会): matters under the Ministry of Economy, Trade and Industry (経済産業省) and the Japan Fair Trade Commission (公正取引委員会): industrial policy, small and medium-sized enterprises, commerce, energy supply including nuclear power, trade and competition policy.
+Example statements from the coding instructions:
+- エネルギー産業の先進地として国の発展に貢献し、活力ある地域を目指します。
+- 経済の発展に必要な、新たなエネルギーの安定供給に取り組んでいきます。
+- 中小企業の資金繰り支援を進めます。
+
+Education, Culture, Sports, Science, and Technology
+---------------------------------------------------
+Committee on Education, Culture, Sports, Science and Technology (文部科学委員会): matters under the Ministry of Education, Culture, Sports, Science and Technology (文部科学省) and boards of education (教育委員会): schools, universities, education reform, culture, sports, science and technology.
+Example statements from the coding instructions:
+- 世界トップレベルの学力と人間力を目指します。
+- 科学技術立国の復活 持続的な成長にはイノベーションが不可欠です。
+
+Environment
+-----------
+Committee on Environment (環境委員会): matters under the Ministry of the Environment (環境省): protection of the global environment, climate change and CO2 reduction, pollution and nature conservation.
+Example statements from the coding instructions:
+- 地球環境を守るため全力を尽します。
+- 地球環境を守るための国際貢献を増やします。
+
+Financial Affairs
+-----------------
+Committee on Financial Affairs (財務金融委員会): matters under the Ministry of Finance (財務省) and the Financial Services Agency (金融庁): taxation, the fiscal system and government debt, overcoming deflation, banking and the financial system.
+Example statement from the coding instructions:
+- 地域金融を強化し、個人保証から脱却する法改正を行います。
+
+Foreign Affairs
+---------------
+Committee on Foreign Affairs (外務委員会): matters under the Ministry of Foreign Affairs (外務省): diplomacy and international relations.
+Example statements from the coding instructions:
+- 日米同盟の強化のもと、国益を守る、主張する外交を展開します。
+- その他にも多くの外交問題が山積しておりますが、外交は国民生活に大きく影響を与える極めて身近な問題です。
+
+Health, Labour, and Welfare
+---------------------------
+Committee on Health, Labour and Welfare (厚生労働委員会): matters under the Ministry of Health, Labour and Welfare (厚生労働省): social security, pensions, medical care, nursing care, childcare and nursery schools, employment and labour conditions, welfare.
+Example statements from the coding instructions:
+- 社会保障制度改革 将来の生活安定化のために、安心できる年金制度を！
+- 「特養ホーム・保育園」待機者 50％減らす。
+- 誰もが安心できる年金・医療・介護制度に。
+
+Internal Affairs and Communications
+-----------------------------------
+Committee on Internal Affairs and Communications (総務委員会): matters under the Ministry of Internal Affairs and Communications (総務省) and matters concerning local public bodies (地方公共団体): local government and regional autonomy, local finance, elections administration, postal services and postal reform, telecommunications and broadcasting.
+Example statements from the coding instructions:
+- 「地方に住みたい」を実現できるよう後押し。
+- その第一歩が「郵政改革」です。
+
+Land, Infrastructure, Transport, and Tourism
+--------------------------------------------
+Committee on Land, Infrastructure, Transport and Tourism (国土交通委員会): matters under the Ministry of Land, Infrastructure, Transport and Tourism (国土交通省): roads and expressways, railways, airports and ports, public works, housing, urban planning, tourism.
+Example statements from the coding instructions:
+- 民営化によって経営の合理化と工夫が実現でき、料金収入の拡大と高速道路の活用が増大します。
+- 圏央道のほか、6 号国道バイパス、TX 延伸問題等に取り組みます。
+- 能登空港への国際チャーター便誘致や能越自動車道の整備を促進し、国内外から多くの人が訪れる能登をめざします。
+
+No Policy Area
+--------------
+The policy area of the statement cannot be determined.
+
+Security
+--------
+Committee on National Security (安全保障委員会): matters under the Ministry of Defense (防衛省) and the National Security Council (国家安全保障会議): defense, the Self-Defense Forces, U.S. military bases in Japan.
+Example statements from the coding instructions:
+- 国民を守り、友好国から信頼される防衛をつくります。
+- 「普天間」から日本を変える ここ沖縄 2 区は、普天間を始めとする米軍基地が面積の大半を占め、わが国防衛の最重要地域となっています。
+
+### Output format ###
+
+Your response MUST be a JSON object of exactly this form:
+
+  {"policy_area": "Economy, Trade and Industry"}
+
+The value of `"policy_area"` must be exactly one of these strings:
+  Agriculture, Forestry, and Fisheries
+  Committees on Cabinet
+  Economy, Trade and Industry
+  Education, Culture, Sports, Science, and Technology
+  Environment
+  Financial Affairs
+  Foreign Affairs
+  Health, Labour, and Welfare
+  Internal Affairs and Communications
+  Land, Infrastructure, Transport, and Tourism
+  No Policy Area
+  Security
+
+Do NOT output the bare label alone. Do NOT output explanations, markdown, or any other text. Output ONLY the JSON object.

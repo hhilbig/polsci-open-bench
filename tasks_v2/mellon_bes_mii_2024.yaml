@@ -1,0 +1,73 @@
+order: 10
+name: mellon_bes_mii_2024
+version: 2
+supersedes: ../tasks/mellon_bes_mii_2024.yaml
+family: Policy-topic coding
+source: Mellon et al. 2024
+data_file: ../data/mellon_bes_mii_2024.csv
+prompt_file: ../prompts_v2/mellon_bes_mii_2024.txt
+label_kind: categorical
+label_key: issue
+# `constitution` (code 20 in the replication category file mii_cats.xlsx) is
+# dropped from the label list: it is not a category in the authors' coding
+# prompt (main_prompt5.txt), has no description anywhere in the replication
+# materials, and no response carries it in either the original or the second
+# hand-coding. Gold and items are unchanged.
+labels:
+  - Referendum unspecified
+  - Coronavirus
+  - COVID-economy
+  - BLM and responses
+  - health
+  - education
+  - election outcome
+  - pol-neg
+  - partisan-neg
+  - societal divides
+  - morals
+  - nat ident, goals-loss
+  - racism/discrimination
+  - welfare
+  - terrorism
+  - immigration
+  - asylum
+  - crime
+  - europe
+  - constitutional
+  - international trade
+  - devolution
+  - scot-ind
+  - foreign affairs
+  - war
+  - defence
+  - foreign emergency
+  - domestic emergency
+  - economy-general
+  - economy-personal
+  - unemployment
+  - taxation
+  - debt/deficit
+  - inflation
+  - living costs
+  - poverty
+  - austerity
+  - inequality
+  - housing
+  - social care
+  - pensions/ageing
+  - transport/infrastructure
+  - environment
+  - pol value-auth
+  - pol values-liberal
+  - pol values-right
+  - pol values-left
+  - other
+  - uncoded
+id:
+  kind: column
+  column: item_id
+text:
+  template: |
+    Open-ended response: {text}
+ground_truth:
+  column: gt_issue

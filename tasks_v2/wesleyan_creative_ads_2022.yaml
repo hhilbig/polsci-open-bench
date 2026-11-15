@@ -1,0 +1,32 @@
+order: 6
+name: wesleyan_creative_ads_2022
+version: 2
+supersedes: ../tasks/wesleyan_creative_ads_2022.yaml
+family: Sentiment / Stance / Tone
+source: Zhang et al. 2025
+data_file: ../data/wesleyan_creative_ads_2022_v2.csv
+prompt_file: ../prompts_v2/wesleyan_creative_ads_2022.txt
+label_kind: categorical
+label_key: tone
+labels:
+  - promote
+  - attack
+  - unclear
+id:
+  kind: column
+  column: ad_id
+# v2 data (code/build_wesleyan_creative_ads_2022_task.py --version 2): the
+# candidate is the coder-typed name (othercand1_txt) when the first coded
+# candidate is non-federal (1,094 ads that v1 showed as "Down-ballot
+# candidate/governor" or a placeholder name); 14 ads whose target cannot be
+# named are dropped; field markers and literal \n are cleaned; no truncation
+# (no ad exceeds the 10,000-token cap). "unclear" stays a label: 77 of 2,877
+# pool items.
+text:
+  template: |
+    Ad sponsor (page name): {page_name}
+    Candidate: {candidate}
+    Ad content:
+    {full_text}
+ground_truth:
+  column: gt_tone
