@@ -72,7 +72,9 @@ if [[ ! -x "$UV_INSTALL_DIR/uv" ]]; then
 fi
 export PATH="$UV_INSTALL_DIR:$PATH"
 
-uv venv "$SCRATCH_ROOT/venv" --python 3.12
+# --clear: a requeued job reuses its job-id scratch path; without it a venv left
+# half-installed by a preemption is kept and vLLM fails to import (job 25466548).
+uv venv --clear "$SCRATCH_ROOT/venv" --python 3.12
 source "$SCRATCH_ROOT/venv/bin/activate"
 UV_PIP_FLAGS=(-q)
 if [[ "${OFFLINE_INSTALL:-0}" == "1" ]]; then
