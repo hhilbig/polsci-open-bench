@@ -1,0 +1,30 @@
+# Speaker shown vs hidden on AgoraSpeech criticism/agenda (cue experiment for the
+# llm-differential-error project, Approved Next Work item 2). Same data file and prompt
+# as tasks/agoraspeech_criticism_agenda.yaml; the only difference between the two
+# conditions is the "Speaker:" line. Uses every row of the data file (5,279 paragraphs).
+order: 410
+name: agoraspeech_criticism_agenda_speaker_shown
+family: Rhetoric / Discourse Function
+source: Sermpezis et al. 2026
+data_file: ../data/agoraspeech_criticism_agenda.csv
+prompt_file: ../prompts/agoraspeech_criticism_agenda.txt
+label_kind: categorical
+label_key: criticism_or_agenda
+labels:
+  - criticism
+  - political agenda
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Speaker: {source_politician}
+    Speech date: {source_date}
+
+    Paragraph:
+    {text}
+ground_truth:
+  column: gt_criticism_or_agenda
+sampling:
+  n_v1: 100000
+  n_v2_new: 0
