@@ -910,6 +910,18 @@ class HiveBakeoffRunnerTests(unittest.TestCase):
             },
         )
 
+    def test_checkpoint_keeps_float_like_item_ids_as_written(self):
+        # theocharis_dynamics_incivility ids are float strings; parsing them as
+        # floats on read-back changed the last digit of 130 of 500 (2026-11-14).
+        ids = ["9.099503373642259e+17", "9.121103364168947e+17", "9.154039359004713e+17"]
+        rows = pd.DataFrame(
+            [{"task": "t", "model": "m", "item_id": i, "parse_error": None} for i in ids]
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "task.csv"
+            write_csv_atomic(path, rows)
+            self.assertTrue(task_checkpoint_complete(path, "t", "m", ids))
+
     def test_checkpoint_requires_exact_coverage(self):
         rows = pd.DataFrame(
             [

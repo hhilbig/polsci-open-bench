@@ -1061,7 +1061,7 @@ def task_checkpoint_complete(
     if not path.exists():
         return False
     try:
-        frame = pd.read_csv(path, low_memory=False)
+        frame = pd.read_csv(path, low_memory=False, dtype={"item_id": str})
     except Exception:
         return False
     required = {"task", "model", "item_id", "parse_error"}
@@ -1970,7 +1970,7 @@ def merge_task_checkpoints(
             expected_panel_task_fingerprint=panel_task_fingerprint,
         ):
             raise BakeoffError(f"cannot merge incomplete checkpoint: {path}")
-        frames.append(pd.read_csv(path, low_memory=False))
+        frames.append(pd.read_csv(path, low_memory=False, dtype={"item_id": str}))
     merged = pd.concat(frames, ignore_index=True, sort=False)
     if merged.duplicated(["task", "model", "item_id"]).any():
         raise BakeoffError("merged predictions contain duplicate task/model/item_id keys")
@@ -2273,7 +2273,7 @@ def run(args: argparse.Namespace) -> None:
                 and pilot_audit_path.exists()
             )
             if pilot_checkpoint_ok:
-                pilot_frame = pd.read_csv(pilot_path, low_memory=False)
+                pilot_frame = pd.read_csv(pilot_path, low_memory=False, dtype={"item_id": str})
                 pilot_batch_result = load_task_result(
                     pilot_path,
                     pilot_fingerprint,
