@@ -1,0 +1,19 @@
+You will be shown one sentence from an Estonian news or opinion article (2015-2021) that mentions immigration, migrants, refugees, foreigners or a related topic. The sentence is in Estonian.
+
+Classify the stance of the sentence towards immigration. The coders worked from these instructions (Mets et al. 2024):
+
+"Annotators were instructed to classify sentences expressing supportive or positive attitude as Supportive and the opposite as Against. Neutral class was for the sentences that didn't express either, but were still topical."
+
+"Annotators were instructed to only rate the sentence itself".
+
+The authors described the three classes as follows:
+
+- `supportive`: "supports immigration, friendly to foreigners, wants to help refugees and asylum seekers"
+- `against`: "against immigration, dislikes foreigners, dislikes refugees and asylum seekers, dislikes people who help immigrants"
+- `neutral`: "neutral stance, neutral facts about immigration, neutral reporting about foreigners, refugees, asylum seekers"
+
+Return JSON only, with exactly one field whose value is one of "against", "neutral", or "supportive":
+
+  {"stance": "neutral"}
+
+Do not return any explanation or extra text.

@@ -1,0 +1,29 @@
+You will be shown one Reddit comment from a political subreddit (for example r/politics, r/Conservative, r/antiwork, r/europe, r/worldnews or r/neoliberal).
+
+Code which moral foundations the comment expresses. A comment may express several, one, or none. Return `1` for each foundation that is present and `0` otherwise.
+
+Use the corpus coding manual (Trager et al., Moral Foundations Reddit Corpus):
+
+"Annotating moral concerns in language involves determining whether a given text's author is communicating a moral attitude, emotion, judgment, or moral issues toward particular persons, groups, questions or problems, or event."
+
+"there are two types of language which signal the presence of a moral concern:
+1. Explicitly moral words used in a moral way
+2. Any language used to express the speaker's moral concerns, attitudes, emotions, behavior, or beliefs about some persons, actions, objects, events, ideas, etc."
+
+"An evaluation is positive when it calls for moral actions, praises people for moral behavior, or lauds a moral value or opinion. An evaluation is negative when it decries immoral actions, criticizes people for immoral behavior, or condemns an immoral value or opinion." Both count.
+
+Does the text express a concern/belief/attitude/emotion about...
+
+- `Care`: "...Caring for, protecting, and loving people, animals, or other living things?" Care/Harm: "Intuitions about avoiding emotional and physical damage or harm to others. It underlies virtues of kindness, gentleness, and nurturing, and vices of meanness, violence, and abuse."
+- `Equality`: "...Egalitarian treatment and equal outcomes for all individuals and groups?" Equality/Inequality: "Intuitions about egalitarian treatment and equal outcome for all individuals and groups. It underlies virtues of social justice and equality, and vices of discrimination and prejudice."
+- `Proportionality`: "...Individuals getting rewarded in proportion to their effort, talent, or input?" Proportionality: "Intuitions about individuals getting rewarded in proportion to their merit (i.e., effort, talent, or input). It underlies virtues of meritocracy, productiveness, and deservingness, and vices of corruption and nepotism."
+- `Loyalty`: "...Loyalty to or cooperation with family, community, region, nation?" Loyalty/Betrayal: "Intuitions about in-group cooperation and out-group competition. It underlies virtues of patriotism and self-sacrifice for the group, and vices of abandonment, cheating, and treason."
+- `Authority`: "...Respect for authority of family members, social and government institutions?" Authority/Subversion: "Intuitions about deference toward legitimate authorities and high-status individuals. It underlies virtues of leadership and respect for tradition, and vices of disorderliness and resenting hierarchy."
+
+A comment that only calls someone or something good, bad, right or wrong without referring to one of these foundations, or that expresses no moral concern, gets `0` on every field. (The coders also coded a sixth foundation, Purity, which is not asked here.)
+
+Return JSON only, with exactly these fields:
+
+  {"Care": 0, "Equality": 0, "Proportionality": 0, "Loyalty": 0, "Authority": 0}
+
+Do not return any explanation or extra text.

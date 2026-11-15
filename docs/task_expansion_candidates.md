@@ -755,8 +755,9 @@ not directly ingestible from the archive as inspected.
 ## Sourcing pass with a quality gate (2026-11-14)
 
 **Verdict.** Of 18 sources that passed a first screen, 14 are admissible with
-conditions and 4 are rejected. The top eight were built on 2026-11-14 as
-`tasks_ext/` tasks (no model runs yet); provenance is in
+conditions and 4 are rejected. All 14 were built on 2026-11-14 as
+`tasks_ext/` tasks (no model runs yet; the top eight first, the other six
+the same day); provenance is in
 [`prompts_provenance.md`](prompts_provenance.md). Eight would be solid additions:
 Hebrew delegitimization, UN Security Council resolution stance, Czech
 propaganda articles, ParlaSent, ClaimBuster, PopBERT, expert-coded politician

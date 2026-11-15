@@ -154,21 +154,27 @@ class ManifestTest(unittest.TestCase):
             self.assertEqual(len(items), len({i["item_id"] for i in items}), name)
 
     def test_sourcing_pass_manifests_load(self):
-        """The eight tasks built from the 2026-11-14 sourcing pass."""
-        for name, kind in [
-            ("rivlin_angert_pdd_delegitimization", "binary"),
-            ("parlasent_en_sentiment", "categorical"),
-            ("arslan_claimbuster_checkworthy", "categorical"),
-            ("erhard_popbert_populism", "multi_binary"),
-            ("heseltine_politician_tweet_tone", "categorical"),
-            ("chalkidis_trump_populism", "categorical"),
-            ("benson_tucker_unsc_government_stance", "categorical"),
-            ("horak_czech_propaganda", "multi_binary"),
+        """The fourteen tasks built from the 2026-11-14 sourcing pass."""
+        for name, kind, n in [
+            ("rivlin_angert_pdd_delegitimization", "binary", 500),
+            ("parlasent_en_sentiment", "categorical", 500),
+            ("arslan_claimbuster_checkworthy", "categorical", 500),
+            ("erhard_popbert_populism", "multi_binary", 500),
+            ("heseltine_politician_tweet_tone", "categorical", 500),
+            ("chalkidis_trump_populism", "categorical", 500),
+            ("benson_tucker_unsc_government_stance", "categorical", 500),
+            ("horak_czech_propaganda", "multi_binary", 500),
+            ("thomas_qevasion_clarity", "categorical", 306),
+            ("bevan_uk_pmqs_policy_topic", "categorical", 500),
+            ("liu_gvfc_frame", "categorical", 500),
+            ("muller_proksch_polnos_nostalgia", "binary", 500),
+            ("trager_mfrc_political_moral", "multi_binary", 500),
+            ("mets_estonian_immigration_stance", "categorical", 500),
         ]:
             task = task_registry.load_task_definition(REPO / "tasks_ext" / f"{name}.yaml")
             self.assertEqual(task["label_kind"], kind, name)
             items = task["loader"]()
-            self.assertEqual(len(items), 500, name)
+            self.assertEqual(len(items), n, name)
             self.assertEqual(len(items), len({i["item_id"] for i in items}), name)
             self.assertTrue(all(i["user_content"].strip() for i in items), name)
             if kind == "categorical":
@@ -187,6 +193,7 @@ class ManifestTest(unittest.TestCase):
             ("cap_executive_order_policy_topic", "categorical"),
             ("benson_tucker_unsc_government_stance", "categorical"),
             ("horak_czech_propaganda", "multi_binary"),
+            ("thomas_qevasion_clarity", "categorical"),
         ]:
             path = REPO / "tasks_ext" / f"{name}.yaml"
             task = task_registry.load_task_definition(path)

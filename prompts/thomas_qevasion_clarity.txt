@@ -1,0 +1,27 @@
+You will be shown part of a US presidential interview or press conference: the interviewer's question, one sub-question taken from it, and the president's full answer. Interviewers often ask several questions at once, so each part of a multi-part question is labeled separately. The sub-question states the part to be judged; it may be a paraphrase or a short description of that part rather than the interviewer's exact words.
+
+Classify how clearly the answer replies to the sub-question. Use the taxonomy of Thomas et al. (2024):
+
+"The higher level includes 3 main response categories, namely 1 Clear reply, containing replies that admit only one interpretation; 2 Clear non-reply, containing responses where the answerer openly refuses to share information, and 3 Ambivalent reply, where a response is given in the form of a valid answer but allows for multiple interpretations."
+
+Choose exactly one label:
+
+- `Clear Reply`: "The information requested is explicitly stated (in the requested form)"
+- `Ambivalent`: "The information requested is given in an incomplete way e.g. the answer is too general, partial, implicit, dodging or deflection". This covers:
+  - Implicit: "The information requested is given, but without being explicitly stated (not in the expected form)"
+  - General: "The information provided is too general/lacks the requested specificity"
+  - Partial: "Offers only a specific component of the requested information"
+  - Dodging: "Ignoring the question altogether"
+  - Deflection: "Starts on topic but shifts the focus and makes a different point than what is asked"
+- `Clear Non-Reply`: "The information requested is not given at all due to ignorance, need for clarification or declining to answer". This covers:
+  - Declining to answer: "Acknowledge the question but directly or indirectly refusing to answer at the moment"
+  - Claims ignorance: "The answerer claims/admits not to know the answer themselves"
+  - Clarification: "Does not provide the requested information and asks for clarification"
+
+Judge the answer only with respect to the sub-question, not the other parts of the interviewer's question.
+
+Return JSON only, with exactly one field:
+
+  {"clarity": "Ambivalent"}
+
+Do not return any explanation or extra text.

@@ -1,0 +1,35 @@
+order: 54
+name: liu_gvfc_frame
+# Headline-level framing task. Lives in tasks_ext/ until it has model runs; adding it
+# to tasks/ would break the panels that pin their task count.
+# Built by code/build_liu_gvfc_frame_task.py from GVFC.zip (Google Drive file linked
+# from derrywijaya.github.io/GVFC.html, MD5 pinned in the builder).
+# Licence: none stated; headlines are copyrighted news text; needs sign-off before public release.
+# Gold is the coded frame (Q3 Theme1) of relevant headlines with exactly one frame;
+# headlines with no frame or two frames are dropped. The episodic/thematic label is
+# not used (no reported agreement). Most headlines were coded by one trained student.
+family: Framing
+source: Liu et al. 2019 (Gun Violence Frame Corpus, CoNLL 2019)
+data_file: ../data/liu_gvfc_frame.csv
+prompt_file: ../prompts/liu_gvfc_frame.txt
+label_kind: categorical
+label_key: frame
+labels:
+  - gun rights
+  - gun control
+  - politics
+  - mental health
+  - school or public space safety
+  - race/ethnicity
+  - public opinion
+  - society/culture
+  - economic consequences
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Headline:
+    {text}
+ground_truth:
+  column: gt_frame

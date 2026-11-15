@@ -1,0 +1,48 @@
+order: 53
+name: bevan_uk_pmqs_policy_topic
+# Short-text task. Lives in tasks_ext/ until it has model runs; adding it to tasks/
+# would break the panels that pin their task count.
+# Built by code/build_bevan_uk_pmqs_policy_topic_task.py from the CAP UK PMQs file
+# (uk_pmqs.csv, 1997-2008). Engagement questions and questions under 10 words dropped.
+# Same 21 CAP major-topic labels and label descriptions as the other CAP tasks; the
+# US-only coding rule (Native American and D.C. affairs) is replaced by the UK PMQs
+# codebook rule and the master codebook's devolution subtopic. Gold uses v2 names
+# (topic 5 is Labor) written directly by the builder, so no label_map is needed.
+# No coder-agreement figure was found for this dataset.
+family: Policy-topic coding
+source: Bevan and John 2016 (UK Policy Agendas Project, Prime Minister's Questions)
+data_file: ../data/bevan_uk_pmqs_policy_topic.csv
+prompt_file: ../prompts/bevan_uk_pmqs_policy_topic.txt
+label_kind: categorical
+label_key: policy_topic
+labels:
+  - Macroeconomics
+  - Civil Rights
+  - Health
+  - Agriculture
+  - Labor
+  - Education
+  - Environment
+  - Energy
+  - Immigration
+  - Transportation
+  - Law and Crime
+  - Social Welfare
+  - Housing
+  - Domestic Commerce
+  - Defense
+  - Technology
+  - Foreign Trade
+  - International Affairs
+  - Government Operations
+  - Public Lands
+  - Culture
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Question to the Prime Minister:
+    {text}
+ground_truth:
+  column: gt_policy_topic

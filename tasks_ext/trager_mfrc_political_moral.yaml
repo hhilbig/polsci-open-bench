@@ -1,0 +1,35 @@
+order: 56
+name: trager_mfrc_political_moral
+# Multi-label moral-foundations task on Reddit comments from political subreddits. Lives in
+# tasks_ext/ until it has model runs; adding it to tasks/ would break the panels that pin their
+# task count. Built by code/build_trager_mfrc_political_moral_task.py from Hugging Face
+# USC-MOLA-Lab/MFRC (pinned revision), train_dedup file (CC BY 4.0). US Politics and French
+# politics buckets only; texts with >= 3 annotators. Gold per foundation = more than half of
+# the annotators (our rule; the authors' "at least 50%" rule is kept in authors_rule_* columns).
+# Conflicting same-annotator duplicate votes are dropped. Purity is left out (under 1% positive).
+# 729 texts overlap the repo's annotator-disagreement set (column in_human_vote_set).
+family: Moral appeals
+source: Trager et al. 2022 (Moral Foundations Reddit Corpus)
+data_file: ../data/trager_mfrc_political_moral.csv
+prompt_file: ../prompts/trager_mfrc_political_moral.txt
+label_kind: multi_binary
+labels:
+  - Care
+  - Equality
+  - Proportionality
+  - Loyalty
+  - Authority
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Reddit comment:
+    {text}
+ground_truth:
+  columns:
+    Care: gt_Care
+    Equality: gt_Equality
+    Proportionality: gt_Proportionality
+    Loyalty: gt_Loyalty
+    Authority: gt_Authority

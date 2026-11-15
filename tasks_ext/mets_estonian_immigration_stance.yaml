@@ -1,0 +1,31 @@
+order: 57
+name: mets_estonian_immigration_stance
+# Sentence-level stance task in Estonian. Lives in tasks_ext/ until it has model runs; adding it
+# to tasks/ would break the panels that pin their task count.
+# Built by code/build_mets_estonian_immigration_stance_task.py from GitHub
+# markmets/immigration-prediction-EST (pinned commit), Annotated_Dataset.csv. Gold = the
+# authors' stanceConsolidated code collapsed 1-2/3/4-5; MH (ambiguous) rows dropped as in the
+# paper. One coder per sentence; Cohen's kappa vs a third coder 0.49-0.57 on the full 550-item
+# check, 0.68 on its non-ambiguous 222 (S1 File).
+# Licence: repository is GPL-3.0, but the sentences are quoted news text whose copyright stays
+# with the publishers (Uued Uudised, Ekspress Grupp).
+family: Sentiment / Stance / Tone
+source: Mets et al. 2024 (Estonian immigration stance)
+data_file: ../data/mets_estonian_immigration_stance.csv
+prompt_file: ../prompts/mets_estonian_immigration_stance.txt
+label_kind: categorical
+ordinal: true
+label_key: stance
+labels:
+  - against
+  - neutral
+  - supportive
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Sentence:
+    {text}
+ground_truth:
+  column: gt_stance

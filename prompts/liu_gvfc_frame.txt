@@ -1,0 +1,94 @@
+You will be shown the headline of a 2018 U.S. news article about gun violence in the United States. Each headline was coded by trained coders as having one dominant theme (frame). Identify that theme.
+
+The coders' codebook (News Framing of U.S. Gun Violence Codebook) instructs: "To code each news story, take a look at the headline and then answer the following questions. Make your decision based on the explicit expression. Do not infer or over interpret."
+
+The themes are defined in the codebook as follows:
+
+Gun rights
+The story is related to the Constitution, the second amendment, and protection of individual liberty and gun ownership as a right, including:
+- Meaning of the 2nd amendment
+- The irrefutability of one's right to own guns
+- Gun ownership as critical to democracy and protecting oneself
+Examples: "Membership, interest in gun rights groups soar in the weeks after the Florida high school shooting"; "Rapper 'Killer Mike,' NRA host Colion Noir: No guns would turn people into slaves"
+
+Gun control
+The story is about issues related to regulating guns through legislation and other institutional measures.
+- Enforcing and/or expanding background checks
+- Limiting sale of guns and/or related dangerous equipment (e.g., AR15s, semi-automatic rifles, bump stocks, large-capacity ammo)
+- Increasing age limits on gun purchases
+- Implementing licensing and gun safety training programs
+Examples: "GOP lawmaker calls for age restriction on AR-15s"; "No bump stocks turned in to Denver police after ban"
+
+Politics
+The story is mainly about the political issues around guns and shootings, including:
+- Political campaigns and upcoming elections (e.g., using guns as a wedge issue or motivating force to get people to the polls)
+- Fighting between the Democratic and Republican parties, or politicians
+- Political money contributions from gun lobbies (e.g., NRA)
+- One political party or one politician's stance on gun violence. Therefore, as long as the news headline mentions a politician's name, it often indicates the theme of politics.
+- Often times, the politicians' names or the party names should be mentioned.
+Examples: "How Illinois governor candidates would address gun violence"; "Trump warns Dems will 'take away your Second Amendment'"; "Lindsey Graham: Both parties will suffer if Congress doesn't act on new gun bill"
+
+Mental health
+The story is about issues related to individuals' mental illnesses or emotional well-being, or the mental health system as a whole, including:
+- Predicting and preventing mental health breakdowns
+- Treating mental illness
+- Creating measures to ensure mentally ill people do not have access to guns
+- Descriptions of individuals' behavioral / personality traits that indicate instability, impulsivity, anger, etc.
+Examples: "Gun debate hits home for families dealing with myths about violence, mental illness"; "Renewed Debate Over Gun Access, Mental Health"; "Las Vegas gunman lost money, became unstable before shooting"
+
+School or public space safety
+Issues related to institutional and school safety, including:
+- Awareness and monitoring of "troubled" individuals by law enforcement (e.g., local police, FBI)
+- Safety measures in schools to prevent or mitigate shootings (e.g., police/safety officers in the school, armed teachers, metal detectors, clear backpacks)
+- Note that a headline simply mentioning "school shooting" does not necessarily mean it uses this safety measure frame.
+Examples: "Preschoolers among students required to carry clear backpacks in Texas school district"; "Scott wants armed police at Stoneman Douglas after disturbing incidents at Parkland school"; "Sales of bulletproof school supplies spike after Florida shooting"
+
+Race/ethnicity
+The story is about gun issues related to certain ethnic group(s), including:
+- Angry, isolated white men as primary perpetrators of domestic gun violence
+- Immigrants from Mexico bringing in guns from across the border
+- Muslim "terrorists"
+- Gun violence in African American communities
+Examples: "Illegal immigrant acquitted of Kate Steinle's murder faces judge on gun charges"; "The disparities in how black and white men die in gun violence, state by state"
+
+Public opinion
+The study is about the public's, including a certain community's reactions to gun-related issues, including:
+- Public opinion polls related to guns
+- Protests
+- Mourning victims of gun violence
+- The public's emotional responses
+Example: "Baltimore students walk out of class to protest gun violence"
+
+Society/culture
+Societal-wide factors that are related to gun violence, including:
+- Violence in media (e.g., TV/movies and video games)
+- Social pressures that may incite someone to violence (e.g., cliques/bullying and isolation)
+- Breakdown in family structures, so there is a lack of familial support and stability
+- Breakdown in community structures (e.g., religious organizations, other civic-oriented groups), so there is a lack of community support and stability
+Example: "There's Not A Single Ounce Of Evidence To Link Mass Shootings To Video Games"
+
+Economic consequences
+The story is about financial losses or gains, or the costs involved in gun-related issues, including:
+- The actual sales of firearms
+- The financial consequences of gun regulation (e.g., lost tax revenue, or gun manufacturing companies moving to a different state)
+- The financial state of gun-related lobbying groups (e.g., the NRA)
+- Federal budget for gun-related programs
+Example: "The NRA Is In Deep, Deep Financial Trouble"
+
+Answer with exactly one of these labels:
+
+- `gun rights`
+- `gun control`
+- `politics`
+- `mental health`
+- `school or public space safety`
+- `race/ethnicity`
+- `public opinion`
+- `society/culture`
+- `economic consequences`
+
+Return JSON only, with exactly one field:
+
+  {"frame": "politics"}
+
+Do not return any explanation or extra text.

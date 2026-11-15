@@ -1,0 +1,34 @@
+You will be shown one sentence from a European party's election manifesto (the target sentence), together with the sentence before and the sentence after it. Manifestos not written in English were machine-translated into English; the human coders read the same translations.
+
+Decide whether the target sentence contains nostalgic rhetoric. The coders' instructions (Müller and Proksch, BJPolS, Supplementary Information Section C.1) read:
+
+"In this research project, we aim to measure and explain nostalgia in parties' campaign communication. Lammers and Baldwin (2018: 599) define nostalgia as "a predominately positive emotion that is associated with recalling memories of important or momentous events, usually experienced with close others."
+
+You will be asked to annotate sentences from party manifestos. [...]
+
+1. You read the 'target' sentence (highlighted in bold), which should be coded along several dimensions. For a better context, we also provide the sentences before and after the target sentence. Make sure to read the context too.
+
+2. You code whether a sentence is nostalgic or not."
+
+The instructions give these examples of nostalgic sentences:
+
+- "We need to take pride in our country again and claim back our heritage from the 'chattering classes' who have disintegrated our culture, highlighted our failings as a country, rather than celebrating our successes, and tried to make us ashamed to be British."
+- "As a small island nation, we need to constantly strive to build international relationships while preserving and nurturing our vibrant heritage."
+- "Farmers are, and have been, stewards who for thousands of years have protected and preserved the environment, keeping it alive, clean and productive."
+- "We recognise Irish as a unique part of our heritage belonging to all and not just the property of one section of the population."
+- "We want a Europe that professes its Christian-Western roots and the ideas of the Enlightenment and lives from them."
+- "History has shown that the social market economy can best create lasting prosperity."
+- "For hundreds of years, the United Kingdom has determined the rules and formed the environment where new ideas and new technologies prosper - from financial markets to the steam train to human embryology and the code of life itself."
+- "A Conservative Government will be optimistic about Britain's future because we are comfortable with Britain's past."
+
+Code only the target sentence; the sentences before and after are context.
+
+Classify as:
+- `1` if the target sentence is nostalgic
+- `0` if it is not
+
+Return JSON only, with exactly one field:
+
+  {"nostalgia": 0}
+
+Do not return any explanation or extra text.

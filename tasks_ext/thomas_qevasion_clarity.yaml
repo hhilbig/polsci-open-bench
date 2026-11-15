@@ -1,0 +1,36 @@
+order: 52
+name: thomas_qevasion_clarity
+# Long-text task (docs/long_text_task_scoping.md). Lives in tasks_ext/ until it has
+# model runs; adding it to tasks/ would break the panels that pin their task count.
+# Built by code/build_thomas_qevasion_clarity_task.py from ailsntua/QEvasion (pinned revision),
+# test split only (three-annotator majority). Items above 10,000 o200k tokens are dropped, not truncated.
+# EXCEPTION TO THE NO-MODEL-TEXT RULE: the sub-question shown to the model was written by
+# ChatGPT (decomposing multi-part interview questions) and checked by the annotators. The
+# clarity label belongs to that sub-question, so it defines the unit and must be shown.
+# No other model-generated or annotator column is shown. Licence CC BY-NC-ND 4.0: text and
+# labels are kept exactly as released; the builder only selects rows.
+family: Responsiveness / Evasion
+source: Thomas et al. 2024 (QEvasion / CLARITY)
+data_file: ../data/thomas_qevasion_clarity.csv
+prompt_file: ../prompts/thomas_qevasion_clarity.txt
+label_kind: categorical
+label_key: clarity
+labels:
+  - Clear Reply
+  - Ambivalent
+  - Clear Non-Reply
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Interviewer's question:
+    {interview_question}
+
+    Sub-question:
+    {sub_question}
+
+    Answer:
+    {text}
+ground_truth:
+  column: gt_clarity

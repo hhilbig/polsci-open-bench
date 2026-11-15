@@ -1,0 +1,35 @@
+order: 55
+name: muller_proksch_polnos_nostalgia
+# Sentence-level task. Lives in tasks_ext/ until it has model runs; adding it to tasks/
+# would break the panels that pin their task count.
+# Built by code/build_muller_proksch_polnos_nostalgia_task.py from Harvard Dataverse
+# doi:10.7910/DVN/L198GI (CC0). Gold is the authors' rule: nostalgic if at least 3 of
+# 4 coders said so. Coders read Google-translated English with the previous and next
+# sentence, so the model sees the same; the context sentences are not in the coded
+# file and were rebuilt by the builder from data_translated_full.rds.
+# Sampling: half the items were selected because a nostalgia dictionary flagged them
+# (`keyword_selected`); 143 of the 148 positives come from that half, so the task
+# partly rewards spotting dictionary terms.
+family: Rhetoric / Nostalgia
+source: Müller and Proksch 2024 (PolNos, BJPolS)
+data_file: ../data/muller_proksch_polnos_nostalgia.csv
+prompt_file: ../prompts/muller_proksch_polnos_nostalgia.txt
+label_kind: binary
+label_key: nostalgia
+labels:
+  - nostalgia
+id:
+  kind: column
+  column: source_id
+text:
+  template: |
+    Previous sentence:
+    {text_pre}
+
+    Target sentence:
+    {text}
+
+    Next sentence:
+    {text_post}
+ground_truth:
+  column: gt_nostalgia
