@@ -59,6 +59,13 @@ class RefreshSelectionTests(unittest.TestCase):
             path.write_text(yaml.safe_dump(config))
             with self.assertRaises(h.BakeoffError):
                 h.load_config(path)
+            config['hardware']['tensor_parallel_full_pool'] = True
+            path.write_text(yaml.safe_dump(config))
+            self.assertEqual(h.load_config(path)['hardware']['gpu_count'], 2)
+            config['hardware']['gpu_count'] = 4
+            path.write_text(yaml.safe_dump(config))
+            with self.assertRaises(h.BakeoffError):
+                h.load_config(path)
 
     def test_qwen_flash_pilot_pins_offload_image_and_exact_68_keys(self):
         config = h.load_config(Path('experiments/refresh_qwen_flash_next_pilot.yaml'))

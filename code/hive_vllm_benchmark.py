@@ -406,7 +406,12 @@ def load_config(path: Path) -> dict[str, Any]:
                 f"{sorted(unknown_llm_kwargs)}"
             )
         tensor_parallel = int(llm_kwargs.get("tensor_parallel_size", 1))
-        refresh_multi_gpu = bool(config.get("refresh_sample")) and config.get("hardware", {}).get("nodes") == 1 and config.get("hardware", {}).get("gpu_count") == tensor_parallel
+        # Multi-GPU runs need a single-node hardware block whose GPU count equals
+        # the tensor-parallel size, and either the refresh tier or an explicit
+        # opt-in for a full task-pool run (hardware.tensor_parallel_full_pool).
+        hardware = config.get("hardware", {})
+        multi_gpu_tier = bool(config.get("refresh_sample")) or hardware.get("tensor_parallel_full_pool") is True
+        refresh_multi_gpu = multi_gpu_tier and hardware.get("nodes") == 1 and hardware.get("gpu_count") == tensor_parallel
         if tensor_parallel < 1 or (tensor_parallel != 1 and not refresh_multi_gpu):
             raise BakeoffError(
                 f"model {model_key!r} must use tensor_parallel_size=1 in this one-GPU bake-off"
@@ -2177,6 +2182,12 @@ def run(args: argparse.Namespace) -> None:
                 raise BakeoffError("Refresh allocated GPU count differs from tensor parallel size")
             if int(os.environ.get("SLURM_JOB_NUM_NODES", "1")) != 1:
                 raise BakeoffError("Refresh inference requires a single-node allocation")
+        elif config.get("hardware", {}).get("tensor_parallel_full_pool") is True:
+            expected_gpus = int(model.get("llm_kwargs", {}).get("tensor_parallel_size", 1))
+            if len(gpu_before_load.get("gpus", [])) != expected_gpus:
+                raise BakeoffError("Allocated GPU count differs from tensor parallel size")
+            if int(os.environ.get("SLURM_JOB_NUM_NODES", "1")) != 1:
+                raise BakeoffError("Multi-GPU inference requires a single-node allocation")
         if execution is not None:
             assert_compact_hardware(execution, gpu_before_load)
             snapshot_path = assert_compact_offline_provenance(execution, model)
