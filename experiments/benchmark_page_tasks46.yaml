@@ -1,0 +1,131 @@
+# Draft page for the November task pool: 25 models on 46 tasks (2026-11-19).
+#
+# Not published. Build it with the config override, after building the release
+# with experiments/task_ext_20261114/build_ext_release.py:
+#   export BENCHMARK_PAGE_CONFIG=experiments/benchmark_page_tasks46.yaml
+#   python3 code/update_benchmark_page.py figures
+#   python3 code/update_benchmark_page.py page
+# The `release` step of update_benchmark_page.py builds the November release and
+# does not apply here. The published page still uses experiments/benchmark_page.yaml.
+schema_version: 1
+page_id: tasks46_20261119
+inputs:
+  release_dir: output/sidecar/release_20261119_tasks46
+  panel: output/sidecar/task_ext_20261114_api/panel_f1_tasks.json
+  # Has a `family` column (the five annotation types of the figures) as well as
+  # the category, since 22 of the tasks are not in the paper's family map.
+  taxonomy: experiments/task_ext_20261114/task_categories.csv
+  tasks_dir: tasks_ext_v2_20261114
+  cost_table: output/sidecar/task_ext_20261114_api/cost_table.csv
+  # Required by the loader; build_ext_release.py reads these folders directly.
+  api_source: output/sidecar/task_ext_20261114_api
+  open_manifest: output/sidecar/task_ext_20261114_r2
+  api_manifests: []
+  # Same GPU model, same texts (the full pool of 22,913 texts on the 46 tasks).
+  # The runs differ in how many texts vLLM processed at once, so they form two
+  # groups. Qwen3.8 Flash-Next ran on two GPUs with another vLLM version and is
+  # not in the speed figure.
+  speed_runs:
+  - label: Group 1
+    concurrency: no limit on texts at a time
+    models:
+      gemma4_31b_it_qat_w4a16: output/sidecar/task_ext_20261114_r2
+      glm4_7_flash: output/sidecar/task_ext_20261114_r2
+      mistral_small_4_119b_nvfp4: output/sidecar/task_ext_20261114_r2
+      qwen3_30b_a3b_instruct_2507_fp8: output/sidecar/task_ext_20261114_r2
+      qwen3_5_35b_a3b_fp8: output/sidecar/task_ext_20261114_r2
+      qwen3_5_9b_bf16: output/sidecar/task_ext_20261114_r2
+      qwen3_6_27b_fp8: output/sidecar/task_ext_20261114_r2
+      qwen3_6_35b_a3b_fp8: output/sidecar/task_ext_20261114_r2
+      qwen3_8_27b_fp8: output/sidecar/task_ext_20261114_r2
+  - label: Group 2
+    concurrency: 16 texts at a time
+    models:
+      gemma3_12b_it_fp8_dynamic: output/sidecar/task_ext_20261114_r2
+      llama3_3_70b_instruct_fp8_dynamic: output/sidecar/task_ext_20261114_r2
+      qwen3_next_80b_a3b_fp8: output/sidecar/task_ext_20261114_r2
+site:
+  page_url: https://www.hannohilbig.com/llm-benchmark/
+  data_url: https://github.com/hhilbig/polsci-open-bench/tree/main/output/sidecar/release_20261119_tasks46
+  code_url: https://github.com/hhilbig/polsci-open-bench
+  author_url: https://www.hannohilbig.com/
+  homepage_repo: ~/Documents/GitHub/hhilbig.github.io
+  target_dir: llm-benchmark
+  share_image: figures/fig-recent-mean-f1.png
+featured_models:
+- claude-opus-5.5
+- claude-sonnet-5.5
+- claude-haiku-5.5
+- claude-opus-5
+- claude-sonnet-5
+- gpt-6.1-sol
+- gpt-6-luna
+- gemini-4-argon
+- gemini-3.8-flash
+- gemini-3.1-flash-lite
+- glm-5.3
+- deepseek-v4.1-flash-1017
+- gemma4_31b_it_qat_w4a16
+- qwen3_8_flash_next_fp8
+- qwen3_6_27b_fp8
+- qwen3_8_27b_fp8
+- llama3_3_70b_instruct_fp8_dynamic
+- mistral_small_4_119b_nvfp4
+labels:
+  claude-opus-5: Claude Opus 5
+  claude-sonnet-5: Claude Sonnet 5
+  claude-opus-5.5: Claude Opus 5.5
+  claude-sonnet-5.5: Claude Sonnet 5.5
+  claude-haiku-5.5: Claude Haiku 5.5
+  gpt-6.1-sol: GPT-6.1 Sol
+  gpt-6-luna: GPT-6 Luna
+  gemini-4-argon: Gemini 4 Argon
+  gemini-3.8-flash: Gemini 3.8 Flash
+  gemini-3.1-flash-lite: Gemini 3.1 Flash-Lite
+  glm-5.3: GLM-5.3
+  deepseek-v4.1-flash-1017: DeepSeek V4.1 Flash
+  gemma3_12b_it_fp8_dynamic: Gemma 3 12B (dynamic FP8)
+  gemma4_31b_it_qat_w4a16: Gemma 4 31B (W4A16)
+  glm4_7_flash: GLM-4.7-Flash
+  llama3_3_70b_instruct_fp8_dynamic: Llama 3.3 70B (dynamic FP8)
+  mistral_small_4_119b_nvfp4: Mistral Small 4 (NVFP4)
+  qwen3_30b_a3b_instruct_2507_fp8: Qwen3 30B-A3B 2507 (FP8)
+  qwen3_5_35b_a3b_fp8: Qwen3.5 35B-A3B (FP8)
+  qwen3_5_9b_bf16: Qwen3.5 9B (BF16)
+  qwen3_6_27b_fp8: Qwen3.6 27B (FP8)
+  qwen3_6_35b_a3b_fp8: Qwen3.6 35B-A3B (FP8)
+  qwen3_8_27b_fp8: Qwen3.8 27B (FP8)
+  qwen3_8_flash_next_fp8: Qwen3.8 Flash-Next (FP8)
+  qwen3_next_80b_a3b_fp8: Qwen3-Next 80B-A3B (FP8)
+runs:
+  api_window: between 15 and 18 November 2026
+  batch_providers: all models except DeepSeek V4.1 Flash
+  gpu: NVIDIA RTX PRO 6000 Blackwell
+  gpu_memory: 96 GB
+  cluster: UC Davis's Hive computing cluster
+  runtime: vLLM 0.26
+  multi_gpu_note: The exception is Qwen3.8 Flash-Next, which ran on two GPUs with a development version of vLLM.
+  max_output_tokens: 256
+  token_limit_exception: the five models that cannot turn reasoning off (Claude Opus 5.5, Claude Sonnet 5.5,
+    GPT-6.1 Sol, Gemini 4 Argon and GLM-5.3), which may return up to 1,024 tokens (2,048 for the first 40
+    texts), and Gemini 3.8 Flash, which may return up to 1,024 tokens
+  not_run_open:
+  - Kimi K3
+  - MiniMax M3
+  temperature_note: API models run at their provider's default temperature, except for the Gemini models, GLM-5.3
+    and DeepSeek V4.1 Flash, which run at temperature 0.
+  # Text for this release only; the published page uses the built-in defaults.
+  texts_phrase: the same 100 texts (50 for the six tasks with the longest texts)
+  api_bullet: I sent the requests to the API models {api_window}, through OpenRouter's batch endpoint for all
+    models except Claude Sonnet 5, which I ran through Anthropic's batch endpoint, and DeepSeek V4.1 Flash,
+    which has no batch endpoint and received one request per text. OpenRouter checks batch requests against
+    the provider's content policy and refuses the whole batch if one text is flagged, so I left out the two
+    texts that were flagged for the Anthropic models and score every model on the remaining texts.
+  methods_sample: For each task, I draw 100 texts (50 for the six tasks with the longest texts) at random,
+    stratified by task, from the texts that the open-weight models coded, and I score every model on the
+    same {n_texts} texts. All models receive the same texts, gold labels and prompts.
+  previous_release_note: Results from the November 2026 release, in which I compared 43 models on 33 tasks (24
+    of which are also part of the 46 tasks that I use here), are still available as
+    <a href="https://github.com/hhilbig/polsci-open-bench/tree/main/output/sidecar/refresh_20261106_release_33">release
+    refresh_20261106</a>, although the two sets of results are not directly comparable, since the tasks, the texts
+    and many of the models differ.

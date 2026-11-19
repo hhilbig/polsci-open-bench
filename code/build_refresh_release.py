@@ -185,7 +185,11 @@ def compute(predictions, task_defs, categories, iterations=2000, active_only=Fal
     """Pair item draws within tasks and task draws across every model."""
     models, tasks = sorted(predictions.model.unique()), sorted(predictions.task.unique())
     rng = np.random.default_rng(SEED)
-    weights = {name: rng.multinomial(100, np.full(100, .01), size=iterations).astype(float) for name in tasks}
+    # Texts per task, taken from the predictions: 100 in the 33-task panel, 50 to
+    # 100 in the November task pool. With 100 everywhere the draws are unchanged.
+    sizes = predictions.groupby('task').size() // len(models)
+    weights = {name: rng.multinomial(int(sizes[name]), np.full(int(sizes[name]), 1 / int(sizes[name])),
+                                     size=iterations).astype(float) for name in tasks}
     task_draws = rng.integers(len(tasks), size=(iterations, len(tasks)))
     per_task, per_class, aggregates, category_rows = [], [], [], []
     item_samples, task_samples, points = {}, {}, {}

@@ -94,11 +94,17 @@ costs <- read.csv(cost_path) |>
   mutate(estimated = cost_basis %in% c("token_estimate", "provider_tokens"))
 stopifnot(nrow(costs) == sum(models$kind == "API"))
 best_open <- models |> filter(hardware_tier == "single-gpu") |> slice_max(mean_task_f1, n = 1)
+# The reference label sits under the dashed line at the right, unless an expensive
+# model sits just under the line there; then it moves to the left edge.
+crowded_right <- any(costs$cost_per_1k_items > median(costs$cost_per_1k_items) &
+                     costs$mean_task_f1 < best_open$mean_task_f1 &
+                     costs$mean_task_f1 > best_open$mean_task_f1 - 0.012)
 p <- ggplot(costs, aes(cost_per_1k_items, mean_task_f1)) +
   geom_hline(yintercept = best_open$mean_task_f1, color = CLARA_BLUE, linetype = "dashed", linewidth = 0.5) +
-  annotate("text", x = max(costs$cost_per_1k_items), y = best_open$mean_task_f1 - 0.004,
+  annotate("text", x = if (crowded_right) min(costs$cost_per_1k_items) else max(costs$cost_per_1k_items),
+           y = best_open$mean_task_f1 - 0.004,
            label = sprintf("Best open model on one GPU (%s), %.3f", best_open$short_label, best_open$mean_task_f1),
-           hjust = 1, vjust = 1, size = 3, color = CLARA_BLUE) +
+           hjust = if (crowded_right) 0 else 1, vjust = 1, size = 3, color = CLARA_BLUE) +
   geom_point(aes(shape = estimated), color = CLARA_DARK, size = 2.4, stroke = 0.8) +
   geom_text_repel(aes(label = short_label), size = 3, color = "grey20", min.segment.length = 0,
                   segment.color = "grey70", box.padding = 0.4, seed = 20260921) +
@@ -204,7 +210,9 @@ family_plot <- function(ids, label_col, ncol) {
 p <- family_plot(featured, "short_label", 3)
 save_figure(p, "fig-recent-family", "Performance by annotation type",
             paste(
-              "Mean F1 within each of the five annotation types used in the paper, with each task weighted equally.",
+              if (isFALSE(manifest$paper_families))
+                "Mean F1 within each of five annotation types, with each task weighted equally."
+              else "Mean F1 within each of the five annotation types used in the paper, with each task weighted equally.",
               "Models appear in the same order in every panel, ranked by their overall mean."),
             NULL, 8.5, 0.34 * length(featured) + 1.2, "featured")
 
@@ -308,15 +316,22 @@ p <- ggplot(tp, aes(seconds_per_item, mean_f1)) +
   theme_clara() + theme(panel.spacing = unit(1.2, "lines"))
 minutes <- tp |> group_by(panel) |> summarise(lo = min(seconds_per_item) * 1000 / 60,
                                               hi = max(seconds_per_item) * 1000 / 60, n = n())
+# Which panel processed texts without a limit and which at 16 at a time, in the
+# words of the configured groups (August/September runs, or the November groups).
+unlimited <- groups[[which(grepl("no limit", vapply(groups, function(g) g$concurrency, "")))[1]]]$label
+limited <- groups[[which(grepl("16", vapply(groups, function(g) g$concurrency, "")))[1]]]$label
+panel_word <- function(label) c("first", "second")[match(label, vapply(groups, function(g) g$label, ""))]
+in_runs <- function(label) if (grepl("runs$", label)) sprintf("in the %s", label) else sprintf("in the %s panel", panel_word(label))
 speed_caption <- sprintf(paste(
   "Each point shows one open-weight model, with mean F1 plotted against generation time per text on one %s GPU.",
-  "The models in each panel coded the same texts with identical settings, but in the August runs vLLM",
-  "processed as many texts at once as memory allowed, while in the September runs I limited it to 16 texts",
+  "The models in each panel coded the same texts with identical settings, but %s vLLM",
+  "processed as many texts at once as memory allowed, while %s I limited it to 16 texts",
   "at a time, so I would only compare times within a panel and not across the two panels. In the first",
   "panel, the %d models need between %.1f and %.1f minutes per 1,000 texts, and in the second panel the %d",
   "models need between %.1f and %.1f minutes (not counting the time it takes to load a model or to wait in",
   "the queue)."),
   sub("^NVIDIA ", "", sub(" Max-Q Workstation Edition", "", groups[[1]]$hardware)),
+  in_runs(unlimited), in_runs(limited),
   minutes$n[1], minutes$lo[1], minutes$hi[1], minutes$n[2], minutes$lo[2], minutes$hi[2])
 save_figure(p, "fig-speed", "Quality and generation time", speed_caption,
             tp |> transmute(model, panel = as.character(panel), seconds_per_item, mean_f1), 9, 4.4, "more")

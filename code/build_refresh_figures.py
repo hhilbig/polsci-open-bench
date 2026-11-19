@@ -81,14 +81,20 @@ def build(release_dir):
     panel=json.loads(CONFIG.resolve('panel').read_text())
     digest=hashlib.sha256(json.dumps(panel,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
     if digest!=release['manifest']['panel_sha256']:raise ValueError('Figure sample differs from release')
-    source=(ROOT/'code/build_report_assets.R').read_text()
-    block=source.split('family_map <-')[1].split('long_codebook_tasks <-')[0]
-    families=dict(re.findall(r'"([a-z0-9_]+)"\s*,\s*"([^"]+)"',block))
+    taxonomy=list(csv.DictReader(CONFIG.resolve('taxonomy').open()))
+    if taxonomy and 'family' in taxonomy[0]:
+        # A taxonomy with its own family column (the November task pool) replaces the paper's map.
+        families={r['task']:r['family'] for r in taxonomy};paper_families=False
+    else:
+        source=(ROOT/'code/build_report_assets.R').read_text()
+        block=source.split('family_map <-')[1].split('long_codebook_tasks <-')[0]
+        families=dict(re.findall(r'"([a-z0-9_]+)"\s*,\s*"([^"]+)"',block));paper_families=True
     tasks={r['task']:dict(r) for r in release['task_definitions']}
     if not set(tasks)<=set(families):raise ValueError('Paper taxonomy must cover every release task')
     items=defaultdict(list)
     for row in panel['rows']:items[row['task']].append(row['item'])
-    definitions={t['name']:t for t in load_task_definitions()}
+    tasks_dir=CONFIG.inputs.get('tasks_dir')
+    definitions={t['name']:t for t in (load_task_definitions(tasks_dir=ROOT/tasks_dir) if tasks_dir else load_task_definitions())}
     for key,t in tasks.items():
         effective=_effective_label_count(t,items[key])
         words=_word_count(Path(definitions[key]['prompt_path']).read_text())
@@ -104,8 +110,14 @@ def build(release_dir):
     for m in models:
         key=tuple(m.get(k) for k in ['throughput_keyset_sha256','throughput_settings_sha256','throughput_hardware','throughput_items'])
         if m['kind']=='open' and all(x is not None for x in key) and m.get('throughput_items_per_second'):comparable[key].append(m)
-    key,group=max(comparable.items(),key=lambda kv:len(kv[1]))
-    if len(group)<2:raise ValueError('No comparable throughput group')
+    # The September group comes from the release itself; a release without recorded
+    # throughput (the November task pool) uses only the configured speed runs.
+    september=[]
+    if comparable:
+        key,group=max(comparable.items(),key=lambda kv:len(kv[1]))
+        if len(group)<2:raise ValueError('No comparable throughput group')
+        september=[dict(label='September runs',items=key[3],hardware=key[2],concurrency='16 texts at a time',
+                        models=[dict(model=m['model'],seconds_per_item=1/m['throughput_items_per_second']) for m in group])]
     out=release_dir/'preview/llm-benchmark/figures';out.mkdir(parents=True,exist_ok=True)
     manifest={
         'sample_sha256':digest,
@@ -115,10 +127,8 @@ def build(release_dir):
         'models':[dict(model=m['model'],label=m['label'],short_label=short_label(m['label']),kind=m['kind'],
                        hardware_tier=m['hardware_tier'],gpus=gpu_count(m.get('hardware')),mean_task_f1=m['mean_task_f1'],
                        task_ci_low=m['ci_task_low'],task_ci_high=m['ci_task_high']) for m in models],
-        'throughput_groups':speed_groups(release,tasks)+[
-            dict(label='September runs',items=key[3],hardware=key[2],concurrency='16 texts at a time',
-                 models=[dict(model=m['model'],seconds_per_item=1/m['throughput_items_per_second']) for m in group])],
-        'figures':[],'featured_figures':[],
+        'throughput_groups':speed_groups(release,tasks)+september,
+        'figures':[],'featured_figures':[],'paper_families':paper_families,
         'rank_robustness':rank_robustness(release_dir,{m['model'] for m in models}),
     }
     (out/'figure-data.json').write_text(json.dumps(manifest,indent=2,ensure_ascii=False,allow_nan=False)+'\n')
