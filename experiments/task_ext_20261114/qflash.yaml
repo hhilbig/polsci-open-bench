@@ -1,0 +1,66 @@
+version: 1
+run_id: task_ext_20261114_qflash
+benchmark_commit: 03058c248f90b0e7944635ef26059d5abb7d6ae5
+task_scope:
+  tasks_dir: tasks_ext_v2_20261114
+  expected_tasks: 47
+  expected_items: 23413
+  sampling_note: Full loader pool of every tasks_ext and tasks_v2 manifest; release
+    draws are subsets.
+# Model revision and model settings are those of the November panel run
+# (experiments/refresh_qwen_flash_next_remainder.yaml). November's image and lock
+# were deleted from Hive scratch; this uses a copy of the same-named image found
+# in mm_credit_runtime on 2026-11-17. Its SHA-256 differs from November's
+# (3b1cdfad...), but vLLM, torch, transformers, flashinfer, xgrammar,
+# compressed-tensors, pandas and cuda-toolkit match the versions November's run
+# recorded. The lock is pip freeze inside this image with the pandas overlay. Task scope and generation settings are those of the other
+# open models on this task pool (vllm026.yaml), including max_model_len 24576.
+# Runs from a second Hive checkout at 03058c2 (TP opt-in), so the shared
+# checkout stays at 2cae5cb for the other open-model jobs.
+runtime:
+  vllm_version: 0.1.dev20073+g8e685d198
+  python_version: '3.12'
+  runtime_lock_sha256: 79d40faf997ea6a352f1f6b76ffb09e53a55e242f31aa3c775abf92d7b2b6d00
+  container_image_sha256: d48bec39f3c52a5e75807af690ee62795afff89322cac3c914f3514c2004379d
+  required_environment:
+    VLLM_PLE_CPU_OFFLOAD: '1'
+  max_model_len: 24576
+  # 0.80 and max_num_batched_tokens 8192 (below): job 25791016 at 0.85 and vLLM's
+  # default 16384 ran out of memory in the PLE short-conv prefill on the first batch.
+  gpu_memory_utilization: 0.80
+generation:
+  temperature: 0.0
+  max_tokens: 256
+  seed: 20261114
+  enable_thinking: false
+  structured_outputs: json_schema
+  prompt_margin_tokens: 128
+promotion_gate:
+  baseline_model_key: qwen3_6_27b_fp8
+  minimum_mean_f1_gain: 0.01
+  equivalence_tolerance: 0.005
+  maximum_parse_error_increase: 1.0
+  material_throughput_ratio: 1.25
+models:
+  qwen3_8_flash_next_fp8:
+    role: refresh_candidate_no_accuracy_selection
+    model_id: Qwen/Qwen3.8-Flash-Next-FP8
+    revision: 236dfdf285828023ca3bcd3f37366c58a3469b13
+    display_name: Qwen3.8 Flash-Next FP8
+    quantization: FP8
+    llm_kwargs:
+      tensor_parallel_size: 2
+      max_num_seqs: 256
+      max_num_batched_tokens: 8192
+      kernel_config:
+        enable_flashinfer_autotune: false
+        moe_backend: triton
+    chat_template_kwargs:
+      enable_thinking: false
+# 173 GB of weights: two Blackwells, as in November. Full-pool runs allow
+# tensor parallelism only with this explicit opt-in (code/hive_vllm_benchmark.py).
+hardware:
+  nodes: 1
+  gpu_count: 2
+  gpu_type: 6000_blackwell
+  tensor_parallel_full_pool: true
