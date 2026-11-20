@@ -129,3 +129,19 @@ runs:
     <a href="https://github.com/hhilbig/polsci-open-bench/tree/main/output/sidecar/refresh_20261106_release_33">release
     refresh_20261106</a>, although the two sets of results are not directly comparable, since the tasks, the texts
     and many of the models differ.
+  scoring_absent_classes: Classes that do not appear in the gold labels of a task are left out of its macro F1.
+  # Shown as a collapsed section after the task list (HTML); see docs/subgroup_analysis.md.
+  subgroup_note: >-
+    <p>I also split the tasks into groups that I defined before I looked at the results, i.e. by language and by
+    the type of label, and for the open-weight models I split the texts of each task into a shorter and a longer
+    half – since the groups differ in other ways as well, I only look at whether the order of the models
+    changes.</p><ul>
+    <li>English tasks (36), and shorter compared to longer texts: the order hardly changes.</li>
+    <li>Tasks that are not only in English (10, in eight languages): Gemma 4 31B (W4A16) ranks first and Claude
+    Haiku 5.5 second, while GPT-6.1 Sol falls from third to 20th and Claude Opus 5.5 from second to 11th. Six of
+    the 10 tasks are yes/no decisions, though, and I would not put too much weight on the exact ranks.</li>
+    <li>Yes/no decisions, three to five classes and seven or more classes: the models that reason before they
+    answer are ahead mostly on the tasks with seven or more classes (by about 0.07 compared to the average
+    model), and not on the yes/no decisions.</li></ul>
+    <p>Researchers who code texts in other languages should therefore test a few models on their own data
+    (<a href="https://github.com/hhilbig/polsci-open-bench/blob/main/docs/subgroup_analysis.md">details</a>).</p>
