@@ -375,8 +375,9 @@ def timing_check_sentence():
     """Report the release-timing exposure check (code/analyze_contamination_timing.py)."""
     path=DEFAULT_RELEASE/'robustness'/'contamination_timing.csv'
     if not path.exists() and RUNS.get('texts_phrase'):
-        return ''  # not run for the November task pool yet
-    rows=[r for r in csv.DictReader(path.open()) if r['sample']=='all_33_tasks' and r['term']=='pre']
+        return ''  # not run for this release yet
+    with path.open() as f:
+        rows=[r for r in csv.DictReader(f) if re.fullmatch(r'all_\d+_tasks', r['sample']) and r['term']=='pre']
     if len(rows)!=1:
         raise ValueError('timing check needs one all-task pre estimate')
     r=rows[0]
