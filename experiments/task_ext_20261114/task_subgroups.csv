@@ -1,0 +1,47 @@
+task,language,language_detail,label_structure,label_kind,n_classes
+arslan_claimbuster_checkworthy,English,English,3 to 5 classes,categorical,3
+ballard_incivility,English,English,yes/no decisions,binary,2
+benoit_manifesto_economic_position,English,English,3 to 5 classes,categorical,5
+benoit_manifesto_social_position,English,English,3 to 5 classes,categorical,5
+benson_tucker_unsc_government_stance,English,English,3 to 5 classes,categorical,4
+bestvater_kavanaugh_stance,English,English,yes/no decisions,binary,2
+bestvater_wm_stance,English,English,yes/no decisions,binary,2
+bevan_uk_pmqs_policy_topic,English,English,7 or more classes,categorical,21
+brandt_gtd_attack_type,English,English,7 or more classes,categorical,9
+burnham_covid_threat_minimization,English,English,yes/no decisions,binary,2
+burnham_trump_stance,English,English,3 to 5 classes,categorical,3
+cap_crs_policy_topic,English,English,7 or more classes,categorical,21
+cap_executive_order_policy_topic,English,English,7 or more classes,categorical,21
+cap_party_platform_policy_topic,English,English,7 or more classes,categorical,21
+chalkidis_trump_populism,English,English,3 to 5 classes,categorical,4
+dicocco_manifesto_populism,Not English only,German and Italian,yes/no decisions,binary,2
+douglass_icbe_sentence_event_type,English,English,3 to 5 classes,categorical,5
+erhard_popbert_populism,Not English only,German,yes/no decisions,multi_binary,4
+erlich_ati_topics,Not English only,Spanish,yes/no decisions,multi_binary,6
+gilardi_stance,English,English,3 to 5 classes,categorical,3
+gpd_speech_populism,Not English only,"speeches in many languages, some English",3 to 5 classes,categorical,3
+halterman_keith_bfrs,English,English,7 or more classes,categorical,12
+halterman_keith_cmp,English,English,7 or more classes,categorical,7
+heseltine_politician_tweet_tone,Not English only,"US, German, Italian and Chilean tweets",3 to 5 classes,categorical,3
+horak_czech_propaganda,Not English only,Czech,yes/no decisions,multi_binary,5
+kiesel_hyperpartisan_article,English,English,yes/no decisions,binary,2
+lemens_gallego_tweet_position3,English,English,3 to 5 classes,categorical,3
+liu_gvfc_frame,English,English,7 or more classes,categorical,9
+mellon_bes_mii_2024,English,English,7 or more classes,categorical,49
+mets_estonian_immigration_stance,Not English only,Estonian,3 to 5 classes,categorical,3
+muller_fujimura_campaign_policy_area,Not English only,Japanese,7 or more classes,categorical,12
+muller_proksch_polnos_nostalgia,English,English,yes/no decisions,binary,2
+ornstein_scotus_sentiment,English,English,3 to 5 classes,categorical,3
+parlasent_en_sentiment,English,English,3 to 5 classes,categorical,3
+plover_cameo_event,English,English,7 or more classes,categorical,18
+politicause_causal_relation,English,English,yes/no decisions,binary,2
+rheault_line_of_fire_incivility,English,English,yes/no decisions,binary,2
+rivlin_angert_pdd_delegitimization,Not English only,Hebrew,yes/no decisions,binary,2
+scdb_opinion_issue_area,English,English,7 or more classes,categorical,12
+theocharis_dynamics_incivility,English,English,yes/no decisions,binary,2
+thomas_qevasion_clarity,English,English,3 to 5 classes,categorical,3
+toxicity_protests_es,Not English only,Spanish,yes/no decisions,binary,2
+trager_mfrc_political_moral,English,English,yes/no decisions,multi_binary,5
+twitcivility_impoliteness,English,English,yes/no decisions,binary,2
+wesleyan_creative_ads_2022,English,English,3 to 5 classes,categorical,3
+yan_bernhard_offensive,English,English,yes/no decisions,binary,2

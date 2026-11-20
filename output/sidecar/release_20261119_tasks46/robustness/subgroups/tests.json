@@ -1,0 +1,54 @@
+[
+  {
+    "split": "language",
+    "statistic": 0.269347182423395,
+    "p_value": 0.03719256148770246,
+    "permutations": 5000,
+    "null_median": 0.11038222564647902,
+    "spearman_with_overall": {
+      "English": 0.9792307692307692,
+      "Not English only": 0.5769230769230769
+    },
+    "n_models": 25,
+    "group_sizes": {
+      "English": 36,
+      "Not English only": 10
+    }
+  },
+  {
+    "split": "label_structure",
+    "statistic": 0.370857421021531,
+    "p_value": 0.08118376324735053,
+    "permutations": 5000,
+    "null_median": 0.2358141634594646,
+    "spearman_with_overall": {
+      "3 to 5 classes": 0.9338461538461539,
+      "7 or more classes": 0.9415384615384615,
+      "yes/no decisions": 0.7630769230769231
+    },
+    "n_models": 25,
+    "group_sizes": {
+      "3 to 5 classes": 16,
+      "7 or more classes": 12,
+      "yes/no decisions": 18
+    }
+  },
+  {
+    "split": "language_within_label_structure",
+    "statistic": 0.1877168841773839,
+    "p_value": 0.12117576484703059,
+    "permutations": 5000,
+    "null_median": 0.11223252536264736
+  },
+  {
+    "split": "length_within_task",
+    "statistic": 0.0012824684961812724,
+    "p_value": 0.0065986802639472104,
+    "permutations": 5000,
+    "null_median": 0.0004943076417653369,
+    "common_gap": -0.012093434144341554,
+    "spearman_short_long": 0.9725274725274725,
+    "n_models": 13,
+    "n_tasks": 46
+  }
+]
