@@ -107,18 +107,29 @@ def decisions(group, task, support_only=False):
 
 def headline_replicates(group, task, weights, support_only=False):
     """Weighted confusion counts reproduce scorer F1 without slow sklearn loops."""
-    scores = []
+    scores, included = [], []
     dropped = {str(x) for x in (task.get('headline_exclude_labels') or [])}
+    categorical = task['label_kind'] == 'categorical'
     for key, gold, pred, classes in decisions(group, task, support_only):
         if task['label_kind'] == 'multi_binary' and str(key) in dropped:
             continue
-        for label in classes if task['label_kind'] == 'categorical' else [1]:
-            if task['label_kind'] == 'categorical' and str(label) in dropped:
+        for label in classes if categorical else [1]:
+            if categorical and str(label) in dropped:
                 continue
             tp = weights @ ((gold == label) & (pred == label)).astype(float)
             den = weights @ ((gold == label).astype(float) + (pred == label).astype(float))
             scores.append(np.divide(2 * tp, den, out=np.zeros_like(tp), where=den != 0))
-    return np.mean(scores, axis=0)
+            # With support_only, macro F1 averages over the classes present in the
+            # gold labels. Apply the same rule within each bootstrap replicate: a
+            # class whose gold items were all left out of the draw is not scored
+            # in that draw. Scoring it as zero biases the intervals downward on
+            # tasks with rare classes. The point estimate (all weights 1) is unchanged.
+            if categorical and support_only:
+                included.append(weights @ (gold == label).astype(float) > 0)
+            else:
+                included.append(np.ones(weights.shape[0], dtype=bool))
+    scores, included = np.asarray(scores), np.asarray(included)
+    return (scores * included).sum(axis=0) / included.sum(axis=0)
 
 
 def validate_panel(group, panel, task_defs):

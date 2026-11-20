@@ -28,6 +28,19 @@ def test_fast_score_matches_existing_and_retains_failures(kind):
     assert g.pred_a.iloc[0] == ('x' if categorical else 1)
 
 
+def test_support_only_replicates_drop_classes_absent_from_the_draw():
+    # 'z' has one gold item; a draw that leaves it out must score macro F1 over
+    # x and y only, as the scorer does on that sample, not count z as zero.
+    task = dict(name='t', label_kind='categorical', label_key='a', labels=['x','y','z','w'])
+    g = pd.DataFrame(dict(gt_a=['x','y','x','z','y'], pred_a=['x','y','y','z','x'],
+                          parse_error=[None]*5))
+    weights = np.array([[1,1,1,1,1], [2,1,1,0,1], [0,2,1,1,1]], dtype=float)
+    scores = headline_replicates(g, task, weights, support_only=True)
+    for i, row in enumerate(weights):
+        expanded = g.iloc[np.repeat(np.arange(5), row.astype(int))]
+        assert np.isclose(scores[i], _score_malformed_as_incorrect(expanded, task, support_only=True)['headline_f1'])
+
+
 def test_undefined_mcc_absent_class_f1():
     task = dict(label_kind='categorical', label_key='a', labels=['x','y'])
     rows = class_metrics(pd.DataFrame(dict(gt_a=['x','x'],pred_a=['x','x'],parse_error=[None,None])),task)
@@ -82,6 +95,9 @@ class ReleaseTests(unittest.TestCase):
 
     def test_undefined(self):
         test_undefined_mcc_absent_class_f1()
+
+    def test_support_only_replicates(self):
+        test_support_only_replicates_drop_classes_absent_from_the_draw()
 
     def test_validation(self):
         test_frozen_keys_and_gold_required()
